@@ -6,8 +6,25 @@ An Avarage City- uma aventura "misturiosa"
 Um jogo rpg se turnos que se passa em um mundo onde pessoas despertam poderem místicos, no cenario de uma cidade simples e com seus devidos problemas onde o protagonista henry chamaleon(provisório) luta contra pessoas poderosas e mal feitores em busca de se tornar mais forte com sua habilidade de usar varios poderes.
 Você como jogador deve avançar nas batalhas e encontrar inimigos com habilidades diferentes em busca de aprendelas
 
+PERSONAGEM: 
+30 Pontos de vida iniciais
+6 de energia máxima 
+a pontuação seria ganha durante as lutas ao acertar ou bloquear golpes, esses pontos seriam trocados por habilidades.
+Em velocidade o player teria por padrão 1 bloco por movimento 
+
+INIMIGOS SIMPLES:
+status iguais aos do protagonista sem a opção de movimentação e pontuação, ao realizar um golpe e acertar o protagonista perde vida
+
+BOSS:
+Status melhorados(vida, recuperação de energia e dano)de forma ainda não definida
+
 SISTEMA DE VIDA:
 O jogador inicialmente teria 30 pontos de vida e os perderia quando fosse atingido, caso a vida chegue a zero o jogo mostra a tela de derrota e te devolve pro inicio do jogo com alguns itens a mais.Golpes como socos removeriam menos vida (algo entre 1-6) e golpes como explosões mais(entre 10-16) tambem pensamos em efeitos negativos como fogo e venenk(DoT entre 1-4)
+
+MAPA:
+Se passando numa cidade os itens coletáveis ficariam presentes em lojas ou compartimentos como lixos, baldea etc...
+Cenarios de luta incluiriam chão calçado ou terra, casinhas ao fundo ou arvores(decidindo entre mais natural ou urbano).
+Ja no modo livre o cenário seria mais preenchido com detalhes menores como muros, npcs(interativos ou não), plantas como grama ou mata
 
 COMANDOS:
 AWSD: movimentação no mapa
