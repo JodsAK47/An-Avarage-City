@@ -26,7 +26,7 @@ class inimigo:
         self.vida = 0
         self.mpm = 6
         self.cor = (255,0,255)
-        self.build = "nome do verso"
+        self.categoria = "nome do verso" #Usaremos pra alterar os valores dos atributos
         self.atributo = { 
             "Agi": 1 ,
             "For": 1 ,
