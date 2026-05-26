@@ -1,3 +1,4 @@
+import pygame 
 class personagem:
 
     def __init__(self,x,y):
@@ -25,7 +26,7 @@ class inimigo:
         self.xp = 5
         self.vida = 0
         self.mpm = 6
-        self.cor = (255,0,255)
+        self.cor = (255,255,0)
         self.categoria = "nome do verso" #Usaremos pra alterar os valores dos atributos
         self.atributo = { 
             "Agi": 1 ,
@@ -33,3 +34,4 @@ class inimigo:
             "Con": 1 ,
             "Sab": 1 ,             
                     }
+        
