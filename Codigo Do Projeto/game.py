@@ -8,7 +8,7 @@ class Jogo:
 
         self.largura = 800
         self.altura = 600
-
+        pygame.display.set_caption("An Avarage City")
         self.tela = pygame.display.set_mode(
             (self.largura,self.altura)
         )
