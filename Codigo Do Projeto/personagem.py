@@ -1,4 +1,7 @@
 import pygame 
+
+botao_cor = (150, 150, 150)
+
 class personagem:
 
     def __init__(self,x,y):
@@ -34,4 +37,18 @@ class inimigo:
             "Con": 1 ,
             "Sab": 1 ,             
                     }
-        
+
+class botao:
+
+    def botao_atacar (self,x,y, texto):
+        self.y = y
+        self.x = x 
+        self.texto = texto   
+    def botao_bloqueiar (self,x,y, texto):
+        self.y = y
+        self.x = x
+        self.texto = texto   
+    def botao_foco (self,x,y,texto):
+        self.y = y
+        self.x = x  
+        self.texto = texto 
