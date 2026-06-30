@@ -1,5 +1,5 @@
 import pygame
-from jogo import pensonagem, inimigo1, inimigo2, chefe
+from personagem import pensonagem, inimigo1, inimigo2, chefe
 
 pygame.init()
 
