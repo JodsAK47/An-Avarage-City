@@ -1,54 +1,154 @@
-import pygame 
+import pygame
 
-botao_cor = (150, 150, 150)
+# ==========================
+# CLASSE PERSONAGEM
+# ==========================
 
-class personagem:
+class Personagem:
 
-    def __init__(self,x,y):
-        self.y = y
+    def __init__(self, nome, x, y):
+
+        self.nome = nome
         self.x = x
-        self.nome = "nome"
-        self.vida = 30
-        self.mpm = 6
-        self.cor = (255,0,255)
-        self.build = "nome do verso"
+        self.y = y
+
         self.nivel = 1
-        self.atributo = { 
-            "Agi": 1 ,
-            "For": 1 ,
-            "Con": 1 ,
-            "Sab": 1 ,             
-                    }
-        
+        self.xp = 0
 
-class inimigo:
+        self.vida_max = 30
+        self.vida = self.vida_max
 
-    def __init__(self,x,y):
-        self.y = y
+        self.mana_max = 10
+        self.mana = self.mana_max
+
+        self.cor = (255, 0, 255)
+
+        self.atributos = {
+            "For": 5,
+            "Agi": 3,
+            "Con": 4,
+            "Sab": 2
+        }
+
+    def atacar(self):
+        return self.atributos["For"]
+
+    def receber_dano(self, dano):
+
+        self.vida -= dano
+
+        if self.vida < 0:
+            self.vida = 0
+
+    def vivo(self):
+        return self.vida > 0
+
+    def desenhar(self, tela):
+
+        pygame.draw.rect(
+            tela,
+            self.cor,
+            (self.x, self.y, 80, 80)
+        )
+
+
+# ==========================
+# CLASSE INIMIGO
+# ==========================
+
+class Inimigo:
+
+    def __init__(self, nome, vida, forca, xp, x, y, cor):
+
+        self.nome = nome
+
+        self.vida_max = vida
+        self.vida = vida
+
+        self.xp = xp
+
         self.x = x
-        self.xp = 5
-        self.vida = 0
-        self.mpm = 6
-        self.cor = (255,255,0)
-        self.categoria = "nome do verso" #Usaremos pra alterar os valores dos atributos
-        self.atributo = { 
-            "Agi": 1 ,
-            "For": 1 ,
-            "Con": 1 ,
-            "Sab": 1 ,             
-                    }
+        self.y = y
 
-class botao:
+        self.cor = cor
 
-    def botao_atacar (self,x,y, texto):
-        self.y = y
-        self.x = x 
-        self.texto = texto   
-    def botao_bloqueiar (self,x,y, texto):
-        self.y = y
-        self.x = x
-        self.texto = texto   
-    def botao_foco (self,x,y,texto):
-        self.y = y
-        self.x = x  
-        self.texto = texto 
+        self.atributos = {
+            "For": forca
+        }
+
+    def atacar(self):
+        return self.atributos["For"]
+
+    def receber_dano(self, dano):
+
+        self.vida -= dano
+
+        if self.vida < 0:
+            self.vida = 0
+
+    def vivo(self):
+        return self.vida > 0
+
+    def desenhar(self, tela):
+
+        pygame.draw.rect(
+            tela,
+            self.cor,
+            (self.x, self.y, 80, 80)
+        )
+
+
+# ==========================
+# PERSONAGEM
+# ==========================
+
+pensonagem = Personagem(
+    nome="naotem",
+    x=100,
+    y=250
+)
+
+
+# ==========================
+# INIMIGO 1
+# ==========================
+
+inimigo1 = Inimigo(
+    nome="Inimigo 1",
+    vida=15,
+    forca=3,
+    xp=10,
+    x=550,
+    y=150,
+    cor=(0, 255, 0)
+)
+
+
+# ==========================
+# INIMIGO 2
+# ==========================
+
+inimigo2 = Inimigo(
+    nome="Inimigo 2",
+    vida=25,
+    forca=5,
+    xp=20,
+    x=550,
+    y=250,
+    cor=(255, 255, 0)
+)
+
+
+# ==========================
+# CHEFE
+# ==========================
+
+chefe = Inimigo(
+    nome="Chefe",
+    vida=80,
+    forca=10,
+    xp=100,
+    x=550,
+    y=350,
+    cor=(255, 0, 0)
+)
