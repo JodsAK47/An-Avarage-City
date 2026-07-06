@@ -52,10 +52,6 @@ class Personagem:
         )
 
 
-# ==========================
-# CLASSE INIMIGO
-# ==========================
-
 class Inimigo:
 
     def __init__(self, nome, vida, forca, xp, x, y, cor):
@@ -64,7 +60,6 @@ class Inimigo:
 
         self.vida_max = vida
         self.vida = vida
-
         self.xp = xp
 
         self.x = x
@@ -97,21 +92,12 @@ class Inimigo:
             (self.x, self.y, 80, 80)
         )
 
-
-# ==========================
-# PERSONAGEM
-# ==========================
-
-pensonagem = Personagem(
+personagem = Personagem(
     nome="naotem",
     x=100,
     y=250
 )
 
-
-# ==========================
-# INIMIGO 1
-# ==========================
 
 inimigo1 = Inimigo(
     nome="Inimigo 1",
@@ -124,10 +110,6 @@ inimigo1 = Inimigo(
 )
 
 
-# ==========================
-# INIMIGO 2
-# ==========================
-
 inimigo2 = Inimigo(
     nome="Inimigo 2",
     vida=25,
@@ -137,11 +119,6 @@ inimigo2 = Inimigo(
     y=250,
     cor=(255, 255, 0)
 )
-
-
-# ==========================
-# CHEFE
-# ==========================
 
 chefe = Inimigo(
     nome="Chefe",
