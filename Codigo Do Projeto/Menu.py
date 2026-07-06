@@ -1,5 +1,5 @@
 import pygame
-from personagem import pensonagem, inimigo1, inimigo2, chefe
+from personagem import personagem, inimigo1, inimigo2, chefe
 
 pygame.init()
 
@@ -83,7 +83,7 @@ class Botao:
 
         superficie.blit(
             self.txt_renderizado,
-            self.txt_rect
+            self.txt_recta
         )
 
     def clicado(self, posicao_mouse):
@@ -193,7 +193,7 @@ while rodando:
 
         tela.fill((20, 20, 20))
 
-        pensonagem.desenhar(tela)
+        personagem.desenhar(tela)
 
         inimigo1.desenhar(tela)
         inimigo2.desenhar(tela)
