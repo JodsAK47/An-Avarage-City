@@ -1,4 +1,5 @@
 import pygame
+# Certifique-se de que o arquivo personagem.py está na mesma pasta
 from personagem import personagem, inimigo1, inimigo2, chefe
 
 pygame.init()
@@ -15,7 +16,7 @@ class Botao:
 
     def __init__(self, x, y, largura, altura, texto, cor_base,
                  cor_hover, largura_hover, altura_hover,
-                 cor_texto=(0, 0, 0), fonte_tamanho=40):
+                 cor_texto=(0, 0, 0), fonte_tamanho=32): # Reduzi levemente o tamanho padrão para caber melhor
 
         self.x_centro = x + largura // 2
         self.y_centro = y + altura // 2
@@ -35,7 +36,8 @@ class Botao:
         self.cor_hover = cor_hover
         self.cor_atual = cor_base
 
-        self.fonte = pygame.font.SysFont(None, fonte_tamanho)
+        # --- MODIFICAÇÃO AQUI: Fonte pixelada/mono do sistema ---
+        self.fonte = pygame.font.SysFont(["consolas", "courier"], fonte_tamanho, bold=True)
 
         self.txt_renderizado = self.fonte.render(
             texto,
@@ -50,7 +52,6 @@ class Botao:
     def atualizar(self, posicao_mouse, clique_mouse):
 
         if self.rect.collidepoint(posicao_mouse):
-
             self.cor_atual = self.cor_hover
 
             if clique_mouse[0]:
@@ -59,37 +60,31 @@ class Botao:
             else:
                 self.rect.width = self.largura_hover
                 self.rect.height = self.altura_hover
-
         else:
-
             self.cor_atual = self.cor_base
             self.rect.width = self.largura_base
             self.rect.height = self.altura_base
 
-        self.rect.center = (
-            self.x_centro,
-            self.y_centro
-        )
-
+        self.rect.center = (self.x_centro, self.y_centro)
         self.txt_rect.center = self.rect.center
 
     def desenhar(self, superficie):
-
         pygame.draw.rect(
             superficie,
             self.cor_atual,
             self.rect
         )
-
         superficie.blit(
             self.txt_renderizado,
-            self.txt_recta
+            self.txt_rect
         )
 
     def clicado(self, posicao_mouse):
         return self.rect.collidepoint(posicao_mouse)
 
-fonte_titulo = pygame.font.SysFont(None, 60)
+
+# --- MODIFICAÇÃO AQUI: Título com fonte pixelada/mono ---
+fonte_titulo = pygame.font.SysFont(["consolas", "courier"], 60, bold=True)
 
 txt_titulo = fonte_titulo.render(
     "MENU",
@@ -104,6 +99,7 @@ titulo_rect = pygame.Rect(
     80
 )
 
+# Instanciando botões (ajustei levemente o tamanho do texto interno se necessário)
 botao_jogar = Botao(
     300, 200,
     190, 55,
@@ -116,7 +112,7 @@ botao_jogar = Botao(
 botao_creditos = Botao(
     300, 300,
     190, 55,
-    "CREDITOS",
+    "CLASSE",
     (200, 200, 0),
     (255, 255, 0),
     200, 60
@@ -139,7 +135,6 @@ lista_botoes = [
 ]
 
 estado = "menu"
-
 rodando = True
 
 while rodando:
@@ -153,9 +148,7 @@ while rodando:
             rodando = False
 
         if evento.type == pygame.MOUSEBUTTONDOWN:
-
             if evento.button == 1:
-
                 if botao_jogar.clicado(mouse_pos):
                     estado = "jogo"
 
@@ -166,7 +159,6 @@ while rodando:
                     rodando = False
 
     if estado == "menu":
-
         tela.fill((30, 30, 40))
 
         pygame.draw.rect(
@@ -182,19 +174,14 @@ while rodando:
             )
         )
 
+        # Atualização constante dos botões para o efeito Hover funcionar perfeitamente
         for botao in lista_botoes:
-            botao.atualizar(
-                mouse_pos,
-                mouse_click
-            )
+            botao.atualizar(mouse_pos, mouse_click)
             botao.desenhar(tela)
 
     elif estado == "jogo":
-
         tela.fill((20, 20, 20))
-
         personagem.desenhar(tela)
-
         inimigo1.desenhar(tela)
         inimigo2.desenhar(tela)
         chefe.desenhar(tela)
