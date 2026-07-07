@@ -1,4 +1,4 @@
-mport pygame
+import pygame
 # Certifique-se de que o arquivo personagem.py está na mesma pasta
 from personagem import personagem
 from Inimigo import  inimigo1, inimigo2, chefe
@@ -134,6 +134,28 @@ lista_botoes = [
     botao_sair
 ]
 
+# ... (Mantenha as classes, títulos e instanciações dos botões exatamente como estão)
+
+lista_botoes = [
+    botao_jogar,
+    botao_creditos,
+    botao_sair
+]
+
+# ==========================================================
+# CONFIGURAÇÃO DA MÚSICA DO MENU
+# ==========================================================
+pygame.mixer.init() # Inicializa o sistema de som
+
+# Substitua "musica_menu.mp3" pelo nome/caminho real do seu arquivo de música
+# Dica: Arquivos .mp3 ou .ogg funcionam perfeitamente aqui.
+try:
+    pygame.mixer.music.load("musica_menu.mp3")
+    pygame.mixer.music.set_volume(0.5) # Define o volume de 0.0 (mudo) a 1.0 (máximo)
+    pygame.mixer.music.play(-1) # O -1 faz a música reiniciar automaticamente ao acabar
+except pygame.error:
+    print("Aviso: Arquivo de música não encontrado. O jogo continuará sem som.")
+
 estado = "menu"
 rodando = True
 
@@ -149,13 +171,20 @@ while rodando:
 
         if evento.type == pygame.MOUSEBUTTONDOWN:
             if evento.button == 1:
+                
+                # --- BOTÃO JOGAR ---
                 if botao_jogar.clicado(mouse_pos):
+                    pygame.mixer.music.stop() # PARA A MÚSICA AO ENTRAR NO JOGO
                     estado = "jogo"
 
+                # --- BOTÃO CLASSE (CRÉDITOS) ---
                 if botao_creditos.clicado(mouse_pos):
+                    pygame.mixer.music.stop() # PARA A MÚSICA SE QUISER PARAR AQUI TAMBÉM
                     print("Creditos")
 
+                # --- BOTÃO SAIR ---
                 if botao_sair.clicado(mouse_pos):
+                    pygame.mixer.music.stop() # PARA A MÚSICA ANTES DE FECHAR
                     rodando = False
 
     if estado == "menu":
@@ -174,7 +203,6 @@ while rodando:
             )
         )
 
-        # Atualização constante dos botões para o efeito Hover funcionar perfeitamente
         for botao in lista_botoes:
             botao.atualizar(mouse_pos, mouse_click)
             botao.desenhar(tela)
