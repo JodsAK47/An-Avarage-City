@@ -1,6 +1,6 @@
 import pygame
 # Certifique-se de que o arquivo personagem.py está na mesma pasta
-from personagem import personagem, inimigo1, inimigo2, chefe
+from Personagem import personagem, inimigo1, inimigo2, chefe
 
 pygame.init()
 
