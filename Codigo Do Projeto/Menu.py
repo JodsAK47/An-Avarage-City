@@ -1,7 +1,7 @@
-import pygame
+mport pygame
 # Certifique-se de que o arquivo personagem.py está na mesma pasta
-from Personagem import personagem, inimigo1, inimigo2, chefe
-
+from personagem import personagem
+from Inimigo import  inimigo1, inimigo2, chefe
 pygame.init()
 
 LARGURA = 800
