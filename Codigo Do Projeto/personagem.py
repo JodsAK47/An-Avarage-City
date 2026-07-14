@@ -1,57 +1,50 @@
 import pygame
 
-# ==========================
-# CLASSE PERSONAGEM
-# ==========================
-
 class Personagem:
-
-    def __init__(self, nome, x, y):
-
+    def __init__(self, nome, x, y,ataques):
         self.nome = nome
-        self.x = x
-        self.y = y
-
         self.nivel = 1
         self.xp = 0
+        
+        # --- POSIÇÃO E COLISÃO (NOVO) ---
+        self.x = x
+        self.y = y
+        self.largura = 80
+        self.altura = 80
+        self.rect = pygame.Rect(self.x, self.y, self.largura, self.altura)
 
-        self.vida_max = 30
-        self.vida = self.vida_max
+        #STATUS
 
-        self.mana_max = 10
-        self.mana = self.mana_max
+        self.max_hp = 60
+        self.hp = self.max_hp
+
+        self.max_mp = 6
+        self.mp = self.max_mp
+
+        self.ataques = ataques
+
+        self.congelado = False
+        self.queimando = False
+        self.envenenado = False
 
         self.cor = (255, 0, 255)
-
         self.atributos = {
-            "For": 5,
-            "Agi": 3,
-            "Con": 4,
-            "Sab": 2
+            "For": 1,
+            "Agi": 1,
+            "Con": 1,
+            "Sab": 1,
+            "Int": 1
         }
 
-    def atacar(self):
-        return self.atributos["For"]
-
     def receber_dano(self, dano):
-
-        self.vida -= dano
-
-        if self.vida < 0:
-            self.vida = 0
+        self.hp = max(0, self.hp - dano)
 
     def vivo(self):
-        return self.vida > 0
+        return self.hp > 0
 
     def desenhar(self, tela):
+        # Agora desenha usando o rect oficial
+        pygame.draw.rect( tela, self.cor, self.rect)
 
-        pygame.draw.rect(
-            tela,
-            self.cor,
-            (self.x, self.y, 80, 80)
-        )
-personagem = Personagem(
-    nome="naotem",
-    x=100,
-    y=250
-)
+personagem = Personagem(nome="Herói", x=200, y=300, ataques = ["Gelo","Fogo"])
+subpersonagem = Personagem(nome="Herói", x=200, y=300, ataques = ["Gelo","Fogo"])
