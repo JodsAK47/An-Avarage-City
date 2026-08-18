@@ -1,14 +1,15 @@
 import pygame
 import random
 from Entidades.Personagem import personagem
-from Entidades.Inimigo import inimigo1, inimigo2, chefe
+from Entidades.Inimigo import obter_inimigos_por_cenario # <-- Importa a lista e não mais os inimigos fixos
 from Menu import Botao
-from Habilidades import banco_habilidades 
-
+from Habilidades import banco_habilidades
 class GerenciadorJogo:
     def __init__(self, tela):
         self.tela = tela
-        self.ordem_turnos = [personagem, inimigo1, inimigo2, chefe]
+        # Inicialmente apenas o personagem; os inimigos entram quando a fase é escolhida
+        self.ordem_turnos = [personagem] 
+        
         self.indice_turno = 0
         self.classe_atual = "Nenhuma"
         self.ataque_selecionado = None
@@ -31,12 +32,12 @@ class GerenciadorJogo:
         self.efeito_pendente = None         
         self.chance_efeito_pendente = 0.0   
         
-        # BOTÕES DA HUD
-        self.btn_ataque    = Botao(250, 680, 120, 50, "ATAQUE", (100,0,0), (150,0,0), 124, 54, cor_texto=(255,255,255), fonte_tamanho=20)
-        self.btn_recuperar = Botao(400, 680, 120, 50, "RECUPERAR", (0,100,0), (0,150,0), 124, 54, cor_texto=(255,255,255), fonte_tamanho=18)
-        self.btn_bloquear  = Botao(550, 680, 120, 50, "BLOQUEAR", (100,100,0), (150,150,0), 124, 54, cor_texto=(255,255,255), fonte_tamanho=18)
-        self.btn_fugir     = Botao(700, 680, 120, 50, "FUGIR", (50,50,50), (100,100,100), 124, 54, cor_texto=(255,255,255), fonte_tamanho=20)
-        self.btn_voltar    = Botao(700, 680, 120, 50, "VOLTAR", (80,80,80), (120,120,120), 124, 54, cor_texto=(255,255,255), fonte_tamanho=20)
+        # BOTÕES DA HUD 
+        self.btn_ataque    = Botao(220, 640, 120, 50, "ATAQUE", (100,0,0), (150,0,0), 124, 54, cor_texto=(255,255,255), fonte_tamanho=20)
+        self.btn_recuperar = Botao(360, 640, 120, 50, "RECUPERAR", (0,100,0), (0,150,0), 124, 54, cor_texto=(255,255,255), fonte_tamanho=18)
+        self.btn_bloquear  = Botao(500, 640, 120, 50, "BLOQUEAR", (100,100,0), (150,150,0), 124, 54, cor_texto=(255,255,255), fonte_tamanho=18)
+        self.btn_fugir     = Botao(640, 640, 120, 50, "FUGIR", (50,50,50), (100,100,100), 124, 54, cor_texto=(255,255,255), fonte_tamanho=20)
+        self.btn_voltar    = Botao(640, 640, 120, 50, "VOLTAR", (80,80,80), (120,120,120), 124, 54, cor_texto=(255,255,255), fonte_tamanho=20)
         
         self.fonte = pygame.font.SysFont(["consolas", "courier"], 22, bold=True)
         self.fonte_titulos = pygame.font.SysFont(["consolas", "courier"], 18, bold=True)
@@ -67,8 +68,8 @@ class GerenciadorJogo:
     def gerar_botoes_ataque(self):
         self.botoes_habilidades_dinamicos = []
         for i, nome_hab in enumerate(personagem.ataques):
-            x = 250 + (i * 150)
-            btn = Botao(x, 680, 120, 50, nome_hab.upper()[:10], (0,100,150), (0,150,200), 124, 54, cor_texto=(255,255,255), fonte_tamanho=16)
+            x = 220 + (i * 140)
+            btn = Botao(x, 640, 120, 50, nome_hab.upper()[:10], (0,100,150), (0,150,200), 124, 54, cor_texto=(255,255,255), fonte_tamanho=16)
             self.botoes_habilidades_dinamicos.append({"botao": btn, "nome": nome_hab})
 
     def configurar_classe(self, nova_classe):
@@ -84,41 +85,20 @@ class GerenciadorJogo:
             personagem.atributos["Agi"] += 3
         self.gerar_botoes_ataque()
 
+    # ==========================================================
+    # CÓDIGO REFATORADO: CARREGA OS INIMIGOS DIRETAMENTE DO BANCO
+    # ==========================================================
     def configurar_cenario(self, id_cenario):
         self.musica_luta = "Boss.mp3" if id_cenario == "cenario_4" else "Combate.mp3"
         
-        if id_cenario == "cenario_1":
-            self.mensagem_log = "🌲 Floresta: Goblins apareceram!"
-            inimigo1.nome, inimigo1.max_hp, inimigo1.ataques, inimigo1.xp = "Goblin Verde", 25, ["Mordida", "Soco"], 30
-            inimigo1.atributos = {"For": 2, "Agi": 3, "Int": 0} 
-            
-            inimigo2.nome, inimigo2.max_hp, inimigo2.ataques, inimigo2.xp = "Goblin Corredor", 20, ["Mordida"], 20
-            inimigo2.atributos = {"For": 1, "Agi": 5, "Int": 0}
-            self.ordem_turnos = [personagem, inimigo1, inimigo2]
-            
-        elif id_cenario == "cenario_2":
-            self.mensagem_log = "🦇 Caverna: Monstros fortes à vista!"
-            inimigo1.nome, inimigo1.max_hp, inimigo1.ataques, inimigo1.xp = "Morcego Gigante", 35, ["Mordida"], 40
-            inimigo1.atributos = {"For": 3, "Agi": 4, "Int": 0}
-            
-            inimigo2.nome, inimigo2.max_hp, inimigo2.ataques, inimigo2.xp = "Troll da Caverna", 50, ["Porrete do Chefe", "Soco"], 60
-            inimigo2.atributos = {"For": 6, "Agi": 1, "Int": 0}
-            self.ordem_turnos = [personagem, inimigo1, inimigo2]
-            
-        elif id_cenario == "cenario_3":
-            self.mensagem_log = "🏛️ Ruínas: Guardiões atacam à distância!"
-            inimigo1.nome, inimigo1.max_hp, inimigo1.ataques, inimigo1.xp = "Arqueiro Esqueleto", 40, ["Flechada Letal"], 50
-            inimigo1.atributos = {"For": 1, "Agi": 6, "Int": 0}
-            
-            inimigo2.nome, inimigo2.max_hp, inimigo2.ataques, inimigo2.xp = "Mago Sombrio", 35, ["Gelo", "Soco"], 50
-            inimigo2.atributos = {"For": 1, "Agi": 2, "Int": 5} 
-            self.ordem_turnos = [personagem, inimigo1, inimigo2]
-            
-        elif id_cenario == "cenario_4":
-            self.mensagem_log = "🔥 O COVIL! Enfrentas o Grande Chefe sozinho!"
-            chefe.nome, chefe.max_hp, chefe.ataques, chefe.xp = "Senhor da Guerra", 120, ["Porrete do Chefe", "Soco", "Flechada Letal"], 200
-            chefe.atributos = {"For": 8, "Agi": 4, "Int": 2} 
-            self.ordem_turnos = [personagem, chefe]
+        # Pega do novo banco de inimigos!
+        inimigos_fase = obter_inimigos_por_cenario(id_cenario)
+        self.ordem_turnos = [personagem] + inimigos_fase
+        
+        if id_cenario == "cenario_1": self.mensagem_log = "🌲 Floresta: Goblins apareceram!"
+        elif id_cenario == "cenario_2": self.mensagem_log = "🦇 Caverna: Monstros fortes à vista!"
+        elif id_cenario == "cenario_3": self.mensagem_log = "🏛️ Ruínas: Guardiões atacam à distância!"
+        elif id_cenario == "cenario_4": self.mensagem_log = "🔥 O COVIL! Enfrentas o Grande Chefe sozinho!"
         
         for ent in self.ordem_turnos:
             ent.hp = ent.max_hp
@@ -135,6 +115,9 @@ class GerenciadorJogo:
             entidade.hp = entidade.max_hp
             entidade.mp = getattr(entidade, 'max_mp', 0)
             
+        # SISTEMA DE INICIATIVA: ORDENA PELA AGILIDADE (Agi)
+        self.ordem_turnos.sort(key=lambda e: e.atributos.get("Agi", 0), reverse=True)
+        
         personagem.bloqueando = False
         personagem.recuperando = False
         self.turno_jogador_iniciado = False
@@ -145,6 +128,12 @@ class GerenciadorJogo:
         self.xp_calculado = False 
         self.gerar_botoes_ataque()
         self.atualizar_posicoes_inimigos()
+        
+        primeiro = self.ordem_turnos[0]
+        if primeiro == personagem:
+            self.mensagem_log = "⚡ Você é o mais rápido! Seu Turno!"
+        else:
+            self.mensagem_log = f"⚠️ {primeiro.nome} é mais rápido e começa!"
 
     def avancar_turno(self):
         self.indice_turno += 1
@@ -203,7 +192,6 @@ class GerenciadorJogo:
         
         inimigos_vivos = [e for e in self.ordem_turnos if e != personagem and e.hp > 0]
         
-        # CHECAGEM DE FIM DE LUTA
         if personagem.hp <= 0: 
             return "game_over"
             
@@ -221,7 +209,6 @@ class GerenciadorJogo:
                 self.xp_calculado = True
             return "vitoria"
 
-        # Proteção contra loops se todos morrerem ao mesmo tempo
         if self.indice_turno >= len(self.ordem_turnos): self.indice_turno = 0
         while self.ordem_turnos[self.indice_turno].hp <= 0:
             self.indice_turno += 1
@@ -233,9 +220,6 @@ class GerenciadorJogo:
         clique_agora = mouse_click[0]
         clicou = not clique_agora and self.clique_anterior
         
-        # ==========================================
-        # TURNO DO JOGADOR
-        # ==========================================
         if entidade_atual == personagem:
             if personagem.congelado:
                 if self.timer_inimigo == 0: self.mensagem_log = "❄️ Você está CONGELADO e perdeu o turno!"
@@ -252,8 +236,8 @@ class GerenciadorJogo:
                         personagem.mp += 1
 
                 if self.menu_acoes_estado == "principal":
-                    if "usou" not in self.mensagem_log and "ERROU" not in self.mensagem_log and "falhou" not in self.mensagem_log.lower() and "CRÍTICO" not in self.mensagem_log:
-                        self.mensagem_log = f"Seu Turno! (Classe: {self.classe_atual} | PM: {personagem.mp}/{personagem.max_mp})"
+                    if "usou" not in self.mensagem_log and "ERROU" not in self.mensagem_log and "falhou" not in self.mensagem_log.lower() and "CRÍTICO" not in self.mensagem_log and "rápido" not in self.mensagem_log:
+                        self.mensagem_log = "Seu Turno!"
                     
                     self.btn_ataque.atualizar(mouse_pos, mouse_click)
                     self.btn_recuperar.atualizar(mouse_pos, mouse_click)
@@ -314,9 +298,6 @@ class GerenciadorJogo:
                                     self.executar_ataque_jogador(self.ataque_selecionado, alvo)
                                     break
                             
-        # ==========================================
-        # TURNO DO INIMIGO E ESQUIVA
-        # ==========================================
         else:
             if self.menu_acoes_estado == "esquivando":
                 self.esquiva_x += self.esquiva_vel * self.esquiva_dir
@@ -399,9 +380,6 @@ class GerenciadorJogo:
                     
         self.clique_anterior = clique_agora
 
-    # ==========================================
-    # DESENHO DA TELA
-    # ==========================================
     def desenhar_barras_status(self, entidade):
         rect = entidade.rect
         largura_barra = rect.width
@@ -450,16 +428,43 @@ class GerenciadorJogo:
             pygame.draw.rect(self.tela, (255, 255, 255), (bar_x, bar_y, bar_w, bar_h), 3)
             pygame.draw.rect(self.tela, (255, 50, 50), (bar_x + self.esquiva_x - 4, bar_y - 10, 8, bar_h + 20))
         
-        hud_log = pygame.Rect((self.tela.get_width() - 800) // 2, 570, 800, 60)
+        hud_log = pygame.Rect((self.tela.get_width() - 800) // 2, 20, 800, 60)
         pygame.draw.rect(self.tela, (35, 35, 45), hud_log, border_radius=10)
         pygame.draw.rect(self.tela, (120, 120, 140), hud_log, width=3, border_radius=10)
         texto_surface = self.fonte.render(self.mensagem_log, True, (255, 255, 255))
         self.tela.blit(texto_surface, texto_surface.get_rect(center=hud_log.center))
 
-        hud_acoes = pygame.Rect((self.tela.get_width() - 600) // 2, 650, 600, 110)
+        hud_acoes = pygame.Rect((self.tela.get_width() - 600) // 2, 600, 600, 110)
         pygame.draw.rect(self.tela, (25, 25, 35), hud_acoes, border_radius=10)
         pygame.draw.rect(self.tela, (150, 150, 170), hud_acoes, width=3, border_radius=10)
         self.tela.blit(self.fonte_titulos.render("BARRA DE AÇÃO", True, (200, 200, 200)), (hud_acoes.x + 15, hud_acoes.y + 8))
+
+        hud_status = pygame.Rect((self.tela.get_width() - 600) // 2, 720, 600, 60)
+        pygame.draw.rect(self.tela, (25, 25, 35), hud_status, border_radius=10)
+        pygame.draw.rect(self.tela, (100, 100, 120), hud_status, width=3, border_radius=10)
+        
+        fonte_status = pygame.font.SysFont(["consolas", "courier"], 18, bold=True)
+        
+        x_hp = hud_status.x + 30
+        y_hp = hud_status.y + 25
+        w_hp_bar = 160
+        h_bar = 14
+        pygame.draw.rect(self.tela, (80, 10, 10), (x_hp, y_hp, w_hp_bar, h_bar))
+        if personagem.max_hp > 0:
+            porc_hp = personagem.hp / personagem.max_hp
+            pygame.draw.rect(self.tela, (0, 230, 70), (x_hp, y_hp, int(w_hp_bar * porc_hp), h_bar))
+        txt_hp = fonte_status.render(f"HP: {personagem.hp}/{personagem.max_hp}", True, (255, 255, 255))
+        self.tela.blit(txt_hp, (x_hp + w_hp_bar + 10, y_hp - 3))
+
+        x_mp = hud_status.x + 330
+        y_mp = hud_status.y + 25
+        w_mp_bar = 120
+        pygame.draw.rect(self.tela, (10, 10, 80), (x_mp, y_mp, w_mp_bar, h_bar))
+        if personagem.max_mp > 0:
+            porc_mp = personagem.mp / personagem.max_mp
+            pygame.draw.rect(self.tela, (0, 160, 255), (x_mp, y_mp, int(w_mp_bar * porc_mp), h_bar))
+        txt_mp = fonte_status.render(f"PM: {personagem.mp}/{personagem.max_mp}", True, (255, 255, 255))
+        self.tela.blit(txt_mp, (x_mp + w_mp_bar + 10, y_mp - 3))
 
         indice_seguro = self.indice_turno if self.indice_turno < len(self.ordem_turnos) else 0
         if self.ordem_turnos[indice_seguro] == personagem and not personagem.congelado:
