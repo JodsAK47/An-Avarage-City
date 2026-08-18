@@ -13,6 +13,8 @@ Um jogo de RPG em 2D desenvolvido inteiramente em Python utilizando a biblioteca
 
 ## 📂 Estrutura do Projeto
 
+Certifica-te de que o teu repositório tem a seguinte estrutura para que o jogo funcione corretamente (especialmente as pastas de *assets*):
+
 ```text
 📁 Seu_Repositorio/
 │
@@ -39,5 +41,32 @@ Um jogo de RPG em 2D desenvolvido inteiramente em Python utilizando a biblioteca
     ├── Combate.mp3
     ├── Boss.mp3
     └── GameOver.mp3
+🚀 Como Executar o Jogo
+Pré-requisitos
+Precisarás de ter o Python instalado na sua máquina, bem como a biblioteca pygame.
 
-Este README resume o estado atual do projeto."(Gerado com Inteligencia artificial.)"
+Clone este repositório:
+
+Bash
+git clone [https://github.com/SEU_USUARIO/NOME_DO_REPOSITORIO.git](https://github.com/SEU_USUARIO/NOME_DO_REPOSITORIO.git)
+Instala a dependência do Pygame:
+
+Bash
+pip install pygame
+Executa o arquivo principal na pasta do projeto:
+
+Bash
+python Main.py
+🎮 Controlos
+Rato (Mouse): O jogo é inteiramente controlado via interface gráfica (Point and Click). Usa o clique esquerdo para interagir com menus, escolher habilidades, selecionar alvos, subir atributos e usar a barra de esquiva durante o combate.
+
+🛠️ Modificações e Adições Próximas
+[ ] Adicionar mais itens e sistema de inventário.
+
+[ ] Melhorar as animações durante o uso de habilidades.
+
+[ ] Adicionar mais músicas e efeitos sonoros (SFX) aos ataques.
+
+Projeto desenvolvido como estudo de lógica de programação, orientação a objetos e desenvolvimento de jogos 2D utilizando Python e Pygame.
+
+Este README Apresenta uma visão do projeto no dia 17 de agosto 2026.(ESTE DOCUMENTO FOI GERADO POR IA E VERIFICADO POR HUMANOS)
