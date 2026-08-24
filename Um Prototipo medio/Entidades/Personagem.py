@@ -50,3 +50,5 @@ class Personagem:
 
 # Personagem
 personagem = Personagem(150, 350, "pixil.png")
+# Marca global como jogador para posicionamento
+setattr(personagem, 'is_player', True)

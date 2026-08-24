@@ -1,8 +1,7 @@
 
 import pygame
 import random
-from Entidades.Personagem import personagem
-from Entidades.Inimigo import obter_inimigos_por_cenario
+from Entidades.Personagem import personagem, Personagem
 from Menu import Botao
 from Habilidades import banco_habilidades
 from Fontes import obter_fonte
@@ -11,6 +10,9 @@ from GeracaoFases import GeradorFase
 class GerenciadorJogo:
     def __init__(self, tela):
         self.tela = tela
+        self.duas_pessoas = False
+        self.personagem2 = None
+        self.classe_jogador2 = None
         # Inicialmente apenas o personagem; os inimigos entram quando a fase é escolhida
         self.ordem_turnos = [personagem] 
         
@@ -58,7 +60,8 @@ class GerenciadorJogo:
             personagem.atributos = {"For": 1, "Agi": 1, "Con": 1, "Sab": 1, "Int": 1}
 
     def atualizar_posicoes_inimigos(self):
-        inimigos_vivos = [e for e in self.ordem_turnos if e != personagem and e.hp > 0]
+        # considera apenas entidades que NÃO são jogadores como inimigos
+        inimigos_vivos = [e for e in self.ordem_turnos if not getattr(e, 'is_player', False) and e.hp > 0]
         num = len(inimigos_vivos)
         centro_x, centro_y = 750, 400
         
@@ -66,6 +69,15 @@ class GerenciadorJogo:
             inimigos_vivos[0].rect.center = (centro_x, centro_y)
         elif num == 2:
             inimigos_vivos[0].rect.center = (centro_x, centro_y - 100)
+
+        # Posiciona também os jogadores (personagem e personagem2) espelhando lógica
+        jogadores = [e for e in self.ordem_turnos if getattr(e, 'is_player', False) and e.hp > 0]
+        centro_px = 250
+        if len(jogadores) == 1:
+            jogadores[0].rect.center = (centro_px, centro_y)
+        elif len(jogadores) == 2:
+            jogadores[0].rect.center = (centro_px, centro_y - 100)
+            jogadores[1].rect.center = (centro_px, centro_y + 100)
             inimigos_vivos[1].rect.center = (centro_x, centro_y + 100)
         elif num == 3:
             inimigos_vivos[0].rect.center = (centro_x, centro_y - 150)
@@ -115,25 +127,50 @@ class GerenciadorJogo:
             self.musica_luta = "Boss.mp3" if len(inimigos_fase) == 1 else "Combate.mp3"
             self.mensagem_log = f"🎲 {fase_gerada.nome} - {self.evento_neutro.descricao}"
         elif id_cenario in ["cenario_1", "cenario_2", "cenario_3", "cenario_4"]:
+            # Mantemos a ideia de cenário para texto e dificuldade, mas
+            # os inimigos serão gerados aleatoriamente e independentes do cenário.
             self.fase_numero = int(id_cenario.split("_")[-1])
             self.gerador_fases.fase_num = self.fase_numero
             self.evento_neutro = self.gerador_fases.gerar_evento_neutro(self.fase_numero)
-            inimigos_fase = obter_inimigos_por_cenario(id_cenario)
+            quantidade = 1 if id_cenario == "cenario_4" else max(1, min(4, 1 + (self.fase_numero // 2)))
+            inimigos_fase = self.gerador_fases.gerar_inimigos_aleatorios(self.fase_numero, quantidade=quantidade)
             self.musica_luta = "Boss.mp3" if id_cenario == "cenario_4" else "Combate.mp3"
             if id_cenario == "cenario_1":
-                self.mensagem_log = f"🌲 Floresta: Goblins apareceram! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
+                self.mensagem_log = f"🌲 Floresta: Encontros aleatórios! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
             elif id_cenario == "cenario_2":
-                self.mensagem_log = f"🦇 Caverna: Monstros fortes à vista! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
+                self.mensagem_log = f"🦇 Caverna: Encontros aleatórios! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
             elif id_cenario == "cenario_3":
-                self.mensagem_log = f"🏛️ Ruínas: Guardiões atacam à distância! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
+                self.mensagem_log = f"🏛️ Ruínas: Encontros aleatórios! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
             elif id_cenario == "cenario_4":
-                self.mensagem_log = f"🔥 O COVIL! Enfrentas o Grande Chefe sozinho! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
+                self.mensagem_log = f"🔥 O COVIL! Enfrentas um desafio mais difícil! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
         else:
             inimigos_fase = []
             self.mensagem_log = "⚠️ Cenário não identificado."
             self.musica_luta = "Combate.mp3"
 
-        self.ordem_turnos = [personagem] + inimigos_fase
+        # Ordem base: jogadores primeiro, depois inimigos
+        self.ordem_turnos = [personagem]
+        if getattr(self, 'duas_pessoas', False):
+            # garante criação do personagem2
+            if self.personagem2 is None:
+                self.personagem2 = Personagem(150, 350, "pixil.png")
+                setattr(self.personagem2, 'is_player', True)
+            # aplica classe_jogador2 se definida
+            if getattr(self, 'classe_jogador2', None):
+                cls = self.classe_jogador2
+                if cls == "Lutador":
+                    self.personagem2.ataques = ["Soco", "Terremoto"]
+                    self.personagem2.atributos["For"] += 3
+                elif cls == "Manipulador":
+                    self.personagem2.ataques = ["Gelo", "Nevasca"]
+                    self.personagem2.atributos["Int"] += 3
+                elif cls == "Arqueiro":
+                    self.personagem2.ataques = ["Flechada Letal", "Chuva de Flechas"]
+                    self.personagem2.atributos["Agi"] += 3
+            self.ordem_turnos.append(self.personagem2)
+
+        # adiciona inimigos no final
+        self.ordem_turnos.extend(inimigos_fase)
 
         for ent in self.ordem_turnos:
             ent.hp = ent.max_hp
@@ -146,6 +183,21 @@ class GerenciadorJogo:
         self.atualizar_posicoes_inimigos()
 
     def reiniciar(self):
+        # Reconstrói ordem_turnos garantindo que jogadores venham antes dos inimigos
+        # recolhe inimigos atuais
+        inimigos = [e for e in self.ordem_turnos if not getattr(e, 'is_player', False)]
+
+        # garante personagem2 se modo 2P
+        if getattr(self, 'duas_pessoas', False) and self.personagem2 is None:
+            self.personagem2 = Personagem(150, 350, "pixil.png")
+            setattr(self.personagem2, 'is_player', True)
+
+        # reforma ordem_turnos
+        self.ordem_turnos = [personagem]
+        if getattr(self, 'duas_pessoas', False):
+            self.ordem_turnos.append(self.personagem2)
+        self.ordem_turnos.extend(inimigos)
+
         for entidade in self.ordem_turnos:
             entidade.congelado = False
             entidade.hp = entidade.max_hp
@@ -335,6 +387,53 @@ class GerenciadorJogo:
                                     break
                             
         else:
+            # Se for o segundo jogador (IA simples enquanto placeholder)
+            if getattr(self, 'personagem2', None) is not None and entidade_atual == self.personagem2:
+                if entidade_atual.congelado:
+                    if self.timer_inimigo == 0: self.mensagem_log = "❄️ Jogador 2 CONGELADO!"
+                    self.timer_inimigo += 1
+                    if self.timer_inimigo >= self.tempo_espera_inimigo:
+                        entidade_atual.congelado = False
+                        self.avancar_turno()
+                else:
+                    self.timer_inimigo += 1
+                    if self.timer_inimigo >= self.tempo_espera_inimigo:
+                        # IA escolhe ataque aleatório e acerta um alvo aleatório
+                        inimigos_vivos = [e for e in self.ordem_turnos if e != personagem and e.hp > 0]
+                        if not inimigos_vivos:
+                            self.avancar_turno()
+                        else:
+                            nome_golpe = random.choice(entidade_atual.ataques)
+                            hab_usada = banco_habilidades[nome_golpe]
+                            if entidade_atual.mp >= hab_usada.custo_mp:
+                                entidade_atual.mp -= hab_usada.custo_mp
+                                bonus = self.calcular_bonus_atributo(entidade_atual, hab_usada.tipo)
+                                dano = hab_usada.dano + bonus
+                                critico = False
+                                if random.random() < 0.05:
+                                    critico = True
+                                    dano = int(dano * 1.5)
+                                if not critico and random.random() > hab_usada.precisao:
+                                    self.mensagem_log = f"💨 Jogador 2 tentou {hab_usada.nome} e ERROU!"
+                                else:
+                                    if hab_usada.em_area:
+                                        alvos = inimigos_vivos
+                                    else:
+                                        alvos = [random.choice(inimigos_vivos)]
+                                    for alvo in alvos:
+                                        alvo.hp -= dano
+                                        alvo.hp = max(0, alvo.hp)
+                                    self.mensagem_log = f"🤝 Jogador 2 usou {hab_usada.nome}! ({dano} dano)"
+                            else:
+                                # sem MP, faz ataque básico
+                                alvo = random.choice(inimigos_vivos)
+                                dano = 5 + entidade_atual.atributos.get('For', 1)
+                                alvo.hp -= dano
+                                alvo.hp = max(0, alvo.hp)
+                                self.mensagem_log = f"🤝 Jogador 2 atacou {alvo.nome} ({dano} dano)"
+                            self.avancar_turno()
+                self.clique_anterior = clique_agora
+                return None
             if self.menu_acoes_estado == "esquivando":
                 self.esquiva_x += self.esquiva_vel * self.esquiva_dir
                 if self.esquiva_x >= 400 or self.esquiva_x <= 0:
@@ -467,8 +566,17 @@ class GerenciadorJogo:
         hud_log = pygame.Rect((self.tela.get_width() - 800) // 2, 20, 800, 60)
         pygame.draw.rect(self.tela, (35, 35, 45), hud_log, border_radius=10)
         pygame.draw.rect(self.tela, (120, 120, 140), hud_log, width=3, border_radius=10)
-        texto_surface = self.fonte.render(self.mensagem_log, True, (255, 255, 255))
-        self.tela.blit(texto_surface, texto_surface.get_rect(center=hud_log.center))
+        # Renderiza a mensagem com quebra de linhas para evitar estouro
+        from Fontes import quebrar_texto
+        padding = 10
+        linhas = quebrar_texto(self.mensagem_log, self.fonte, hud_log.width - padding*2)
+        total_altura = len(linhas) * self.fonte.get_linesize()
+        y_inicio = hud_log.y + (hud_log.height - total_altura) // 2
+        for i, linha in enumerate(linhas):
+            surf = self.fonte.render(linha, True, (255, 255, 255))
+            x = hud_log.x + (hud_log.width - surf.get_width()) // 2
+            y = y_inicio + i * self.fonte.get_linesize()
+            self.tela.blit(surf, (x, y))
 
         hud_acoes = pygame.Rect((self.tela.get_width() - 600) // 2, 600, 600, 110)
         pygame.draw.rect(self.tela, (25, 25, 35), hud_acoes, border_radius=10)

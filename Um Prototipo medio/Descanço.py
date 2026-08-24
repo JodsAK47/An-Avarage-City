@@ -11,12 +11,18 @@ class GerenciadorPosLuta:
         self.fonte_texto = obter_fonte(26)
         self.fonte_desc = obter_fonte(20)
         
-        # Botões de Upgrade (quadrados pequenos de "+" )
+        # Botões de Upgrade (quadrados pequenos de "+")
         bw, bh = 40, 40
-        x_b = 650
+        # Textos de atributos começam em x=200 abaixo; posicionamos os botões
+        # à esquerda do texto para ficarem próximos ao rótulo correspondente.
+        margem = 12
+        x_texto = 200
+        # armazena como atributo para uso em desenhar()
+        self.x_texto = x_texto
+        x_b = x_texto - bw - margem
         y_base = 300
         espaco = 60
-        
+
         self.btn_for = Botao(x_b, y_base, bw, bh, "+", (0,150,0), (0,255,0), bw, bh, cor_texto=(255,255,255))
         self.btn_agi = Botao(x_b, y_base+espaco, bw, bh, "+", (0,150,0), (0,255,0), bw, bh, cor_texto=(255,255,255))
         self.btn_con = Botao(x_b, y_base+espaco*2, bw, bh, "+", (0,150,0), (0,255,0), bw, bh, cor_texto=(255,255,255))
@@ -96,7 +102,8 @@ class GerenciadorPosLuta:
         for i in range(5):
             val = personagem.atributos.get(chaves[i], 1)
             txt = self.fonte_texto.render(f"{nomes_attr[i]}: {val}", True, (255,255,255))
-            self.tela.blit(txt, (200, y_base + (i*espaco)))
+            # Desenha o texto deslocado para a direita, de modo que o botão '+' fique à esquerda
+            self.tela.blit(txt, (self.x_texto, y_base + (i*espaco)))
             
         # Desenha os botões apenas se tiver pontos
         if pts > 0:

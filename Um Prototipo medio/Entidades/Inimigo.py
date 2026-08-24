@@ -68,37 +68,56 @@ class Inimigo:
             tela.blit(txt, (self.rect.centerx - txt.get_width()//2, self.rect.y - 20))
 
 # ==========================================================
-# BANCO DE DADOS DE INIMIGOS (SEPARADOS POR CENÁRIO)
+# BANCO DE DADOS DE INIMIGOS (TEMPLATES)
 # ==========================================================
+# Agora usamos dicionários (templates) em vez de instanciar `Inimigo` no
+# momento do import. Isso evita carregamento irregular de sprites e permite
+# criar instâncias apenas quando necessário (ao gerar a fase).
 BANCOS_INIMIGOS = {
     "cenario_1": [
-        Inimigo(0, 0, 25, "Maldição1.png", "Goblin Verde", ["Mordida", "Soco"], 30, {"For": 2, "Agi": 3, "Int": 0}),
-        Inimigo(0, 0, 20, "Maldição1.png", "Goblin Corredor", ["Mordida"], 20, {"For": 1, "Agi": 5, "Int": 0}),
+        {"max_hp": 25, "arquivo_imagem": "Maldição1.png", "nome": "Goblin Verde", "ataques": ["Mordida", "Soco"], "xp": 30, "atributos": {"For": 2, "Agi": 3, "Int": 0}},
+        {"max_hp": 20, "arquivo_imagem": "Maldição1.png", "nome": "Goblin Corredor", "ataques": ["Mordida"], "xp": 20, "atributos": {"For": 1, "Agi": 5, "Int": 0}},
     ],
     "cenario_2": [
-        Inimigo(0, 0, 35, "Maldição1.png", "Morcego Gigante", ["Mordida"], 40, {"For": 3, "Agi": 4, "Int": 0}),
-        Inimigo(0, 0, 50, "Maldição1.png", "Troll da Caverna", ["Porrete do Chefe", "Soco"], 60, {"For": 6, "Agi": 1, "Int": 0}),
+        {"max_hp": 35, "arquivo_imagem": "Maldição1.png", "nome": "Morcego Gigante", "ataques": ["Mordida"], "xp": 40, "atributos": {"For": 3, "Agi": 4, "Int": 0}},
+        {"max_hp": 50, "arquivo_imagem": "Maldição1.png", "nome": "Troll da Caverna", "ataques": ["Porrete do Chefe", "Soco"], "xp": 60, "atributos": {"For": 6, "Agi": 1, "Int": 0}},
     ],
     "cenario_3": [
-        Inimigo(0, 0, 40, "Maldição1.png", "Arqueiro Esqueleto", ["Flechada Letal"], 50, {"For": 1, "Agi": 6, "Int": 0}),
-        Inimigo(0, 0, 35, "Maldição1.png", "Mago Sombrio", ["Gelo", "Soco"], 50, {"For": 1, "Agi": 2, "Int": 5}),
+        {"max_hp": 40, "arquivo_imagem": "Maldição1.png", "nome": "Arqueiro Esqueleto", "ataques": ["Flechada Letal"], "xp": 50, "atributos": {"For": 1, "Agi": 6, "Int": 0}},
+        {"max_hp": 35, "arquivo_imagem": "Maldição1.png", "nome": "Mago Sombrio", "ataques": ["Gelo", "Soco"], "xp": 50, "atributos": {"For": 1, "Agi": 2, "Int": 5}},
     ],
     "cenario_4": [
-        Inimigo(0, 0, 120, "Sukuna1.png", "Senhor da Guerra", ["Porrete do Chefe", "Soco", "Flechada Letal"], 200, {"For": 8, "Agi": 4, "Int": 2}),
+        {"max_hp": 120, "arquivo_imagem": "Sukuna1.png", "nome": "Senhor da Guerra", "ataques": ["Porrete do Chefe", "Soco", "Flechada Letal"], "xp": 200, "atributos": {"For": 8, "Agi": 4, "Int": 2}},
     ],
 }
 
 
+def _criar_inimigo_a_partir_template(template, x=0, y=0):
+    return Inimigo(
+        x,
+        y,
+        template.get("max_hp", 20),
+        template.get("arquivo_imagem", "Maldição1.png"),
+        template.get("nome", "Inimigo"),
+        list(template.get("ataques", ["Soco"])),
+        template.get("xp", 0),
+        dict(template.get("atributos", {"For": 1, "Agi": 1, "Int": 1})),
+    )
+
+
 def listar_inimigos_disponiveis():
+    """Retorna instâncias novas para todos os templates de inimigos."""
     inimigos = []
     for lista in BANCOS_INIMIGOS.values():
-        inimigos.extend(inimigo.clone() for inimigo in lista)
+        for tpl in lista:
+            inimigos.append(_criar_inimigo_a_partir_template(tpl))
     return inimigos
 
 
 def obter_inimigos_por_cenario(id_cenario):
+    """Cria novas instâncias de inimigos para o cenário pedido.
+
+    As posições (x,y) ficam em 0; o `Jogo.py` ajusta dinamicamente as posições
+    durante o combate.
     """
-    Retorna uma lista de inimigos configurados com seus status, imagens e atributos.
-    OBS: As posições (x,y) podem ser 0 pois o Jogo.py as ajusta dinamicamente no combate.
-    """
-    return [inimigo.clone() for inimigo in BANCOS_INIMIGOS.get(id_cenario, [])]
+    return [_criar_inimigo_a_partir_template(tpl) for tpl in BANCOS_INIMIGOS.get(id_cenario, [])]

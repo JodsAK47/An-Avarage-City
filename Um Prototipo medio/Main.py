@@ -23,6 +23,11 @@ selecao_tela = GerenciadorSelecao(tela)
 classes_tela = GerenciadorClasses(tela) 
 pos_luta_tela = GerenciadorPosLuta(tela) # <-- INICIALIZANDO
 
+# Estado para seleção de classes quando for necessário (player 1 ou 2)
+player1_class = None
+player2_class = None
+classes_target = None
+
 def tocar_musica(nome_arquivo):
     pygame.mixer.music.stop()
     try:
@@ -55,26 +60,69 @@ while rodando:
 
         if estado == "menu":
             if menu_tela.botao_jogar.checar_clique(evento, mouse_pos):
-                jogo_tela.reiniciar()
-                estado = "jogo"
-                tocar_musica("Combate.mp3")
+                # Se modo 2P está ligado, forçar seleção de classes antes de iniciar
+                if getattr(menu_tela, 'duas_pessoas', False):
+                    classes_target = 1
+                    classes_tela.aviso = "Escolha CLASSE para JOGADOR 1"
+                    estado = "classes"
+                else:
+                    # Verifica se já há uma classe selecionada no jogo
+                    if jogo_tela.classe_atual == "Nenhuma":
+                        classes_target = 1
+                        classes_tela.aviso = "Escolha SUA CLASSE"
+                        estado = "classes"
+                    else:
+                        jogo_tela.duas_pessoas = getattr(menu_tela, 'duas_pessoas', False)
+                        jogo_tela.reiniciar()
+                        estado = "jogo"
+                        tocar_musica("Combate.mp3")
             elif menu_tela.botao_classe.checar_clique(evento, mouse_pos):
                 estado = "classes"
+            elif menu_tela.switch_2p.checar_clique(evento, mouse_pos):
+                # alterna estado e atualiza aviso visual imediato
+                menu_tela.duas_pessoas = not menu_tela.duas_pessoas
             elif menu_tela.botao_sair.checar_clique(evento, mouse_pos):
                 rodando = False
 
         elif estado == "classes":
+            # Seleção de classe com suporte a 2 jogadores via classes_target
+            escolha = None
             if classes_tela.botao_lutador.checar_clique(evento, mouse_pos):
-                jogo_tela.configurar_classe("Lutador")
-                classes_tela.aviso = "Classe: LUTADOR"
+                escolha = "Lutador"
             elif classes_tela.botao_manipulador.checar_clique(evento, mouse_pos):
-                jogo_tela.configurar_classe("Manipulador")
-                classes_tela.aviso = "Classe: MANIPULADOR"
+                escolha = "Manipulador"
             elif classes_tela.botao_arqueiro.checar_clique(evento, mouse_pos):
-                jogo_tela.configurar_classe("Arqueiro")
-                classes_tela.aviso = "Classe: ARQUEIRO"
+                escolha = "Arqueiro"
             elif classes_tela.botao_voltar.checar_clique(evento, mouse_pos):
+                classes_target = None
                 estado = "menu"
+
+            if escolha:
+                if classes_target == 1:
+                    # configura jogador 1
+                    jogo_tela.configurar_classe(escolha)
+                    player1_class = escolha
+                    classes_tela.aviso = f"Jogador 1: {escolha}"
+                    if getattr(menu_tela, 'duas_pessoas', False):
+                        # pedir classe do jogador 2 agora
+                        classes_target = 2
+                        classes_tela.aviso = "Escolha CLASSE para JOGADOR 2"
+                    else:
+                        # iniciar jogo
+                        jogo_tela.duas_pessoas = False
+                        jogo_tela.reiniciar()
+                        estado = "jogo"
+                        tocar_musica("Combate.mp3")
+                elif classes_target == 2:
+                    player2_class = escolha
+                    classes_tela.aviso = f"Jogador 2: {escolha}"
+                    # aplicar classe 2 no gerenciador de jogo (cria personagem2 mais tarde)
+                    jogo_tela.classe_jogador2 = escolha
+                    # ambos prontos -> iniciar
+                    jogo_tela.duas_pessoas = True
+                    jogo_tela.reiniciar()
+                    estado = "jogo"
+                    tocar_musica("Combate.mp3")
 
         elif estado == "game_over":
             if game_over_tela.botao_tentar_novamente.checar_clique(evento, mouse_pos):

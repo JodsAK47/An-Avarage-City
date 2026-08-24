@@ -151,14 +151,23 @@ class GerenciadorMenu:
         x_botao = (largura_tela - largura_botao) // 2 # Calcula o meio da tela para os botões
         
         # Aumentei o espaçamento no eixo Y (250, 350, 450) para ficar harmonioso na tela de 800 de altura
-        self.botao_jogar = Botao(x_botao, 250, largura_botao, altura_botao, "JOGAR", (0, 200, 0), (0, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=32, sprite_base_path=sprite_jogar_base, sprite_hover_path=sprite_jogar_hover, sprite_clique_path=sprite_jogar_clique)
-        self.botao_classe = Botao(x_botao, 350, largura_botao, altura_botao, "CLASSE", (200, 200, 0), (255, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=32, sprite_base_path=sprite_classe_base, sprite_hover_path=sprite_classe_hover, sprite_clique_path=sprite_classe_clique)
-        self.botao_sair = Botao(x_botao, 450, largura_botao, altura_botao, "SAIR", (200, 0, 0), (255, 0, 0), 200, 60, cor_texto=(255, 255, 255), fonte_tamanho=32, sprite_base_path=sprite_sair_base, sprite_hover_path=sprite_sair_hover, sprite_clique_path=sprite_sair_clique)
+        # Reduzi o tamanho da fonte dos botões para evitar textos grandes
+        self.botao_jogar = Botao(x_botao, 250, largura_botao, altura_botao, "JOGAR", (0, 200, 0), (0, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=24, sprite_base_path=sprite_jogar_base, sprite_hover_path=sprite_jogar_hover, sprite_clique_path=sprite_jogar_clique)
+        self.botao_classe = Botao(x_botao, 350, largura_botao, altura_botao, "CLASSE", (200, 200, 0), (255, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=24, sprite_base_path=sprite_classe_base, sprite_hover_path=sprite_classe_hover, sprite_clique_path=sprite_classe_clique)
+        self.botao_sair = Botao(x_botao, 450, largura_botao, altura_botao, "SAIR", (200, 0, 0), (255, 0, 0), 200, 60, cor_texto=(255, 255, 255), fonte_tamanho=24, sprite_base_path=sprite_sair_base, sprite_hover_path=sprite_sair_hover, sprite_clique_path=sprite_sair_clique)
 
         self.lista_botoes = [self.botao_jogar, self.botao_classe, self.botao_sair]
+        # Switch de 2 jogadores (canto superior direito)
+        sw_w, sw_h = 80, 40
+        sw_x = self.tela.get_width() - sw_w - 20
+        sw_y = 20
+        self.switch_2p = Botao(sw_x, sw_y, sw_w, sw_h, "2P", (120,120,120), (180,180,180), sw_w, sw_h, cor_texto=(255,255,255), fonte_tamanho=22)
+        self.duas_pessoas = False
     def atualizar(self, mouse_pos, mouse_click):
         for botao in self.lista_botoes:
             botao.atualizar(mouse_pos, mouse_click)
+        # atualizar switch
+        self.switch_2p.atualizar(mouse_pos, mouse_click)
 
     def desenhar(self):
         self.tela.fill((30, 30, 40))
@@ -167,3 +176,8 @@ class GerenciadorMenu:
         
         for botao in self.lista_botoes:
             botao.desenhar(self.tela)
+        # Desenha o switch 2P com cor indicando ligado/desligado
+        cor = (0,180,0) if self.duas_pessoas else (120,120,120)
+        pygame.draw.rect(self.tela, cor, self.switch_2p.rect, border_radius=6)
+        txt = self.switch_2p.fonte.render("2P", True, (255,255,255))
+        self.tela.blit(txt, txt.get_rect(center=self.switch_2p.rect.center))
