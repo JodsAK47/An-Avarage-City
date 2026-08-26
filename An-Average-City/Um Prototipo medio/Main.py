@@ -99,6 +99,7 @@ while rodando:
                         estado = "jogo"
                         tocar_musica("Combate.mp3")
             elif menu_tela.botao_classe.checar_clique(evento, posicao_mouse):
+                classes_tela.aviso = "Gerencie as Habilidades"
                 estado = "classes"
             elif menu_tela.switch_2p.checar_clique(evento, posicao_mouse):
                 menu_tela.duas_pessoas = not menu_tela.duas_pessoas
@@ -111,16 +112,12 @@ while rodando:
 
         elif estado == "classes":
             # Seleção de classe com suporte a 2 jogadores via classes_target
-            escolha_classe = None
-            if classes_tela.botao_lutador.checar_clique(evento, posicao_mouse):
-                escolha_classe = "Lutador"
-            elif classes_tela.botao_manipulador.checar_clique(evento, posicao_mouse):
-                escolha_classe = "Manipulador"
-            elif classes_tela.botao_arqueiro.checar_clique(evento, posicao_mouse):
-                escolha_classe = "Arqueiro"
-            elif classes_tela.botao_voltar.checar_clique(evento, posicao_mouse):
+            escolha_classe = classes_tela.atualizar_eventos(evento, posicao_mouse)
+            
+            if classes_tela.voltar_clicado:
                 classes_target = None
                 estado = "menu"
+                classes_tela.voltar_clicado = False
 
             if escolha_classe:
                 if classes_target == 1:
