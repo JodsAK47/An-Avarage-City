@@ -1,8 +1,6 @@
 import pygame
-import os
 from Fontes import obter_fonte
-
-CAMINHO_PROJETO = os.path.dirname(os.path.abspath(__file__))
+from Recursos import caminho_botao, caminho_imagem
 
 class Botao:
     def __init__(self, x, y, largura, altura, texto, cor_base,
@@ -30,10 +28,9 @@ class Botao:
 
         if self.usar_sprites:
             try:
-                caminho_botoes = os.path.join(CAMINHO_PROJETO, "Sprites", "Botoes")
-                caminho_base = os.path.join(caminho_botoes, sprite_base_path)
-                caminho_hover = os.path.join(caminho_botoes, sprite_hover_path)
-                caminho_clique = os.path.join(caminho_botoes, sprite_clique_path)
+                caminho_base = caminho_botao(sprite_base_path)
+                caminho_hover = caminho_botao(sprite_hover_path)
+                caminho_clique = caminho_botao(sprite_clique_path)
 
                 sprite_base_temp = pygame.image.load(caminho_base).convert_alpha()
                 self.sprite_base = pygame.transform.scale(sprite_base_temp, (largura, altura))
@@ -122,7 +119,7 @@ class GerenciadorMenu:
         largura_tela = self.tela.get_width()
         altura_tela = self.tela.get_height()
 
-        caminho_fundo = os.path.join(CAMINHO_PROJETO, "Sprites", "Menu.png")
+        caminho_fundo = caminho_imagem("Menu.png")
         try:
             imagem_fundo = pygame.image.load(caminho_fundo).convert()
             escala = max(largura_tela / imagem_fundo.get_width(), altura_tela / imagem_fundo.get_height())

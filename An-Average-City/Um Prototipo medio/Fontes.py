@@ -1,9 +1,7 @@
 import pygame
-import os
+from Recursos import caminho_fonte
 
-# Caminho para a sua fonte pixel art dentro da pasta Fontes
-DIRETORIO_BASE = os.path.dirname(os.path.abspath(__file__))
-CAMINHO_FONTE = os.path.join(DIRETORIO_BASE, "Fontes", "PressStart2P.ttf") # Coloque o nome correto do seu arquivo .ttf
+CAMINHO_FONTE = caminho_fonte("PressStart2P.ttf")
 
 def obter_fonte(tamanho):
     """

@@ -1,6 +1,6 @@
 import pygame
-import os
 from Fontes import obter_fonte
+from Recursos import caminho_imagem
 
 class Inimigo:
     # Adicionamos xp e atributos ao __init__
@@ -30,11 +30,8 @@ class Inimigo:
         self.ataques = ataques if ataques is not None else ["Soco"]
         
         # CARREGAMENTO DA SPRITE
-        diretorio_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        caminho_imagem = os.path.join(diretorio_base, "Sprites", nome_imagem)
-
         try:
-            self.imagem_original = pygame.image.load(caminho_imagem)
+            self.imagem_original = pygame.image.load(caminho_imagem(nome_imagem))
             self.imagem = pygame.transform.scale(self.imagem_original, (100, 120))
         except Exception as e:
             print(f"⚠️ Erro ao carregar imagem do inimigo ({nome_imagem}): {e}")

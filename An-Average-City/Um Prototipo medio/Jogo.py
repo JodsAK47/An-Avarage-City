@@ -440,46 +440,36 @@ class GerenciadorJogo:
             return None
 
         if self.menu_acoes_estado == "esquivando":
-            barra_atual = self.barras_esquiva[0] if self.barras_esquiva else None
-            if self.espera_esquiva > 0:
-                self.espera_esquiva -= 1
-                if self.espera_esquiva == 0 and self.rodada_esquiva < self.total_rodadas_esquiva:
-                    self.barras_esquiva = [{
-                        "x": random.randint(0, 35),
-                        "velocidade": self.esquiva_vel + self.rodada_esquiva * 2,
-                        "ativa": True
-                    }]
-                    barra_atual = self.barras_esquiva[0]
+            for barra in self.barras_esquiva:
+                if barra["ativa"]:
+                    barra["x"] += barra["velocidade"]
+                    if barra["x"] >= 400:
+                        barra["ativa"] = False
+                        self.mensagem_log = "❌ Barra perdida!"
+            
+            if clicou:
+                barras_visiveis = [b for b in self.barras_esquiva if b["ativa"] and b["x"] > 0]
+                if barras_visiveis:
+                    barra_alvo = max(barras_visiveis, key=lambda b: b["x"])
+                    distancia = abs(barra_alvo["x"] - 200)
+                    barra_alvo["ativa"] = False
+                    
+                    if distancia <= 20:
+                        self.acertos_centro_esquiva += 1
+                        self.reducao_esquiva += 0.33
+                        self.mensagem_log = "✨ Centro acertado!"
+                    elif distancia <= 80:
+                        self.acertos_esquiva += 1
+                        self.reducao_esquiva += 0.16
+                        self.mensagem_log = "💨 Lateral acertada!"
+                    else:
+                        self.mensagem_log = "❌ Errou o tempo!"
 
-            if barra_atual is not None and barra_atual["ativa"]:
-                barra_atual["x"] += barra_atual["velocidade"]
-                if barra_atual["x"] >= 400:
-                    barra_atual["x"] = 400
-                    barra_atual["ativa"] = False
-                    self.rodada_esquiva += 1
-                    self.espera_esquiva = 18 if self.rodada_esquiva < self.total_rodadas_esquiva else 0
-                    self.mensagem_log = "❌ Barra perdida! A proxima barra sera liberada em instantes."
-
-            if clicou and barra_atual is not None and barra_atual["ativa"]:
-                distancia = abs(barra_atual["x"] - 200)
-                barra_atual["ativa"] = False
-                self.rodada_esquiva += 1
-                self.espera_esquiva = 18 if self.rodada_esquiva < self.total_rodadas_esquiva else 0
-                if distancia <= 20:
-                    self.acertos_centro_esquiva += 1
-                    self.reducao_esquiva += 0.33
-                    self.mensagem_log = "✨ Centro acertado! A proxima barra sera liberada em instantes."
-                elif distancia <= 80:
-                    self.acertos_esquiva += 1
-                    self.reducao_esquiva += 0.16
-                    self.mensagem_log = "💨 Lateral acertada! A proxima barra sera liberada em instantes."
-                else:
-                    self.mensagem_log = "❌ Barra perdida! A proxima barra sera liberada em instantes."
-
-            if self.rodada_esquiva >= self.total_rodadas_esquiva and self.espera_esquiva == 0:
+            if all(not b["ativa"] for b in self.barras_esquiva):
                 alvo_esquivando = getattr(self, 'alvo_jogador_pendente', personagem)
                 total_acertos = self.acertos_esquiva + self.acertos_centro_esquiva
-                condicoes_evitadas = total_acertos == 3 or self.acertos_centro_esquiva >= 2
+                condicoes_evitadas = total_acertos == self.total_rodadas_esquiva or self.acertos_centro_esquiva >= (self.total_rodadas_esquiva - 1)
+                
                 reducao_total = min(0.99, self.reducao_esquiva)
                 dano_tomado = max(1, int(self.dano_pendente * (1 - reducao_total)))
                 alvo_esquivando.hp = max(0, alvo_esquivando.hp - dano_tomado)
@@ -488,7 +478,7 @@ class GerenciadorJogo:
                     if dano_tomado == 1 and self.dano_pendente > 1:
                         self.mensagem_log = f"✨ Esquiva completa! Apenas {dano_tomado} dano."
                     else:
-                        self.mensagem_log = f"💨 Esquiva concluida! {dano_tomado} dano."
+                        self.mensagem_log = f"💨 Esquiva concluída! {dano_tomado} dano."
                 else:
                     msg_base = f"❌ Esquiva incompleta! {dano_tomado} dano."
                     if getattr(self, 'efeito_pendente', None) and random.random() < self.chance_efeito_pendente:
@@ -545,11 +535,14 @@ class GerenciadorJogo:
                             self.alvo_jogador_pendente = alvo_jogador
                             self.efeito_pendente = hab_usada.efeito
                             self.chance_efeito_pendente = hab_usada.chance_efeito
-                            self.barras_esquiva = [{
-                                "x": random.randint(0, 35),
-                                "velocidade": self.esquiva_vel,
-                                "ativa": True
-                            }]
+                            self.barras_esquiva = []
+                            espacamento = 180
+                            for i in range(self.total_rodadas_esquiva):
+                                self.barras_esquiva.append({
+                                    "x": random.randint(-20, 0) - (i * espacamento),
+                                    "velocidade": self.esquiva_vel + random.randint(-1, 2),
+                                    "ativa": True
+                                })
                             self.rodada_esquiva = 0
                             self.espera_esquiva = 0
                             self.acertos_esquiva = 0
@@ -580,7 +573,7 @@ class GerenciadorJogo:
             porc = entidade.mp / entidade.max_mp
             pygame.draw.rect(self.tela, (0, 160, 255), (rect.x, y_mp, int(largura_barra * porc), altura_barra))
 
-    def desenhar(self):
+    def desenhar(self, posicao_mouse):
         self.tela.fill((20, 20, 20))
 
         if personagem.hp > 0:
@@ -596,7 +589,6 @@ class GerenciadorJogo:
             if entidade.hp > 0:
                 self.desenhar_barras_status(entidade)
         
-        posicao_mouse = pygame.mouse.get_pos()
         if self.menu_acoes_estado == "selecionar_alvo":
             for alvo in inimigos:
                 if alvo.hp > 0 and alvo.rect.collidepoint(posicao_mouse):
@@ -608,16 +600,16 @@ class GerenciadorJogo:
             bar_x = (self.tela.get_width() - bar_w) // 2
             bar_y = 420
 
+            pygame.draw.rect(self.tela, (50, 50, 50), (bar_x, bar_y, bar_w, bar_h))
+            pygame.draw.rect(self.tela, (200, 200, 0), (bar_x + 120, bar_y, 160, bar_h))
+            pygame.draw.rect(self.tela, (0, 255, 0), (bar_x + 180, bar_y, 40, bar_h))
+            pygame.draw.rect(self.tela, (255, 255, 255), (bar_x, bar_y, bar_w, bar_h), 3)
+
             for barra in self.barras_esquiva:
-                if not barra["ativa"]:
+                if not barra["ativa"] or barra["x"] < 0:
                     continue
-                y_atual = bar_y
-                pygame.draw.rect(self.tela, (50, 50, 50), (bar_x, y_atual, bar_w, bar_h))
-                pygame.draw.rect(self.tela, (200, 200, 0), (bar_x + 120, y_atual, 160, bar_h))
-                pygame.draw.rect(self.tela, (0, 255, 0), (bar_x + 180, y_atual, 40, bar_h))
-                pygame.draw.rect(self.tela, (255, 255, 255), (bar_x, y_atual, bar_w, bar_h), 3)
                 pygame.draw.rect(self.tela, (255, 50, 50),
-                                 (bar_x + barra["x"] - 4, y_atual - 10, 8, bar_h + 20))
+                                 (bar_x + barra["x"] - 4, bar_y - 10, 8, bar_h + 20))
         
         hud_log = pygame.Rect((self.tela.get_width() - 800) // 2, 20, 800, 60)
         pygame.draw.rect(self.tela, (35, 35, 45), hud_log, border_radius=10)

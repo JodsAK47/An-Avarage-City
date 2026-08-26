@@ -1,5 +1,5 @@
 import pygame
-import os
+from Recursos import caminho_imagem
 
 class Personagem:
     def __init__(self, x, y, nome_imagem="pixil.png"):
@@ -31,11 +31,8 @@ class Personagem:
         self.is_player = self.eh_jogador
 
         # 4. CARREGANDO A SPRITE 
-        diretorio_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        caminho_imagem = os.path.join(diretorio_base, "Sprites", nome_imagem)
-
         try:
-            self.imagem_original = pygame.image.load(caminho_imagem)
+            self.imagem_original = pygame.image.load(caminho_imagem(nome_imagem))
             self.imagem = pygame.transform.scale(self.imagem_original, (100, 120))
         except Exception as e:
             # Caso a imagem não seja encontrada na pasta Sprites, cria um retângulo reserva

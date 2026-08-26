@@ -7,15 +7,18 @@ from MenuClasses import GerenciadorClasses
 from Cenarios import GerenciadorSelecao
 from Descanço import GerenciadorPosLuta
 from Entidades.Personagem import personagem
+from Recursos import caminho_musica
 
 pygame.init()
 pygame.mixer.init()
 
 LARGURA = 1000
 ALTURA = 800
-tela = pygame.display.set_mode((LARGURA, ALTURA))
+tela_real = pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
+tela = pygame.Surface((LARGURA, ALTURA))
 pygame.display.set_caption("Menu RPG")
 clock = pygame.time.Clock()
+tela_cheia = False
 
 menu_tela = GerenciadorMenu(tela)
 jogo_tela = GerenciadorJogo(tela)
@@ -32,12 +35,7 @@ classes_target = None
 def tocar_musica(nome_arquivo):
     pygame.mixer.music.stop()
     try:
-        # Descobre o caminho absoluto de onde o Main.py está rodando
-        diretorio_base = os.path.dirname(os.path.abspath(__file__))
-        
-        caminho_musica = os.path.join(diretorio_base, "OSTs's", nome_arquivo) 
-        
-        pygame.mixer.music.load(caminho_musica)
+        pygame.mixer.music.load(caminho_musica(nome_arquivo))
         pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.play(-1)
     except pygame.error as erro:
@@ -49,8 +47,24 @@ estado = "menu"
 rodando = True
 
 while rodando:
-    posicao_mouse = pygame.mouse.get_pos()
+    posicao_mouse_real = pygame.mouse.get_pos()
     estado_clique_mouse = pygame.mouse.get_pressed()
+
+    # Cálculo da escala para o redimensionamento
+    largura_real, altura_real = tela_real.get_size()
+    escala = min(largura_real / LARGURA, altura_real / ALTURA) if LARGURA > 0 and ALTURA > 0 else 1
+    nova_largura = int(LARGURA * escala)
+    nova_altura = int(ALTURA * escala)
+    x_offset = (largura_real - nova_largura) // 2
+    y_offset = (altura_real - nova_altura) // 2
+
+    # Mapear o mouse real para a tela lógica
+    if escala > 0:
+        mx = int((posicao_mouse_real[0] - x_offset) / escala)
+        my = int((posicao_mouse_real[1] - y_offset) / escala)
+    else:
+        mx, my = 0, 0
+    posicao_mouse = (max(0, min(mx, LARGURA)), max(0, min(my, ALTURA)))
 
     # =========================================================
     # 1. EVENTOS 
@@ -58,6 +72,13 @@ while rodando:
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             rodando = False
+        elif evento.type == pygame.KEYDOWN:
+            if evento.key == pygame.K_F11:
+                tela_cheia = not tela_cheia
+                if tela_cheia:
+                    tela_real = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                else:
+                    tela_real = pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
 
         if estado == "menu":
             if menu_tela.botao_jogar.checar_clique(evento, posicao_mouse):
@@ -185,14 +206,17 @@ while rodando:
     elif estado == "classes":
         classes_tela.desenhar()
     elif estado == "jogo":
-        jogo_tela.desenhar()
+        jogo_tela.desenhar(posicao_mouse)
     elif estado == "pos_luta":
         pos_luta_tela.desenhar() # Desenha a nova tela
     elif estado == "selecao_cenario":
-        selecao_tela.desenhar()
+        selecao_tela.desenhar(posicao_mouse)
     elif estado == "game_over":
         game_over_tela.desenhar()
 
+    tela_redimensionada = pygame.transform.scale(tela, (nova_largura, nova_altura))
+    tela_real.fill((0, 0, 0))
+    tela_real.blit(tela_redimensionada, (x_offset, y_offset))
     pygame.display.flip()
     clock.tick(60)
 

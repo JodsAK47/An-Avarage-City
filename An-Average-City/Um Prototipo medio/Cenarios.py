@@ -63,14 +63,13 @@ class GerenciadorSelecao:
                     return retangulo["nome"] # Retorna "cenario_1", "cenario_2", etc.
         return None
 
-    def desenhar(self):
+    def desenhar(self, posicao_mouse):
         self.tela.fill((15, 15, 20))
         
         # Desenha o Título
         x_tit = (self.largura_tela - self.txt_titulo.get_width()) // 2
         self.tela.blit(self.txt_titulo, (x_tit, 80))
         
-        posicao_mouse = pygame.mouse.get_pos()
         fonte = self.fonte_cartao
         
         for retangulo in self.retangulos:
