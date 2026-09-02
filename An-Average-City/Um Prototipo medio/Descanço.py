@@ -54,7 +54,6 @@ class GerenciadorPosLuta:
                     self.mensagem = "Espaco vazio."
                     return None
 
-        # Proteção contra índice fora do range (ex: saindo do modo 2P)
         if self.jogador_selecionado >= len(self.jogadores):
             self.jogador_selecionado = 0
 

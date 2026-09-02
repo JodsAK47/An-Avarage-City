@@ -5,7 +5,7 @@ from Entidades.Personagem import personagem, Personagem
 from Menu import Botao
 from Habilidades import banco_habilidades
 from Fontes import obter_fonte, quebrar_texto
-from GeracaoFases import GeradorFase
+from GeracaoFases import GeradorFase, BANCO_INIMIGOS, _criar_inimigo_a_partir_template
 
 class GerenciadorJogo:
     def __init__(self, tela):
@@ -13,7 +13,6 @@ class GerenciadorJogo:
         self.duas_pessoas = False
         self.personagem2 = None
         self.classe_jogador2 = None
-        # Inicialmente apenas o personagem; os inimigos entram quando a fase é escolhida
         self.ordem_turnos = [personagem] 
         
         self.indice_turno = 0
@@ -31,11 +30,13 @@ class GerenciadorJogo:
         self.evento_neutro = None
         self.fase_numero = 1
         self.gerador_fases = GeradorFase(self.fase_numero)
-        
-        # VARIÁVEIS DA ESQUIVA
+        self.partida_atual = 1
+        self.total_partidas = 9
+        self.pontos_jogo = 0
+
         self.esquiva_x = 0
         self.esquiva_dir = 1
-        self.esquiva_vel = 12 
+        self.esquiva_vel = 10
         self.barras_esquiva = []
         self.rodada_esquiva = 0
         self.espera_esquiva = 0
@@ -48,7 +49,6 @@ class GerenciadorJogo:
         self.efeito_pendente = None         
         self.chance_efeito_pendente = 0.0   
         
-        # BOTÕES DA HUD 
         self.btn_ataque    = Botao(220, 640, 120, 50, "ATAQUE", (100,0,0), (150,0,0), 124, 54, cor_texto=(255,255,255), fonte_tamanho=12)
         self.btn_recuperar = Botao(360, 640, 120, 50, "RECUP", (0,100,0), (0,150,0), 124, 54, cor_texto=(255,255,255), fonte_tamanho=12)
         self.btn_bloquear  = Botao(500, 640, 120, 50, "BLOQ", (100,100,0), (150,150,0), 124, 54, cor_texto=(255,255,255), fonte_tamanho=12)
@@ -59,9 +59,8 @@ class GerenciadorJogo:
         self.fonte_titulos = obter_fonte(14)
         self.fonte_status = pygame.font.SysFont(["consolas", "courier"], 18, bold=True)
         self.mensagem_log = "A batalha começou!"
-        self.ataque_jogador_ativo = None  # Inicializado para evitar AttributeError
+        self.ataque_jogador_ativo = None
 
-        # GARANTIA DE STATUS DO JOGADOR
         if not hasattr(personagem, 'nivel'): personagem.nivel = 1
         if not hasattr(personagem, 'xp'): personagem.xp = 0
         if not hasattr(personagem, 'pontos_atributo'): personagem.pontos_atributo = 0
@@ -75,20 +74,24 @@ class GerenciadorJogo:
         if not classe:
             return
 
-        if classe == "Lutador":
+        # Garante que o bônus seja dado apenas uma vez
+        if getattr(self.personagem2, 'classe_aplicada', None) == classe:
+            return
+
+        if classe == "Sobrevivente":
             self.personagem2.ataques = ["Soco", "Terremoto"]
             self.personagem2.atributos["For"] = int(self.personagem2.atributos.get("For", 1)) + 3
-        elif classe == "Manipulador":
+        elif classe in ("Feiticeiro", "Mago"):
             self.personagem2.ataques = ["Gelo", "Nevasca"]
             self.personagem2.atributos["Int"] = int(self.personagem2.atributos.get("Int", 1)) + 3
-        elif classe == "Arqueiro":
-            self.personagem2.ataques = ["Flechada Letal", "Chuva de Flechas"]
+        elif classe == "Agente":
+            self.personagem2.ataques = ["One Tap", "Spray"]
             self.personagem2.atributos["Agi"] = int(self.personagem2.atributos.get("Agi", 1)) + 3
 
         self.personagem2.is_player = True
+        self.personagem2.classe_aplicada = classe
 
     def atualizar_posicoes_inimigos(self):
-        # considera apenas entidades que NÃO são jogadores como inimigos
         inimigos_vivos = [entidade for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False) and entidade.hp > 0]
         quantidade_inimigos = len(inimigos_vivos)
         centro_x_batalha, centro_y_batalha = 750, 400
@@ -103,7 +106,6 @@ class GerenciadorJogo:
             inimigos_vivos[1].rect.center = (centro_x_batalha, centro_y_batalha)
             inimigos_vivos[2].rect.center = (centro_x_batalha, centro_y_batalha + 150)
 
-        # Posiciona também os jogadores (personagem e personagem2) espelhando lógica
         jogadores_vivos = [entidade for entidade in self.ordem_turnos if getattr(entidade, 'is_player', False) and entidade.hp > 0]
         centro_x_jogador = 250
         if len(jogadores_vivos) == 1:
@@ -122,26 +124,46 @@ class GerenciadorJogo:
             self.botoes_habilidades_dinamicos.append({"botao": botao_habilidade, "nome": nome_habilidade})
 
     def configurar_classe(self, nova_classe):
-        self.classe_atual = nova_classe
-        if nova_classe == "Lutador":
-            personagem.ataques = ["Soco", "Terremoto"]
-            personagem.atributos["For"] += 3
-        elif nova_classe == "Manipulador":
-            personagem.ataques = ["Gelo", "Nevasca"]
-            personagem.atributos["Int"] += 3
-        elif nova_classe == "Arqueiro":
-            personagem.ataques = ["Flechada Letal", "Chuva de Flechas"]
-            personagem.atributos["Agi"] += 3
-        self.gerar_botoes_ataque()
+        if self.classe_atual != "Nenhuma" and self.classe_atual != nova_classe:
+            # Remove o bônus da classe anterior
+            if self.classe_atual == "Sobrevivente":
+                personagem.atributos["For"] = max(1, personagem.atributos.get("For", 1) - 3)
+            elif self.classe_atual in ("Feiticeiro", "Mago"):
+                personagem.atributos["Int"] = max(1, personagem.atributos.get("Int", 1) - 3)
+            elif self.classe_atual == "Agente":
+                personagem.atributos["Agi"] = max(1, personagem.atributos.get("Agi", 1) - 3)
 
-    # ==========================================================
-    # CÓDIGO REFATORADO: CARREGA OS INIMIGOS DIRETAMENTE DO BANCO
-    # ==========================================================
+        if self.classe_atual != nova_classe:
+            self.classe_atual = nova_classe
+            if nova_classe == "Sobrevivente":
+                personagem.ataques = ["Soco", "Terremoto"]
+                personagem.atributos["For"] = personagem.atributos.get("For", 1) + 3
+            elif nova_classe in ("Feiticeiro", "Mago"):
+                personagem.ataques = ["Gelo", "Nevasca"]
+                personagem.atributos["Int"] = personagem.atributos.get("Int", 1) + 3
+            elif nova_classe == "Agente":
+                personagem.ataques = ["One Tap", "Spray"]
+                personagem.atributos["Agi"] = personagem.atributos.get("Agi", 1) + 3
+            self.gerar_botoes_ataque()
+
+    def calcular_pontos_desempenho(self, xp_ganho):
+        hp_restante = max(0, int(personagem.hp))
+        hp_total = max(1, int(personagem.max_hp))
+        hp_bonus = int((hp_restante / hp_total) * 150)
+        xp_bonus = int(xp_ganho * 2)
+        partida_bonus = self.partida_atual * 75
+        return xp_bonus + hp_bonus + partida_bonus
+
     def configurar_cenario(self, id_cenario):
         self.evento_neutro = None
         self.gerador_fases.fase_num = self.fase_numero
 
-        if id_cenario.startswith("evento_neutro_"):
+        if self.partida_atual >= self.total_partidas:
+            template = random.choice(BANCO_INIMIGOS)
+            inimigos_fase = [_criar_inimigo_a_partir_template(template, multiplicador=2.0)]
+            self.musica_luta = "Boss.mp3"
+            self.mensagem_log = "👑 CHEFE FINAL APARECEU!"
+        elif id_cenario.startswith("evento_neutro_"):
             self.fase_numero = int(id_cenario.split("_")[-1])
             self.gerador_fases.fase_num = self.fase_numero
             self.evento_neutro = self.gerador_fases.gerar_evento_neutro(self.fase_numero)
@@ -156,39 +178,19 @@ class GerenciadorJogo:
             inimigos_fase = fase_gerada.inimigos
             self.musica_luta = "Boss.mp3" if len(inimigos_fase) == 1 else "Combate.mp3"
             self.mensagem_log = f"🎲 {fase_gerada.nome} - {self.evento_neutro.descricao}"
-        elif id_cenario in ["cenario_1", "cenario_2", "cenario_3", "cenario_4"]:
-            # Mantemos a ideia de cenário para texto e dificuldade, mas
-            # os inimigos serão gerados aleatoriamente e independentes do cenário.
-            self.fase_numero = int(id_cenario.split("_")[-1])
-            self.gerador_fases.fase_num = self.fase_numero
-            self.evento_neutro = self.gerador_fases.gerar_evento_neutro(self.fase_numero)
-            quantidade = 1 if id_cenario == "cenario_4" else max(1, min(4, 1 + (self.fase_numero // 2)))
-            inimigos_fase = self.gerador_fases.gerar_inimigos_aleatorios(self.fase_numero, quantidade=quantidade)
-            self.musica_luta = "Boss.mp3" if id_cenario == "cenario_4" else "Combate.mp3"
-            if id_cenario == "cenario_1":
-                self.mensagem_log = f"🌲 Floresta: Encontros aleatórios! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
-            elif id_cenario == "cenario_2":
-                self.mensagem_log = f"🦇 Caverna: Encontros aleatórios! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
-            elif id_cenario == "cenario_3":
-                self.mensagem_log = f"🏛️ Ruínas: Encontros aleatórios! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
-            elif id_cenario == "cenario_4":
-                self.mensagem_log = f"🔥 O COVIL! Enfrentas um desafio mais difícil! | {self.evento_neutro.nome}: {self.evento_neutro.descricao}"
         else:
             inimigos_fase = []
             self.mensagem_log = "⚠️ Cenário não identificado."
             self.musica_luta = "Combate.mp3"
 
-        # Ordem base: jogadores primeiro, depois inimigos
         self.ordem_turnos = [personagem]
         if getattr(self, 'duas_pessoas', False):
-            # garante criação do personagem2
             if self.personagem2 is None:
                 self.personagem2 = Personagem(150, 350, "pixil.png")
                 setattr(self.personagem2, 'is_player', True)
             self._aplicar_classe_personagem2()
             self.ordem_turnos.append(self.personagem2)
 
-        # adiciona inimigos no final
         self.ordem_turnos.extend(inimigos_fase)
 
         for ent in self.ordem_turnos:
@@ -223,7 +225,6 @@ class GerenciadorJogo:
             entidade.hp = entidade.max_hp
             entidade.mp = getattr(entidade, 'max_mp', 0)
             
-        # SISTEMA DE INICIATIVA: ORDENA PELA AGILIDADE (Agi)
         self.ordem_turnos.sort(key=lambda entidade: entidade.atributos.get("Agi", 0), reverse=True)
         
         personagem.bloqueando = False
@@ -278,6 +279,11 @@ class GerenciadorJogo:
             return getattr(self, 'classe_jogador2', 'Nenhuma')
         return self.classe_atual
 
+    def velocidade_esquiva(self, entidade):
+        agilidade = int(getattr(getattr(entidade, 'atributos', {}), 'get', lambda *args, **kwargs: 1)('Agi', 1))
+        reducao = max(0.0, agilidade * 0.001)
+        return max(2.5, self.esquiva_vel * (1 - reducao))
+
     def executar_ataque_jogador(self, nome_habilidade, alvo_principal=None, jogador_ativo=None):
         jogador_ativo = jogador_ativo or personagem
         hab = banco_habilidades[nome_habilidade]
@@ -287,9 +293,9 @@ class GerenciadorJogo:
         dano_base = hab.dano
 
         classe_jogador = self.classe_do_jogador(jogador_ativo)
-        if classe_jogador == "Lutador" and hab.tipo == "Físico": dano_base *= 2
-        elif classe_jogador == "Manipulador" and hab.tipo == "Magia": dano_base *= 2
-        elif classe_jogador == "Arqueiro" and hab.tipo == "Distância": dano_base = int(dano_base * 1.8)
+        if classe_jogador == "Sobrevivente" and hab.tipo == "Físico": dano_base *= 2
+        elif classe_jogador == "Feiticeiro" and hab.tipo == "Magia": dano_base *= 2
+        elif classe_jogador == "Agente" and hab.tipo == "Distância": dano_base = int(dano_base * 1.8)
 
         dano_final = dano_base + self.calcular_bonus_atributo(jogador_ativo, hab.tipo)
 
@@ -331,7 +337,6 @@ class GerenciadorJogo:
         if not inimigos_vivos:
             if not self.xp_calculado:
                 xp_ganho = sum(getattr(entidade, 'xp', 0) for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False))
-                # Distribui XP para todos os jogadores vivos
                 for jogador_vivo in jogadores_vivos:
                     jogador_vivo.xp += xp_ganho
                     novo_nivel = (jogador_vivo.xp // 100) + 1
@@ -339,7 +344,15 @@ class GerenciadorJogo:
                         niveis_ganhos = novo_nivel - jogador_vivo.nivel
                         jogador_vivo.pontos_atributo += (3 * niveis_ganhos)
                         jogador_vivo.nivel = novo_nivel
+
+                self.pontos_jogo += self.calcular_pontos_desempenho(xp_ganho)
                 self.xp_calculado = True
+
+                if self.partida_atual >= self.total_partidas:
+                    self.mensagem_log = f"🏆 CHEFE DERROTADO! Pontos ganhos: {self.pontos_jogo}"
+                    return "fim_jogo"
+
+                self.partida_atual += 1
             return "vitoria"
 
         if self.indice_turno >= len(self.ordem_turnos):
@@ -500,7 +513,6 @@ class GerenciadorJogo:
                 self.timer_inimigo += 1
                 if self.timer_inimigo >= self.tempo_espera_inimigo:
                     nome_golpe_inimigo = random.choice(entidade_atual.ataques)
-                    # Proteção: se o ataque não existir no banco, usa "Soco" como fallback
                     hab_usada = banco_habilidades.get(nome_golpe_inimigo) or banco_habilidades["Soco"]
 
                     bonus_inimigo = self.calcular_bonus_atributo(entidade_atual, hab_usada.tipo)
@@ -537,10 +549,11 @@ class GerenciadorJogo:
                             self.chance_efeito_pendente = hab_usada.chance_efeito
                             self.barras_esquiva = []
                             espacamento = 180
+                            velocidade_base = self.velocidade_esquiva(alvo_jogador)
                             for i in range(self.total_rodadas_esquiva):
                                 self.barras_esquiva.append({
                                     "x": random.randint(-20, 0) - (i * espacamento),
-                                    "velocidade": self.esquiva_vel + random.randint(-1, 2),
+                                    "velocidade": velocidade_base + random.randint(-1, 2),
                                     "ativa": True
                                 })
                             self.rodada_esquiva = 0
@@ -611,11 +624,16 @@ class GerenciadorJogo:
                 pygame.draw.rect(self.tela, (255, 50, 50),
                                  (bar_x + barra["x"] - 4, bar_y - 10, 8, bar_h + 20))
         
-        hud_log = pygame.Rect((self.tela.get_width() - 800) // 2, 20, 800, 60)
+        contador_partida = pygame.Rect(30, 25, 170, 42)
+        pygame.draw.rect(self.tela, (35, 35, 45), contador_partida, border_radius=10)
+        pygame.draw.rect(self.tela, (255, 210, 90), contador_partida, width=3, border_radius=10)
+        texto_partida = self.fonte_titulos.render(f"PARTIDA {self.partida_atual}/{self.total_partidas}", True, (255, 255, 255))
+        self.tela.blit(texto_partida, (contador_partida.x + 12, contador_partida.y + 10))
+
+        hud_log = pygame.Rect((self.tela.get_width() - 620) // 2, 20, 620, 70)
         pygame.draw.rect(self.tela, (35, 35, 45), hud_log, border_radius=10)
         pygame.draw.rect(self.tela, (120, 120, 140), hud_log, width=3, border_radius=10)
-        # Renderiza a mensagem com quebra de linhas para evitar estouro
-        padding = 10
+        padding = 12
         linhas = quebrar_texto(self.mensagem_log, self.fonte, hud_log.width - padding*2)
         total_altura = len(linhas) * self.fonte.get_linesize()
         y_inicio = hud_log.y + (hud_log.height - total_altura) // 2

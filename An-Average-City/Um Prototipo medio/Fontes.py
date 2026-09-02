@@ -4,22 +4,13 @@ from Recursos import caminho_fonte
 CAMINHO_FONTE = caminho_fonte("PressStart2P.ttf")
 
 def obter_fonte(tamanho):
-    """
-    Retorna a fonte pixel art no tamanho desejado.
-    Se o arquivo .ttf não for encontrado, usa a fonte do sistema como reserva.
-    """
     try:
         return pygame.font.Font(CAMINHO_FONTE, tamanho)
-    except Exception as e:
-        # Reserva (Fallback) caso o arquivo da fonte falhe
+    except (pygame.error, FileNotFoundError):
         return pygame.font.SysFont(["consolas", "courier"], tamanho, bold=True)
 
 
 def quebrar_texto(texto, fonte, largura_maxima):
-    """Quebra `texto` em várias linhas para caber em `largura_maxima` pixels usando `fonte`.
-
-    Retorna uma lista de strings (linhas).
-    """
     palavras = texto.split()
     linhas = []
     linha_atual = ""
@@ -32,9 +23,7 @@ def quebrar_texto(texto, fonte, largura_maxima):
         else:
             if linha_atual:
                 linhas.append(linha_atual)
-            # Palavra sozinha maior que largura_maxima? então cortamos
             if fonte.size(palavra)[0] > largura_maxima:
-                # quebra a palavra em pedaços
                 parte = ""
                 for ch in palavra:
                     if fonte.size(parte + ch)[0] <= largura_maxima:
@@ -53,5 +42,4 @@ def quebrar_texto(texto, fonte, largura_maxima):
     if linha_atual:
         linhas.append(linha_atual)
 
-    return linhas
-    
+    return linhas

@@ -37,23 +37,15 @@ class FaseAleatoria:
         }
 
 
-BANCOS_INIMIGOS = {
-    "floresta": [
-        {"max_hp": 25, "arquivo_imagem": "Maldição1.png", "nome": "Goblin Verde", "ataques": ["Mordida", "Soco"], "xp": 30, "atributos": {"For": 2, "Agi": 3, "Int": 0}},
-        {"max_hp": 20, "arquivo_imagem": "Maldição1.png", "nome": "Goblin Corredor", "ataques": ["Mordida"], "xp": 20, "atributos": {"For": 1, "Agi": 5, "Int": 0}},
-    ],
-    "caverna": [
-        {"max_hp": 35, "arquivo_imagem": "Maldição1.png", "nome": "Morcego Gigante", "ataques": ["Mordida"], "xp": 40, "atributos": {"For": 3, "Agi": 4, "Int": 0}},
-        {"max_hp": 50, "arquivo_imagem": "Maldição1.png", "nome": "Troll da Caverna", "ataques": ["Porrete do Chefe", "Soco"], "xp": 60, "atributos": {"For": 6, "Agi": 1, "Int": 0}},
-    ],
-    "ruinas": [
-        {"max_hp": 40, "arquivo_imagem": "Maldição1.png", "nome": "Arqueiro Esqueleto", "ataques": ["Flechada Letal"], "xp": 50, "atributos": {"For": 1, "Agi": 6, "Int": 0}},
-        {"max_hp": 35, "arquivo_imagem": "Maldição1.png", "nome": "Mago Sombrio", "ataques": ["Gelo", "Soco"], "xp": 50, "atributos": {"For": 1, "Agi": 2, "Int": 5}},
-    ],
-    "covil": [
-        {"max_hp": 120, "arquivo_imagem": "Sukuna1.png", "nome": "Senhor da Guerra", "ataques": ["Porrete do Chefe", "Soco", "Flechada Letal"], "xp": 200, "atributos": {"For": 8, "Agi": 4, "Int": 2}},
-    ],
-}
+BANCO_INIMIGOS = [
+    {"max_hp": 25, "arquivo_imagem": "Maldição1.png", "nome": "Goblin Verde", "ataques": ["Mordida", "Soco"], "xp": 30, "atributos": {"For": 2, "Agi": 3, "Int": 0}},
+    {"max_hp": 20, "arquivo_imagem": "Maldição1.png", "nome": "Goblin Corredor", "ataques": ["Mordida"], "xp": 20, "atributos": {"For": 1, "Agi": 5, "Int": 0}},
+    {"max_hp": 35, "arquivo_imagem": "Maldição1.png", "nome": "Morcego Gigante", "ataques": ["Mordida"], "xp": 40, "atributos": {"For": 3, "Agi": 4, "Int": 0}},
+    {"max_hp": 50, "arquivo_imagem": "Maldição1.png", "nome": "Troll Brutal", "ataques": ["Porrete do Chefe", "Soco"], "xp": 60, "atributos": {"For": 6, "Agi": 1, "Int": 0}},
+    {"max_hp": 40, "arquivo_imagem": "Maldição1.png", "nome": "Agente Esqueleto", "ataques": ["Gelo"], "xp": 50, "atributos": {"For": 1, "Agi": 6, "Int": 0}},
+    {"max_hp": 35, "arquivo_imagem": "Maldição1.png", "nome": "Mago Sombrio", "ataques": ["Gelo", "Soco"], "xp": 50, "atributos": {"For": 1, "Agi": 2, "Int": 5}},
+    {"max_hp": 120, "arquivo_imagem": "Sukuna1.png", "nome": "Sukuna", "ataques": ["Fogo", "Soco", "Nevasca"], "xp": 200, "atributos": {"For": 8, "Agi": 4, "Int": 20}},
+]
 
 def _criar_inimigo_a_partir_template(template, x=0, y=0, multiplicador=1.0):
     hp = max(12, int(template.get("max_hp", 20) * multiplicador + random.randint(0, 12)))
@@ -77,24 +69,18 @@ def _criar_inimigo_a_partir_template(template, x=0, y=0, multiplicador=1.0):
         atributos,
     )
 
-def listar_inimigos_disponiveis(tipo_cenario=None):
-    """Retorna templates disponíveis, filtrando opcionalmente por cenário."""
-    inimigos = []
-    if tipo_cenario and tipo_cenario in BANCOS_INIMIGOS:
-        return BANCOS_INIMIGOS[tipo_cenario]
-        
-    for lista in BANCOS_INIMIGOS.values():
-        inimigos.extend(lista)
-    return inimigos
+def listar_inimigos_disponiveis():
+    """Retorna os templates disponíveis."""
+    return list(BANCO_INIMIGOS)
 
 class GeradorFase:
     EVENTOS_NEUTROS = [
-        EventoNeutro("Mochila de suprimentos", "ajuda", "Você encontra suprimentos e ganha fôlego para a viagem. (placeholder)", 1),
-        EventoNeutro("Armadilha de pedra", "atrapalha", "Uma pedra solta te derruba e te deixa mais cansado. (placeholder)", 1),
-        EventoNeutro("Fonte mística", "ajuda", "Uma fonte antiga reabastece sua energia por um momento. (placeholder)", 1),
-        EventoNeutro("Fenda no caminho", "atrapalha", "Uma rachadura no terreno atrapalha seus passos e enfraquece a formação. (placeholder)", 1),
-        EventoNeutro("Mercador solitário", "ajuda", "Um mercador lhe oferece uma dica útil e um pequeno presente. (placeholder)", 1),
-        EventoNeutro("Pista falsa", "atrapalha", "Você toma um caminho ruim e perde tempo em uma rota perigosa. (placeholder)", 1),
+        EventoNeutro("Mochila de suprimentos", "ajuda", "Você encontra suprimentos e ganha fôlego para a viagem.", 1),
+        EventoNeutro("Armadilha de pedra", "atrapalha", "Uma pedra solta te derruba e te deixa mais cansado.", 1),
+        EventoNeutro("Fonte mística", "ajuda", "Uma fonte antiga reabastece sua energia por um momento.", 1),
+        EventoNeutro("Fenda no caminho", "atrapalha", "Uma rachadura no terreno atrapalha seus passos e enfraquece a formação.", 1),
+        EventoNeutro("Mercador solitário", "ajuda", "Um mercador lhe oferece uma dica útil e um pequeno presente.", 1),
+        EventoNeutro("Pista falsa", "atrapalha", "Você toma um caminho ruim e perde tempo em uma rota perigosa.", 1),
     ]
 
     def __init__(self, fase_num=1):
@@ -105,12 +91,12 @@ class GeradorFase:
         evento = random.choice(self.EVENTOS_NEUTROS)
         return EventoNeutro(evento.nome, evento.tipo, evento.descricao, fase)
 
-    def gerar_inimigos_aleatorios(self, fase_num=None, quantidade=None, tipo_cenario=None):
+    def gerar_inimigos_aleatorios(self, fase_num=None, quantidade=None):
         fase = self.fase_num if fase_num is None else fase_num
         if quantidade is None:
             quantidade = max(1, min(4, 1 + (fase // 2)))
 
-        templates = listar_inimigos_disponiveis(tipo_cenario)
+        templates = listar_inimigos_disponiveis()
         inimigos = []
 
         for _ in range(quantidade):

@@ -6,6 +6,7 @@ from GameOver import GerenciadorGameOver
 from MenuClasses import GerenciadorClasses 
 from Cenarios import GerenciadorSelecao
 from Descanço import GerenciadorPosLuta
+from Dialogo import GerenciadorDialogo
 from Entidades.Personagem import personagem
 from Recursos import caminho_musica
 
@@ -25,9 +26,9 @@ jogo_tela = GerenciadorJogo(tela)
 game_over_tela = GerenciadorGameOver(tela)
 selecao_tela = GerenciadorSelecao(tela)
 classes_tela = GerenciadorClasses(tela) 
-pos_luta_tela = GerenciadorPosLuta(tela) # <-- INICIALIZANDO
+pos_luta_tela = GerenciadorPosLuta(tela)
+dialogo_tela = GerenciadorDialogo(tela)
 
-# Estado para seleção de classes quando for necessário (player 1 ou 2)
 player1_class = None
 player2_class = None
 classes_target = None
@@ -50,7 +51,6 @@ while rodando:
     posicao_mouse_real = pygame.mouse.get_pos()
     estado_clique_mouse = pygame.mouse.get_pressed()
 
-    # Cálculo da escala para o redimensionamento
     largura_real, altura_real = tela_real.get_size()
     escala = min(largura_real / LARGURA, altura_real / ALTURA) if LARGURA > 0 and ALTURA > 0 else 1
     nova_largura = int(LARGURA * escala)
@@ -58,7 +58,6 @@ while rodando:
     x_offset = (largura_real - nova_largura) // 2
     y_offset = (altura_real - nova_altura) // 2
 
-    # Mapear o mouse real para a tela lógica
     if escala > 0:
         mx = int((posicao_mouse_real[0] - x_offset) / escala)
         my = int((posicao_mouse_real[1] - y_offset) / escala)
@@ -66,9 +65,6 @@ while rodando:
         mx, my = 0, 0
     posicao_mouse = (max(0, min(mx, LARGURA)), max(0, min(my, ALTURA)))
 
-    # =========================================================
-    # 1. EVENTOS 
-    # =========================================================
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
             rodando = False
@@ -82,13 +78,11 @@ while rodando:
 
         if estado == "menu":
             if menu_tela.botao_jogar.checar_clique(evento, posicao_mouse):
-                # Se modo 2P está ligado, forçar seleção de classes antes de iniciar
                 if getattr(menu_tela, 'duas_pessoas', False):
                     classes_target = 1
                     classes_tela.aviso = "Escolha CLASSE para JOGADOR 1"
                     estado = "classes"
                 else:
-                    # Verifica se já há uma classe selecionada no jogo
                     if jogo_tela.classe_atual == "Nenhuma":
                         classes_target = 1
                         classes_tela.aviso = "Escolha SUA CLASSE"
@@ -111,7 +105,6 @@ while rodando:
                 rodando = False
 
         elif estado == "classes":
-            # Seleção de classe com suporte a 2 jogadores via classes_target
             escolha_classe = classes_tela.atualizar_eventos(evento, posicao_mouse)
             
             if classes_tela.voltar_clicado:
@@ -121,12 +114,10 @@ while rodando:
 
             if escolha_classe:
                 if classes_target == 1:
-                    # configura jogador 1
                     jogo_tela.configurar_classe(escolha_classe)
                     player1_class = escolha_classe
                     classes_tela.aviso = f"Jogador 1: {escolha_classe}"
                     if getattr(menu_tela, 'duas_pessoas', False):
-                        # pedir classe do jogador 2 agora
                         classes_target = 2
                         classes_tela.aviso = "Escolha CLASSE para JOGADOR 2"
                     else:
@@ -139,9 +130,7 @@ while rodando:
                 elif classes_target == 2:
                     player2_class = escolha_classe
                     classes_tela.aviso = f"Jogador 2: {escolha_classe}"
-                    # aplicar classe 2 no gerenciador de jogo (cria personagem2 mais tarde)
                     jogo_tela.classe_jogador2 = escolha_classe
-                    # ambos prontos -> iniciar
                     jogo_tela.duas_pessoas = True
                     jogo_tela.reiniciar()
                     estado = "jogo"
@@ -149,10 +138,16 @@ while rodando:
 
         elif estado == "game_over":
             if game_over_tela.botao_menu.checar_clique(evento, posicao_mouse):
+                personagem.resetar()
+                jogo_tela.partida_atual = 1
+                jogo_tela.pontos_jogo = 0
+                jogo_tela.classe_atual = "Nenhuma"
+                jogo_tela.duas_pessoas = False
+                jogo_tela.personagem2 = None
+                jogo_tela.classe_jogador2 = None
                 estado = "menu"
                 tocar_musica("Menu.mp3")
                 
-        # --- NOVA LÓGICA DE TRANSIÇÃO: PÓS-LUTA ---
         elif estado == "pos_luta":
             if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
                 pos_luta_tela.jogadores = [personagem, jogo_tela.personagem2]
@@ -167,14 +162,38 @@ while rodando:
         elif estado == "selecao_cenario":
             escolha_cenario = selecao_tela.atualizar_eventos(evento, posicao_mouse)
             if escolha_cenario:
-                jogo_tela.configurar_cenario(escolha_cenario)
+                if "evento" in escolha_cenario:
+                    dados_dialogo = [
+                        {
+                            "nome": "Andarilho Misterioso",
+                            "texto": "Você encontrou um evento misterioso pelo caminho.\nO que deseja fazer a seguir?",
+                            "opcoes": [
+                                {"texto": "Explorar o local", "retorno": escolha_cenario},
+                                {"texto": "Ignorar e seguir em frente", "retorno": "cancelar_evento"}
+                            ]
+                        }
+                    ]
+                    dialogo_tela.iniciar(dados_dialogo)
+                    estado = "dialogo"
+                else:
+                    jogo_tela.configurar_cenario(escolha_cenario)
+                    jogo_tela.reiniciar()
+                    estado = "jogo"
+                    tocar_musica(jogo_tela.musica_luta)
+
+        elif estado == "dialogo":
+            resultado_dialogo = dialogo_tela.atualizar_eventos(evento, posicao_mouse)
+            if resultado_dialogo == "cancelar_evento":
+                jogo_tela.configurar_cenario("fase_aleatoria")
                 jogo_tela.reiniciar()
                 estado = "jogo"
-                tocar_musica(jogo_tela.musica_luta)
+                tocar_musica("Combate.mp3")
+            elif resultado_dialogo:
+                jogo_tela.configurar_cenario(resultado_dialogo)
+                jogo_tela.reiniciar()
+                estado = "jogo"
+                tocar_musica("Combate.mp3")
 
-    # =========================================================
-    # 2. LÓGICA CONTÍNUA E HOVER
-    # =========================================================
     if estado == "menu":
         menu_tela.atualizar(posicao_mouse, estado_clique_mouse)
     elif estado == "classes":
@@ -189,14 +208,21 @@ while rodando:
             estado = "game_over"
             tocar_musica("GameOver.mp3")
         elif resultado_jogo == "vitoria": 
-            estado = "pos_luta" # Vai para a tela de Status e Nível!
-            tocar_musica("Menu.mp3") # Coloca uma música calma de vitória/menu
+            estado = "pos_luta"
+            tocar_musica("Menu.mp3")
+        elif resultado_jogo == "fim_jogo":
+            personagem.resetar()
+            jogo_tela.partida_atual = 1
+            jogo_tela.pontos_jogo = max(0, jogo_tela.pontos_jogo)
+            jogo_tela.classe_atual = "Nenhuma"
+            jogo_tela.duas_pessoas = False
+            jogo_tela.personagem2 = None
+            jogo_tela.classe_jogador2 = None
+            estado = "menu"
+            tocar_musica("Menu.mp3")
         elif resultado_jogo in ["fugiu", "batalha_encerrada"]:
             estado = "selecao_cenario"
 
-    # =========================================================
-    # 3. DESENHO 
-    # =========================================================
     tela.fill((0, 0, 0))
     if estado == "menu":
         menu_tela.desenhar()
@@ -205,9 +231,12 @@ while rodando:
     elif estado == "jogo":
         jogo_tela.desenhar(posicao_mouse)
     elif estado == "pos_luta":
-        pos_luta_tela.desenhar() # Desenha a nova tela
+        pos_luta_tela.desenhar()
     elif estado == "selecao_cenario":
         selecao_tela.desenhar(posicao_mouse)
+    elif estado == "dialogo":
+        selecao_tela.desenhar(posicao_mouse)
+        dialogo_tela.desenhar()
     elif estado == "game_over":
         game_over_tela.desenhar()
 

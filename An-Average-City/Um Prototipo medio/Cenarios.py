@@ -13,13 +13,13 @@ class GerenciadorSelecao:
 
         self.fonte_titulo = obter_fonte(25)
         self.txt_titulo = self.fonte_titulo.render("ESCOLHA SEU PRÓXIMO DESAFIO", True, (255, 255, 255))
-        self.fonte_cartao = obter_fonte(14)  # Criada uma vez, usada no desenhar()
+        self.fonte_cartao = obter_fonte(14)
 
         self.cenarios_disponiveis = [
-            ("evento_neutro_1", "TRILHA DA SURPRESA\n[EVENTO NEUTRO]"),
-            ("evento_neutro_2", "ENTRADA DE TERRA\n[EVENTO NEUTRO]"),
-            ("evento_neutro_3", "ROTA DA INSEGURANÇA\n[EVENTO NEUTRO]"),
-            ("evento_neutro_4", "BATALHA IMPREVISÍVEL\n[EVENTO NEUTRO]"),
+            ("evento_neutro_1", "EVENTO NEUTRO\n[DESAFIO]"),
+            ("evento_neutro_2", "EVENTO NEUTRO\n[DESAFIO]"),
+            ("evento_neutro_3", "EVENTO NEUTRO\n[DESAFIO]"),
+            ("evento_neutro_4", "EVENTO NEUTRO\n[DESAFIO]"),
             ("fase_aleatoria", "FASE ALEATÓRIA\n[GERAÇÃO AUTOMÁTICA]"),
         ]
 
@@ -60,13 +60,12 @@ class GerenciadorSelecao:
         if clicou:
             for retangulo in self.retangulos:
                 if retangulo["rect"].collidepoint(posicao_mouse):
-                    return retangulo["nome"] # Retorna "cenario_1", "cenario_2", etc.
+                    return retangulo["nome"]
         return None
 
     def desenhar(self, posicao_mouse):
         self.tela.fill((15, 15, 20))
         
-        # Desenha o Título
         x_tit = (self.largura_tela - self.txt_titulo.get_width()) // 2
         self.tela.blit(self.txt_titulo, (x_tit, 80))
         
@@ -76,9 +75,7 @@ class GerenciadorSelecao:
             rect = retangulo["rect"]
             pair_hover = rect.collidepoint(posicao_mouse)
             
-            # Cor de fundo (fica um pouco mais clara se passar o mouse)
             cor_fundo = (60, 60, 80) if pair_hover else (35, 35, 45)
-            # Borda amarela se passar o mouse, branca se não
             cor_borda = (255, 220, 0) if pair_hover else (150, 150, 170)
             largura_borda = 4 if pair_hover else 2
             

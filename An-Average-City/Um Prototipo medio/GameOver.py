@@ -7,7 +7,6 @@ class GerenciadorGameOver:
         self.tela = tela
         largura_tela = self.tela.get_width()
         
-        # --- TÍTULO ---
         self.fonte_titulo = obter_fonte(50)
         self.txt_titulo = self.fonte_titulo.render("GAME OVER", True, (255, 50, 50))
         
@@ -15,7 +14,6 @@ class GerenciadorGameOver:
         self.x_titulo = (largura_tela - largura_titulo) // 2
         self.y_titulo = 200
         
-        # --- BOTÃO ---
         largura_botao = 280
         altura_botao = 60
         x_botao = (largura_tela - largura_botao) // 2
@@ -26,6 +24,6 @@ class GerenciadorGameOver:
         self.botao_menu.atualizar(posicao_mouse, estado_clique_mouse)
 
     def desenhar(self):
-        self.tela.fill((15, 5, 5)) # Fundo escuro avermelhado temático
+        self.tela.fill((15, 5, 5))
         self.tela.blit(self.txt_titulo, (self.x_titulo, self.y_titulo))
         self.botao_menu.desenhar(self.tela)
