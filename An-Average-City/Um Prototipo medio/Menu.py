@@ -63,16 +63,14 @@ class Botao:
 
     def checar_clique(self, evento, posicao_mouse):
         """Verifica se o botão foi pressionado e solto sobre ele"""
-        # Se apertou o botão esquerdo do mouse
         if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
             if self.rect.collidepoint(posicao_mouse):
                 self.pressionado = True
         
-        # Se soltou o botão esquerdo do mouse
         if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
             if self.pressionado and self.rect.collidepoint(posicao_mouse):
                 self.pressionado = False
-                return True # Retorna True só quando a ação de clique termina!
+                return True
             self.pressionado = False
             
         return False
@@ -103,6 +101,7 @@ class Botao:
     def desenhar(self, superficie):
         if self.usar_sprites:
             superficie.blit(self.sprite_atual, self.rect)
+            superficie.blit(self.txt_renderizado, self.txt_rect)
         else:
             pygame.draw.rect(superficie, self.cor_atual, self.rect)
             superficie.blit(self.txt_renderizado, self.txt_rect)
@@ -115,7 +114,6 @@ class GerenciadorMenu:
     def __init__(self, tela):
         self.tela = tela
         
-        # Pega a largura e altura atuais da tela (agora 1000x800)
         largura_tela = self.tela.get_width()
         altura_tela = self.tela.get_height()
 
@@ -134,16 +132,14 @@ class GerenciadorMenu:
             self.posicao_fundo = (0, 0)
             print(f"Aviso: nao foi possivel carregar o fundo do menu: {erro}")
         
-        # --- CENTRALIZANDO O TÍTULO ---
         self.fonte_titulo = obter_fonte(60)
         self.txt_titulo = self.fonte_titulo.render("MENU", True, (255, 255, 255))
         
         largura_titulo = 300
         altura_titulo = 80
-        x_titulo = (largura_tela - largura_titulo) // 2 # Calcula o meio da tela
-        self.titulo_rect = pygame.Rect(x_titulo, 100, largura_titulo, altura_titulo) # Y descido para 100
+        x_titulo = (largura_tela - largura_titulo) // 2
+        self.titulo_rect = pygame.Rect(x_titulo, 100, largura_titulo, altura_titulo)
         
-        # Caminhos dos sprites
         sprite_jogar_base = "BPM.png"
         sprite_jogar_hover = "BPG.png"
         sprite_jogar_clique = "BPP.png"
@@ -156,30 +152,24 @@ class GerenciadorMenu:
         sprite_sair_hover = "BSG.png"
         sprite_sair_clique = "BSP.png"
 
-        # --- CENTRALIZANDO OS BOTÕES ---
         largura_botao = 190
         altura_botao = 55
-        x_botao = (largura_tela - largura_botao) // 2 # Calcula o meio da tela para os botões
+        x_botao = (largura_tela - largura_botao) // 2
         
-        # Aumentei o espaçamento no eixo Y (250, 350, 450) para ficar harmonioso na tela de 800 de altura
-        # Reduzi o tamanho da fonte dos botões para evitar textos grandes
         self.botao_jogar = Botao(x_botao, 250, largura_botao, altura_botao, "JOGAR", (0, 200, 0), (0, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=24, sprite_base_path=sprite_jogar_base, sprite_hover_path=sprite_jogar_hover, sprite_clique_path=sprite_jogar_clique)
-        self.botao_classe = Botao(x_botao, 350, largura_botao, altura_botao, "CLASSE", (200, 200, 0), (255, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=24, sprite_base_path=sprite_classe_base, sprite_hover_path=sprite_classe_hover, sprite_clique_path=sprite_classe_clique)
+        self.botao_classe = Botao(x_botao, 350, largura_botao, altura_botao, "VERSO", (200, 200, 0), (255, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=24, sprite_base_path=sprite_classe_base, sprite_hover_path=sprite_classe_hover, sprite_clique_path=sprite_classe_clique)
         self.botao_sair = Botao(x_botao, 450, largura_botao, altura_botao, "SAIR", (200, 0, 0), (255, 0, 0), 200, 60, cor_texto=(255, 255, 255), fonte_tamanho=24, sprite_base_path=sprite_sair_base, sprite_hover_path=sprite_sair_hover, sprite_clique_path=sprite_sair_clique)
 
         self.lista_botoes = [self.botao_jogar, self.botao_classe, self.botao_sair]
-        # Switch de 2 jogadores (canto superior direito)
         sw_w, sw_h = 80, 40
         sw_x = self.tela.get_width() - sw_w - 20
         sw_y = 20
         self.switch_2p = Botao(sw_x, sw_y, sw_w, sw_h, "2P", (120,120,120), (180,180,180), sw_w, sw_h, cor_texto=(255,255,255), fonte_tamanho=22)
         self.duas_pessoas = False
-        # Texto do switch pré-renderizado (evita recriação de Surface a cada frame)
         self.txt_switch_2p = self.switch_2p.fonte.render("2P", True, (255, 255, 255))
     def atualizar(self, posicao_mouse, estado_clique_mouse):
         for botao in self.lista_botoes:
             botao.atualizar(posicao_mouse, estado_clique_mouse)
-        # atualizar switch
         self.switch_2p.atualizar(posicao_mouse, estado_clique_mouse)
 
     def desenhar(self):
@@ -192,7 +182,6 @@ class GerenciadorMenu:
         
         for botao in self.lista_botoes:
             botao.desenhar(self.tela)
-        # Desenha o switch 2P com cor indicando ligado/desligado
         cor = (0,180,0) if self.duas_pessoas else (120,120,120)
         pygame.draw.rect(self.tela, cor, self.switch_2p.rect, border_radius=6)
         self.tela.blit(self.txt_switch_2p, self.txt_switch_2p.get_rect(center=self.switch_2p.rect.center))
