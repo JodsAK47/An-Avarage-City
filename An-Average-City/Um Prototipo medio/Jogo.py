@@ -653,38 +653,73 @@ class GerenciadorJogo:
         if getattr(self, 'duas_pessoas', False) and getattr(self, 'personagem2', None) is not None:
             jogadores_status.append(self.personagem2)
 
-        largura_cartao = 260
-        x_base_status = 120
-        y_base_status = 720
+        largura_cartao = 360
+        altura_cartao = 88
+        margem_lateral = 26
+        y_base_status = 705
+
+        if len(jogadores_status) == 2:
+            posicoes = [
+                pygame.Rect(margem_lateral, y_base_status, largura_cartao, altura_cartao),
+                pygame.Rect(self.tela.get_width() - margem_lateral - largura_cartao, y_base_status, largura_cartao, altura_cartao),
+            ]
+        else:
+            posicoes = [
+                pygame.Rect((self.tela.get_width() - largura_cartao) // 2, y_base_status, largura_cartao, altura_cartao),
+            ]
+
         for indice, jogador in enumerate(jogadores_status):
-            x_cartao = x_base_status + indice * (largura_cartao + 30)
-            rect_status = pygame.Rect(x_cartao, y_base_status, largura_cartao, 60)
-            pygame.draw.rect(self.tela, (25, 25, 35), rect_status, border_radius=10)
-            pygame.draw.rect(self.tela, (100, 100, 120), rect_status, width=3, border_radius=10)
+            rect_status = posicoes[indice]
+            pygame.draw.rect(self.tela, (25, 25, 35), rect_status, border_radius=12)
+            pygame.draw.rect(self.tela, (100, 100, 120), rect_status, width=3, border_radius=12)
+
+            icone_tamanho = 38
+            icone = pygame.Rect(
+                rect_status.x + 12,
+                rect_status.y + (rect_status.height - icone_tamanho) // 2,
+                icone_tamanho,
+                icone_tamanho,
+            )
+            pygame.draw.rect(self.tela, (50, 50, 70), icone, border_radius=9)
+            pygame.draw.rect(self.tela, (180, 180, 200), icone, width=2, border_radius=9)
+            inicial = "P1" if jogador == personagem else "P2"
+            txt_icon = fonte_status.render(inicial, True, (255, 255, 255))
+            self.tela.blit(txt_icon, txt_icon.get_rect(center=icone.center))
 
             nome_jogador = "JOGADOR 1" if jogador == personagem else "JOGADOR 2"
-            self.tela.blit(fonte_status.render(nome_jogador, True, (255,255,255)), (rect_status.x + 10, rect_status.y + 5))
+            x_texto = rect_status.x + 62
+            self.tela.blit(fonte_status.render(nome_jogador, True, (255, 255, 255)), (x_texto, rect_status.y + 8))
 
-            x_hp = rect_status.x + 12
-            y_hp = rect_status.y + 24
-            w_hp_bar = 150
-            h_bar = 12
-            pygame.draw.rect(self.tela, (80, 10, 10), (x_hp, y_hp, w_hp_bar, h_bar))
+            area_barras_x = rect_status.x + 62
+            area_barras_y = rect_status.y + 34
+            largura_barras = rect_status.width - 120
+
+            x_hp = area_barras_x
+            y_hp = area_barras_y
+            w_hp_bar = largura_barras - 82
+            h_bar = 10
+            pygame.draw.rect(self.tela, (80, 10, 10), (x_hp, y_hp, w_hp_bar, h_bar), border_radius=5)
             if jogador.max_hp > 0:
                 porc_hp = jogador.hp / jogador.max_hp
-                pygame.draw.rect(self.tela, (0, 230, 70), (x_hp, y_hp, int(w_hp_bar * porc_hp), h_bar))
-            txt_hp = fonte_status.render(f"HP: {jogador.hp}/{jogador.max_hp}", True, (255,255,255))
-            self.tela.blit(txt_hp, (x_hp + w_hp_bar + 12, y_hp - 2))
+                pygame.draw.rect(self.tela, (0, 230, 70), (x_hp, y_hp, int(w_hp_bar * porc_hp), h_bar), border_radius=5)
+            txt_hp = fonte_status.render(f"HP {jogador.hp}/{jogador.max_hp}", True, (255, 255, 255))
+            self.tela.blit(txt_hp, (x_hp + w_hp_bar + 8, y_hp - 2))
 
-            x_mp = rect_status.x + 12
-            y_mp = rect_status.y + 40
-            w_mp_bar = 150
-            pygame.draw.rect(self.tela, (10, 10, 80), (x_mp, y_mp, w_mp_bar, h_bar))
+            x_mp = area_barras_x
+            y_mp = area_barras_y + 18
+            w_mp_bar = largura_barras - 82
+            pygame.draw.rect(self.tela, (10, 10, 80), (x_mp, y_mp, w_mp_bar, h_bar), border_radius=5)
             if jogador.max_mp > 0:
                 porc_mp = jogador.mp / jogador.max_mp
-                pygame.draw.rect(self.tela, (0, 160, 255), (x_mp, y_mp, int(w_mp_bar * porc_mp), h_bar))
-            txt_mp = fonte_status.render(f"PM: {jogador.mp}/{jogador.max_mp}", True, (255,255,255))
-            self.tela.blit(txt_mp, (x_mp + w_mp_bar + 12, y_mp - 2))
+                pygame.draw.rect(self.tela, (0, 160, 255), (x_mp, y_mp, int(w_mp_bar * porc_mp), h_bar), border_radius=5)
+            txt_mp = fonte_status.render(f"PM {jogador.mp}/{jogador.max_mp}", True, (255, 255, 255))
+            self.tela.blit(txt_mp, (x_mp + w_mp_bar + 8, y_mp - 2))
+
+        y_base_status = 705
+        if len(jogadores_status) == 2:
+            y_base_status = 708
+        else:
+            y_base_status = 710
 
         indice_seguro = self.indice_turno if self.indice_turno < len(self.ordem_turnos) else 0
         turno_ativo = self.ordem_turnos[indice_seguro] if self.ordem_turnos else None

@@ -1,3 +1,5 @@
+import math
+
 import pygame
 from Fontes import obter_fonte
 from Recursos import caminho_botao, caminho_imagem
@@ -134,11 +136,25 @@ class GerenciadorMenu:
         
         self.fonte_titulo = obter_fonte(60)
         self.txt_titulo = self.fonte_titulo.render("MENU", True, (255, 255, 255))
-        
-        largura_titulo = 300
-        altura_titulo = 80
+
+        largura_titulo = 600
+        altura_titulo = 160
         x_titulo = (largura_tela - largura_titulo) // 2
         self.titulo_rect = pygame.Rect(x_titulo, 100, largura_titulo, altura_titulo)
+        self.titulo_anim_rect = self.titulo_rect.copy()
+        self.titulo_anim_tempo = 0.0
+
+        self.imagem_titulo = None
+        self.posicao_titulo = self.titulo_rect.topleft
+        for nome_titulo in ("Titulo.png", "Titulo(1).png"):
+            try:
+                imagem_titulo = pygame.image.load(caminho_imagem(nome_titulo)).convert_alpha()
+                self.imagem_titulo = pygame.transform.scale(imagem_titulo, (largura_titulo + 120, altura_titulo + 30))
+                self.posicao_titulo = (x_titulo - 60, 70)
+                self.titulo_anim_rect = pygame.Rect(self.posicao_titulo, self.imagem_titulo.get_size())
+                break
+            except (FileNotFoundError, pygame.error):
+                continue
         
         sprite_jogar_base = "BPM.png"
         sprite_jogar_hover = "BPG.png"
@@ -168,17 +184,40 @@ class GerenciadorMenu:
         self.duas_pessoas = False
         self.txt_switch_2p = self.switch_2p.fonte.render("2P", True, (255, 255, 255))
     def atualizar(self, posicao_mouse, estado_clique_mouse):
+        self.titulo_anim_tempo += 0.018
+
         for botao in self.lista_botoes:
             botao.atualizar(posicao_mouse, estado_clique_mouse)
         self.switch_2p.atualizar(posicao_mouse, estado_clique_mouse)
+
+        if self.imagem_titulo is not None:
+            angulo = math.sin(self.titulo_anim_tempo * 1.4) * 4
+            escala = 1.0 + (math.sin(self.titulo_anim_tempo * 2.4) * 0.025)
+            imagem_animada = pygame.transform.rotozoom(self.imagem_titulo, angulo, escala)
+            self.titulo_anim_rect = imagem_animada.get_rect(center=self.titulo_rect.center)
+            self.titulo_anim_rect.y += int(math.sin(self.titulo_anim_tempo * 1.4) * 6)
+            self.titulo_surface = imagem_animada
+        else:
+            pulsacao = 1.0 + math.sin(self.titulo_anim_tempo * 2.2) * 0.025
+            titulo_base = pygame.transform.scale(self.txt_titulo, (
+                int(self.txt_titulo.get_width() * pulsacao),
+                int(self.txt_titulo.get_height() * pulsacao)
+            ))
+            self.titulo_surface = titulo_base
+            self.titulo_anim_rect = titulo_base.get_rect(center=self.titulo_rect.center)
+            self.titulo_anim_rect.x += int(math.sin(self.titulo_anim_tempo * 1.2) * 8)
 
     def desenhar(self):
         if self.imagem_fundo is not None:
             self.tela.blit(self.imagem_fundo, self.posicao_fundo)
         else:
             self.tela.fill((30, 30, 40))
-        pygame.draw.rect(self.tela, (80, 80, 200), self.titulo_rect)
-        self.tela.blit(self.txt_titulo, self.txt_titulo.get_rect(center=self.titulo_rect.center))
+
+        if self.imagem_titulo is not None:
+            self.tela.blit(self.titulo_surface, self.titulo_anim_rect)
+        else:
+            pygame.draw.rect(self.tela, (80, 80, 200), self.titulo_rect)
+            self.tela.blit(self.titulo_surface, self.titulo_anim_rect)
         
         for botao in self.lista_botoes:
             botao.desenhar(self.tela)
