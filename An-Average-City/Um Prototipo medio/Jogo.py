@@ -6,6 +6,7 @@ from Menu import Botao
 from Habilidades import banco_habilidades
 from Fontes import obter_fonte, quebrar_texto
 from GeracaoFases import GeradorFase, BANCO_INIMIGOS, _criar_inimigo_a_partir_template
+from Recursos import caminho_imagem
 
 class GerenciadorJogo:
     def __init__(self, tela):
@@ -55,11 +56,20 @@ class GerenciadorJogo:
         self.btn_fugir     = Botao(640, 640, 120, 50, "FUGIR", (50,50,50), (100,100,100), 124, 54, cor_texto=(255,255,255), fonte_tamanho=12)
         self.btn_voltar    = Botao(640, 640, 120, 50, "VOLTAR", (80,80,80), (120,120,120), 124, 54, cor_texto=(255,255,255), fonte_tamanho=12)
         
+        self.fundo_luta = self._carregar_fundo_luta()
         self.fonte = obter_fonte(14)
         self.fonte_titulos = obter_fonte(14)
         self.fonte_status = pygame.font.SysFont(["consolas", "courier"], 18, bold=True)
         self.mensagem_log = "A batalha começou!"
         self.ataque_jogador_ativo = None
+
+    def _carregar_fundo_luta(self):
+        try:
+            imagem = pygame.image.load(caminho_imagem("Fight.png")).convert_alpha()
+            return imagem
+        except pygame.error:
+            print("⚠️ Aviso: Não foi possível carregar 'Fight.png'.")
+            return None
 
         if not hasattr(personagem, 'nivel'): personagem.nivel = 1
         if not hasattr(personagem, 'xp'): personagem.xp = 0
@@ -638,15 +648,20 @@ class GerenciadorJogo:
         if getattr(entidade, 'max_hp', 0) > 0:
             porc = entidade.hp / entidade.max_hp
             pygame.draw.rect(self.tela, (0, 230, 70), (rect.x, y_hp, int(largura_barra * porc), altura_barra))
-            
-        y_mp = y_hp + altura_barra + 3
-        pygame.draw.rect(self.tela, (10, 10, 80), (rect.x, y_mp, largura_barra, altura_barra))
-        if getattr(entidade, 'max_mp', 0) > 0:
-            porc = entidade.mp / entidade.max_mp
-            pygame.draw.rect(self.tela, (0, 160, 255), (rect.x, y_mp, int(largura_barra * porc), altura_barra))
+
+        max_mp = getattr(entidade, 'max_mp', 0)
+        if max_mp > 0:
+            y_mp = y_hp + altura_barra + 3
+            pygame.draw.rect(self.tela, (10, 10, 80), (rect.x, y_mp, largura_barra, altura_barra))
+            porc = entidade.mp / max_mp if max_mp > 0 else 0
+            pygame.draw.rect(self.tela, (0, 160, 255), (rect.x, y_mp, int(largura_barra * max(0, min(1, porc))), altura_barra))
 
     def desenhar(self, posicao_mouse):
-        self.tela.fill((20, 20, 20))
+        if self.fundo_luta is not None:
+            fundo_escala = pygame.transform.scale(self.fundo_luta, self.tela.get_size())
+            self.tela.blit(fundo_escala, (0, 0))
+        else:
+            self.tela.fill((20, 20, 20))
 
         if personagem.hp > 0:
             personagem.desenhar(self.tela)

@@ -20,16 +20,22 @@ class Inimigo:
         self.arquivo_imagem = nome_imagem
         self.max_hp = vida_maxima
         self.hp = vida_maxima
-        self.max_mp = 0
-        self.mp = 0
+        self.ataques = ataques if ataques is not None else ["Soco"]
+        custo_max_mp = max(
+            (
+                _banco_habilidades_inimigos.get(nome_ataque, _banco_habilidades_inimigos["Soco"]).custo_mp
+                for nome_ataque in self.ataques
+            ),
+            default=0,
+        )
+        self.max_mp = max(10, custo_max_mp * 2)
+        self.mp = self.max_mp
 
         self.congelado = False
         self.xp = xp
 
         self.atributos = atributos if atributos is not None else {"For": 1, "Agi": 1, "Int": 1}
         self.is_player = False
-        
-        self.ataques = ataques if ataques is not None else ["Soco"]
         
         try:
             self.imagem_original = pygame.image.load(caminho_imagem(nome_imagem))
