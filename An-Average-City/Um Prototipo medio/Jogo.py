@@ -107,15 +107,16 @@ class GerenciadorJogo:
         quantidade_inimigos = len(inimigos_vivos)
         centro_x_batalha, centro_y_batalha = 750, 400
 
-        if quantidade_inimigos == 1:
-            inimigos_vivos[0].rect.center = (centro_x_batalha, centro_y_batalha)
-        elif quantidade_inimigos == 2:
-            inimigos_vivos[0].rect.center = (centro_x_batalha, centro_y_batalha - 100)
-            inimigos_vivos[1].rect.center = (centro_x_batalha, centro_y_batalha + 100)
-        elif quantidade_inimigos == 3:
-            inimigos_vivos[0].rect.center = (centro_x_batalha, centro_y_batalha - 150)
-            inimigos_vivos[1].rect.center = (centro_x_batalha, centro_y_batalha)
-            inimigos_vivos[2].rect.center = (centro_x_batalha, centro_y_batalha + 150)
+        posicoes_padrao = {
+            1: [(0, 0)],
+            2: [(-180, -30), (180, 30)],
+            3: [(-220, -100), (0, 80), (220, -100)],
+            4: [(-220, -120), (-70, 60), (70, -60), (220, 120)],
+        }
+
+        layout = posicoes_padrao.get(quantidade_inimigos, [(0, 0)] * quantidade_inimigos)
+        for inimigo, (offset_x, offset_y) in zip(inimigos_vivos, layout):
+            inimigo.rect.center = (centro_x_batalha + offset_x, centro_y_batalha + offset_y)
 
         jogadores_vivos = [entidade for entidade in self.ordem_turnos if getattr(entidade, 'is_player', False) and entidade.hp > 0]
         centro_x_jogador = 250
@@ -124,8 +125,6 @@ class GerenciadorJogo:
         elif len(jogadores_vivos) == 2:
             jogadores_vivos[0].rect.center = (centro_x_jogador, centro_y_batalha - 100)
             jogadores_vivos[1].rect.center = (centro_x_jogador, centro_y_batalha + 100)
-            if quantidade_inimigos > 1:
-                inimigos_vivos[1].rect.center = (centro_x_batalha, centro_y_batalha + 100)
 
     def gerar_botoes_ataque(self):
         self.botoes_habilidades_dinamicos = []

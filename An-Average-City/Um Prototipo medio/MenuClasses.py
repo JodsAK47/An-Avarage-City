@@ -10,6 +10,12 @@ ARVORE_GERAL = [
     {"id": "G5", "nome": "Recuperação", "desc": "Regenera vida aos poucos\nCusto 100", "preco": 100, "pos": (580, 240), "req": ["G3"]},
 ]
 
+ARVORE_POR_CLASSE = {
+    "Sobrevivente": ARVORE_GERAL,
+    "Agente": ARVORE_GERAL,
+    "Feiticeiro": ARVORE_GERAL,
+}
+
 FUNDO = (25, 30, 42)
 PAINEL = (38, 46, 62)
 PAINEL_CLARO = (48, 57, 75)
@@ -39,6 +45,7 @@ class GerenciadorClasses:
         self.caminho_atual = "Físico"
         self.habilidades_desbloqueadas = []
         self.habilidade_foco = None
+        self.arvores_por_classe = ARVORE_POR_CLASSE
         
         self.botao_voltar = Botao(720, 700, 240, 50, "VOLTAR", (55, 62, 78), AZUL_DESTAQUE, 250, 55, cor_texto=TEXTO, fonte_tamanho=14)
         self.botao_selecionar = Botao(720, 630, 240, 50, "ESCOLHER CLASSE", AZUL_DESTAQUE, (95, 120, 145), 250, 55, cor_texto=TEXTO, fonte_tamanho=14)
@@ -55,6 +62,9 @@ class GerenciadorClasses:
             "Agente": pygame.Rect(190, 410, 80, 80),
             "Feiticeiro": pygame.Rect(130, 545, 80, 80)
         }
+
+    def obter_arvore_ativa(self):
+        return self.arvores_por_classe.get(self.classe_atual, ARVORE_GERAL)
 
     def atualizar_eventos(self, evento, posicao_mouse):
         if self.botao_voltar.checar_clique(evento, posicao_mouse):
@@ -89,7 +99,7 @@ class GerenciadorClasses:
                     self.habilidade_foco = None
                     return None
             
-            for hab in ARVORE_GERAL:
+            for hab in self.obter_arvore_ativa():
                 x, y = hab["pos"]
                 rect_hab = pygame.Rect(x - 35, y - 35, 70, 70)
                 if rect_hab.collidepoint(posicao_mouse):
@@ -153,14 +163,16 @@ class GerenciadorClasses:
         
         pygame.draw.rect(self.tela, PAINEL, (320, 40, 360, 720))
         
-        for hab in ARVORE_GERAL:
+        arvore_ativa = self.obter_arvore_ativa()
+
+        for hab in arvore_ativa:
             for req_id in hab["req"]:
-                for h in ARVORE_GERAL:
+                for h in arvore_ativa:
                     if h["id"] == req_id:
                         cor_linha = AZUL_DESTAQUE if (hab["id"] in self.habilidades_desbloqueadas) else BORDA
                         pygame.draw.line(self.tela, cor_linha, h["pos"], hab["pos"], 4)
         
-        for hab in ARVORE_GERAL:
+        for hab in arvore_ativa:
             cor = (75, 82, 95)
             if hab["id"] in self.habilidades_desbloqueadas:
                 cor = (95, 125, 155)

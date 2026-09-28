@@ -83,7 +83,9 @@ while rodando:
                     tela_real = pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
 
         if estado == "menu":
-            if menu_tela.botao_jogar.checar_clique(evento, posicao_mouse):
+            botoes_menu = menu_tela.botoes
+
+            if botoes_menu["jogar"].checar_clique(evento, posicao_mouse):
                 if getattr(menu_tela, 'duas_pessoas', False):
                     classes_target = 1
                     classes_tela.aviso = "Escolha CLASSE para JOGADOR 1"
@@ -98,7 +100,7 @@ while rodando:
                         jogo_tela.reiniciar()
                         estado = "jogo"
                         tocar_musica("Combate.mp3")
-            elif menu_tela.botao_classe.checar_clique(evento, posicao_mouse):
+            elif botoes_menu["classe"].checar_clique(evento, posicao_mouse):
                 classes_tela.aviso = "Gerencie as Habilidades"
                 estado = "classes"
             elif menu_tela.switch_2p.checar_clique(evento, posicao_mouse):
@@ -107,7 +109,7 @@ while rodando:
                     jogo_tela.duas_pessoas = False
                     jogo_tela.personagem2 = None
                     jogo_tela.classe_jogador2 = None
-            elif menu_tela.botao_sair.checar_clique(evento, posicao_mouse):
+            elif botoes_menu["sair"].checar_clique(evento, posicao_mouse):
                 rodando = False
 
         elif estado == "classes":

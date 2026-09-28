@@ -156,33 +156,49 @@ class GerenciadorMenu:
             except (FileNotFoundError, pygame.error):
                 continue
         
-        sprite_jogar_base = "BPM.png"
-        sprite_jogar_hover = "BPG.png"
-        sprite_jogar_clique = "BPP.png"
+        sprite_jogar_base = "BVERDEM.png"
+        sprite_jogar_hover = "BVERDG.png"
+        sprite_jogar_clique = "BVERDEP.png"
 
-        sprite_classe_base = "BCM.png" 
-        sprite_classe_hover = "BCG.png"
-        sprite_classe_clique = "BCP.png"
+        sprite_classe_base = "BYELLM.png"
+        sprite_classe_hover = "BYELLG.png"
+        sprite_classe_clique = "BYELLP.png"
 
-        sprite_sair_base = "BSM.png"
-        sprite_sair_hover = "BSG.png"
-        sprite_sair_clique = "BSP.png"
+        sprite_sair_base = "BREDM.png"
+        sprite_sair_hover = "BREDG.png"
+        sprite_sair_clique = "BREDP.png"
 
         largura_botao = 190
         altura_botao = 55
         x_botao = (largura_tela - largura_botao) // 2
-        
-        self.botao_jogar = Botao(x_botao, 250, largura_botao, altura_botao, "JOGAR", (0, 200, 0), (0, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=24, sprite_base_path=sprite_jogar_base, sprite_hover_path=sprite_jogar_hover, sprite_clique_path=sprite_jogar_clique)
-        self.botao_classe = Botao(x_botao, 350, largura_botao, altura_botao, "VERSO", (200, 200, 0), (255, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=24, sprite_base_path=sprite_classe_base, sprite_hover_path=sprite_classe_hover, sprite_clique_path=sprite_classe_clique)
-        self.botao_sair = Botao(x_botao, 450, largura_botao, altura_botao, "SAIR", (200, 0, 0), (255, 0, 0), 200, 60, cor_texto=(255, 255, 255), fonte_tamanho=24, sprite_base_path=sprite_sair_base, sprite_hover_path=sprite_sair_hover, sprite_clique_path=sprite_sair_clique)
 
-        self.lista_botoes = [self.botao_jogar, self.botao_classe, self.botao_sair]
+        self.botoes = {
+            "jogar": Botao(x_botao, 250, largura_botao, altura_botao, "JOGAR", (0, 200, 0), (0, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=24, sprite_base_path=sprite_jogar_base, sprite_hover_path=sprite_jogar_hover, sprite_clique_path=sprite_jogar_clique),
+            "classe": Botao(x_botao, 350, largura_botao, altura_botao, "VERSO", (200, 200, 0), (255, 255, 0), 200, 60, cor_texto=(0, 0, 0), fonte_tamanho=24, sprite_base_path=sprite_classe_base, sprite_hover_path=sprite_classe_hover, sprite_clique_path=sprite_classe_clique),
+            "sair": Botao(x_botao, 450, largura_botao, altura_botao, "SAIR", (200, 0, 0), (255, 0, 0), 200, 60, cor_texto=(255, 255, 255), fonte_tamanho=24, sprite_base_path=sprite_sair_base, sprite_hover_path=sprite_sair_hover, sprite_clique_path=sprite_sair_clique),
+        }
+        self.botao_jogar = self.botoes["jogar"]
+        self.botao_classe = self.botoes["classe"]
+        self.botao_sair = self.botoes["sair"]
+        self.lista_botoes = list(self.botoes.values())
+
         sw_w, sw_h = 80, 40
         sw_x = self.tela.get_width() - sw_w - 20
         sw_y = 20
-        self.switch_2p = Botao(sw_x, sw_y, sw_w, sw_h, "2P", (120,120,120), (180,180,180), sw_w, sw_h, cor_texto=(255,255,255), fonte_tamanho=22)
+        self.switch_2p = Botao(
+            sw_x, sw_y, sw_w, sw_h, "2P",
+            (120, 120, 120), (180, 180, 180), sw_w, sw_h,
+            cor_texto=(255, 255, 255), fonte_tamanho=22,
+            sprite_base_path="BAZULM.png",
+            sprite_hover_path="BAZULG.png",
+            sprite_clique_path="BAZULP.png",
+        )
         self.duas_pessoas = False
         self.txt_switch_2p = self.switch_2p.fonte.render("2P", True, (255, 255, 255))
+
+    def buscar_botao(self, nome_botao):
+        return self.botoes.get(nome_botao.lower())
+
     def atualizar(self, posicao_mouse, estado_clique_mouse):
         self.titulo_anim_tempo += 0.018
 
@@ -221,6 +237,4 @@ class GerenciadorMenu:
         
         for botao in self.lista_botoes:
             botao.desenhar(self.tela)
-        cor = (0,180,0) if self.duas_pessoas else (120,120,120)
-        pygame.draw.rect(self.tela, cor, self.switch_2p.rect, border_radius=6)
-        self.tela.blit(self.txt_switch_2p, self.txt_switch_2p.get_rect(center=self.switch_2p.rect.center))
+        self.switch_2p.desenhar(self.tela)
