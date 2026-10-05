@@ -1,0 +1,86 @@
+{
+    "Soco": {
+        "nome": "Soco",
+        "tipo": "Físico",
+        "dano": 4,
+        "custo_mp": 0,
+        "precisao": 0.90,
+        "descricao": "Um golpe direto.",
+        "efeito": null,
+        "chance_efeito": 0.0,
+        "em_area": false,
+        "verso": "Inimigo"
+    },
+    "Mordida": {
+        "nome": "Mordida",
+        "tipo": "Físico",
+        "dano": 6,
+        "custo_mp": 0,
+        "precisao": 0.85,
+        "descricao": "Morde o alvo.",
+        "efeito": null,
+        "chance_efeito": 0.0,
+        "em_area": false,
+        "verso": "Inimigo"
+    },
+    "Porrete do Chefe": {
+        "nome": "Porrete do Chefe",
+        "tipo": "Físico",
+        "dano": 12,
+        "custo_mp": 4,
+        "precisao": 0.75,
+        "descricao": "Um golpe pesado de porrete.",
+        "efeito": null,
+        "chance_efeito": 0.0,
+        "em_area": false,
+        "verso": "Inimigo"
+    },
+    "Gelo": {
+        "nome": "Gelo",
+        "tipo": "Magia",
+        "dano": 8,
+        "custo_mp": 3,
+        "precisao": 0.80,
+        "descricao": "Dispara uma rajada de gelo.",
+        "efeito": "Congelar",
+        "chance_efeito": 0.20,
+        "em_area": false,
+        "verso": "Inimigo"
+    },
+    "Fogo": {
+        "nome": "Fogo",
+        "tipo": "Magia",
+        "dano": 10,
+        "custo_mp": 4,
+        "precisao": 0.80,
+        "descricao": "Lança uma chama contra o alvo.",
+        "efeito": "Queimar",
+        "chance_efeito": 0.15,
+        "em_area": false,
+        "verso": "Inimigo"
+    },
+    "Nevasca": {
+        "nome": "Nevasca",
+        "tipo": "Magia",
+        "dano": 9,
+        "custo_mp": 6,
+        "precisao": 0.70,
+        "descricao": "Uma tempestade de gelo atinge todos os alvos.",
+        "efeito": "Congelar",
+        "chance_efeito": 0.15,
+        "em_area": true,
+        "verso": "Inimigo"
+    },
+    "Terremoto": {
+        "nome": "Terremoto",
+        "tipo": "Magia",
+        "dano": 14,
+        "custo_mp": 8,
+        "precisao": 0.65,
+        "descricao": "Abala o campo de batalha.",
+        "efeito": null,
+        "chance_efeito": 0.0,
+        "em_area": true,
+        "verso": "Inimigo"
+    }
+}
