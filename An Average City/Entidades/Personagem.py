@@ -11,7 +11,7 @@ class Personagem:
         self.nivel = 1
         self.xp = 0
         self.pontos_atributo = 0
-        self.atributos = {"For": 1, "Agi": 1, "Con": 1, "Sab": 1, "Int": 1}
+        self.atributos = {"For": 1, "Agi": 1, "Con": 1, "Sab": 1, "Int": 1, "Sor": 1}
         self.ataques = []
         self.ultimates_desbloqueadas = set()
 
@@ -25,10 +25,13 @@ class Personagem:
 
         try:
             self.imagem_original = pygame.image.load(caminho_imagem(nome_imagem))
-            self.imagem = pygame.transform.scale(self.imagem_original, (100, 120))
+            w_orig, h_orig = self.imagem_original.get_size()
+            altura_desejada = 115
+            largura_desejada = int(w_orig * (altura_desejada / max(1, h_orig)))
+            self.imagem = pygame.transform.scale(self.imagem_original, (largura_desejada, altura_desejada))
         except (pygame.error, FileNotFoundError) as e:
             print(f"⚠️ Erro ao carregar imagem: {e}")
-            self.imagem = pygame.Surface((100, 120))
+            self.imagem = pygame.Surface((100, 115))
             self.imagem.fill((0, 200, 100))
 
         self.rect = self.imagem.get_rect(topleft=(x, y))
@@ -41,10 +44,26 @@ class Personagem:
         self.nome_imagem = nova_imagem
         try:
             self.imagem_original = pygame.image.load(caminho_imagem(nova_imagem))
-            self.imagem = pygame.transform.scale(self.imagem_original, (100, 120))
+            w_orig, h_orig = self.imagem_original.get_size()
+            altura_desejada = 115
+            largura_desejada = int(w_orig * (altura_desejada / max(1, h_orig)))
+            self.imagem = pygame.transform.scale(self.imagem_original, (largura_desejada, altura_desejada))
+            self.rect.size = self.imagem.get_size()
             self.convertida = False
         except (pygame.error, FileNotFoundError) as e:
             print(f"⚠️ Erro ao carregar nova skin '{nova_imagem}': {e}")
+
+    def tem_ultimate_desbloqueada(self, verso, classe=None):
+        nodo_req = {"Sobrevivente": "S4", "Agente": "A4", "Feiticeiro": "F4"}.get(verso)
+        talentos = getattr(self, "talentos", set())
+        if nodo_req and nodo_req in talentos:
+            return True
+        ultimates = getattr(self, "ultimates_desbloqueadas", set())
+        if verso in ultimates:
+            return True
+        if classe and (verso, classe) in ultimates:
+            return True
+        return False
 
     def resetar(self):
         talentos_salvos = set(getattr(self, 'talentos', set()))
@@ -65,7 +84,6 @@ class Personagem:
             self.convertida = True
 
         tela.blit(self.imagem, self.rect)
-
 
 personagem = Personagem(150, 350, "pixil.png")
 personagem.is_player = True

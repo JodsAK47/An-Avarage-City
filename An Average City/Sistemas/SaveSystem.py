@@ -1,47 +1,47 @@
 import json
 import os
-from Sistemas.Recursos import caminho_dados
+from Sistemas.Recursos import caminho_dados, caminho_saves
 
-CAMINHO_DADOS = caminho_dados()
-ARQUIVO_SAVE = caminho_dados("save.json")
-
+CAMINHO_SAVES = caminho_saves()
+ARQUIVO_SAVE = caminho_saves("save.json")
+ARQUIVO_LEGADO_SAVE = caminho_dados("save.json")
 
 class GerenciadorSave:
     def __init__(self):
-        self.pontos = 10  # Pontos iniciais padrão
-        self.total_pontos_acumulados = 10
+        self.pontos = 0
+        self.total_pontos_acumulados = 0
         self.maior_pontuacao = 0
         self.conquistas = []
         self.member_card_coletado = False
+        self.progresso_versos = {}
         self.carregar()
 
     def carregar(self):
-        """Carrega o arquivo de save ou cria um novo com dados iniciais se não existir."""
-        if not os.path.exists(CAMINHO_DADOS):
-            os.makedirs(CAMINHO_DADOS, exist_ok=True)
+        arquivo_para_ler = None
+        if os.path.exists(ARQUIVO_SAVE):
+            arquivo_para_ler = ARQUIVO_SAVE
+        elif os.path.exists(ARQUIVO_LEGADO_SAVE):
+            arquivo_para_ler = ARQUIVO_LEGADO_SAVE
 
-        if not os.path.exists(ARQUIVO_SAVE):
-            # Cria o save inicial imediatamente
-            self.salvar()
+        if not arquivo_para_ler:
             return
 
         try:
-            with open(ARQUIVO_SAVE, "r", encoding="utf-8") as f:
+            with open(arquivo_para_ler, "r", encoding="utf-8") as f:
                 dados = json.load(f)
-                self.pontos = int(dados.get("pontos", 10))
-                self.total_pontos_acumulados = int(dados.get("total_pontos_acumulados", self.pontos))
-                self.maior_pontuacao = int(dados.get("maior_pontuacao", 0))
+                self.pontos = max(0, int(dados.get("pontos", 0)))
+                self.total_pontos_acumulados = max(0, int(dados.get("total_pontos_acumulados", self.pontos)))
+                self.maior_pontuacao = max(0, int(dados.get("maior_pontuacao", 0)))
                 self.conquistas = list(dados.get("conquistas", []))
                 self.member_card_coletado = bool(dados.get("member_card_coletado", False))
+                self.progresso_versos = dict(dados.get("progresso_versos", {}))
         except Exception as e:
-            print(f"⚠️ Erro ao carregar save.json: {e}. Criando novo save...")
-            self.salvar()
+            print(f"⚠️ Erro ao carregar save.json: {e}")
 
     def salvar(self):
-        """Escreve o estado persistente no arquivo Dados/save.json."""
         try:
-            if not os.path.exists(CAMINHO_DADOS):
-                os.makedirs(CAMINHO_DADOS, exist_ok=True)
+            if not os.path.exists(CAMINHO_SAVES):
+                os.makedirs(CAMINHO_SAVES, exist_ok=True)
 
             dados = {
                 "pontos": int(self.pontos),
@@ -49,6 +49,7 @@ class GerenciadorSave:
                 "maior_pontuacao": int(self.maior_pontuacao),
                 "conquistas": list(self.conquistas),
                 "member_card_coletado": bool(self.member_card_coletado),
+                "progresso_versos": dict(self.progresso_versos),
             }
 
             with open(ARQUIVO_SAVE, "w", encoding="utf-8") as f:
@@ -56,19 +57,26 @@ class GerenciadorSave:
         except Exception as e:
             print(f"⚠️ Erro ao salvar em save.json: {e}")
 
+    def obter_progresso_versos(self):
+        return dict(self.progresso_versos)
+
+    def obter_progresso_verso(self, verso):
+        return list(self.progresso_versos.get(verso, []))
+
+    def definir_progresso_verso(self, verso, talentos):
+        self.progresso_versos[verso] = list(talentos)
+
     def obter_pontos(self):
         return self.pontos
 
     def definir_pontos(self, novos_pontos):
         self.pontos = max(0, int(novos_pontos))
-        self.salvar()
 
     def adicionar_pontos(self, quantidade):
         qtd = int(quantidade)
         self.pontos = max(0, self.pontos + qtd)
         if qtd > 0:
             self.total_pontos_acumulados += qtd
-        self.salvar()
 
     def registrar_partida(self, pontos_partida):
         pts = int(pontos_partida)
@@ -79,7 +87,6 @@ class GerenciadorSave:
     def desbloquear_conquista(self, id_conquista):
         if id_conquista not in self.conquistas:
             self.conquistas.append(id_conquista)
-            self.salvar()
             return True
         return False
 
@@ -91,21 +98,18 @@ class GerenciadorSave:
 
     def coletar_member_card(self):
         self.member_card_coletado = True
-        self.salvar()
         return True
 
     def definir_member_card(self, valor):
         self.member_card_coletado = bool(valor)
-        self.salvar()
 
     def resetar_tudo(self):
-        """Redefine os pontos, conquistas e itens para o estado inicial e salva no disco."""
-        self.pontos = 10
-        self.total_pontos_acumulados = 10
+        self.pontos = 0
+        self.total_pontos_acumulados = 0
         self.maior_pontuacao = 0
         self.conquistas.clear()
         self.member_card_coletado = False
+        self.progresso_versos.clear()
         self.salvar()
-
 
 save_global = GerenciadorSave()

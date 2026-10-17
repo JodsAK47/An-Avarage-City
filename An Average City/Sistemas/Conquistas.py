@@ -7,9 +7,7 @@ from Sistemas.Recursos import caminho_imagem, caminho_botao, caminho_dados
 CAMINHO_DADOS = caminho_dados()
 ARQUIVO_CONQUISTAS = caminho_dados("conquistas.json")
 
-
 def converter_para_cinza(surface):
-    """Converte uma superfície Pygame para escala de cinza (preto e branco)."""
     try:
         return pygame.transform.grayscale(surface)
     except (AttributeError, pygame.error):
@@ -22,7 +20,6 @@ def converter_para_cinza(surface):
                     cinza = int(0.299 * r + 0.587 * g + 0.114 * b)
                     copia.set_at((x, y), (cinza, cinza, cinza, a))
         return copia
-
 
 class Conquista:
     def __init__(self, id_conquista, nome, como_liberar, icone_arquivo, desbloqueada=False):
@@ -64,7 +61,6 @@ class Conquista:
         base = self._superficie_colorida if esta_ativa else self._superficie_cinza
         return pygame.transform.smoothscale(base, tamanho)
 
-
 class SistemaConquistas:
     def __init__(self):
         self.conquistas = []
@@ -86,7 +82,7 @@ class SistemaConquistas:
                 dados = json.load(f)
                 for item in dados:
                     id_c = item["id"]
-                    ja_desbloqueada = item.get("desbloqueada", False) or save_global.esta_desbloqueada(id_c)
+                    ja_desbloqueada = save_global.esta_desbloqueada(id_c)
                     c = Conquista(
                         id_conquista=id_c,
                         nome=item["nome"],
@@ -96,8 +92,6 @@ class SistemaConquistas:
                     )
                     self.conquistas.append(c)
                     self.mapa_conquistas[c.id] = c
-                    if ja_desbloqueada and not save_global.esta_desbloqueada(id_c):
-                        save_global.desbloquear_conquista(id_c)
         except Exception as e:
             print(f"⚠️ Erro ao carregar conquistas: {e}")
 
@@ -130,12 +124,10 @@ class SistemaConquistas:
             c.desbloqueada = True
             from Sistemas.SaveSystem import save_global
             save_global.desbloquear_conquista(id_conquista)
-            self.salvar()
-            # Adiciona notificação de conquista na tela
             self.notificacoes.append({
                 "nome": c.nome,
                 "icone": c.obter_icone(desbloqueada=True, tamanho=(40, 40)),
-                "tempo": 220,  # ~3.5 segundos a 60 fps
+                "tempo": 220,
                 "y_anim": -70
             })
             return True
@@ -148,7 +140,6 @@ class SistemaConquistas:
         return len(self.conquistas)
 
     def resetar_todas(self):
-        """Bloqueia novamente todas as conquistas e salva o estado."""
         for c in self.conquistas:
             c.desbloqueada = False
         self.salvar()
@@ -174,21 +165,17 @@ class SistemaConquistas:
             x = (tela.get_width() - 360) // 2
             rect_banner = pygame.Rect(x, y, 360, 56)
 
-            # Sombra e fundo
             pygame.draw.rect(tela, (15, 15, 20), (rect_banner.x + 3, rect_banner.y + 3, rect_banner.width, rect_banner.height), border_radius=10)
             pygame.draw.rect(tela, (30, 36, 50), rect_banner, border_radius=10)
             pygame.draw.rect(tela, (230, 190, 60), rect_banner, width=2, border_radius=10)
 
-            # Ícone
             icone = notif.get("icone")
             if icone:
                 tela.blit(icone, (rect_banner.x + 10, rect_banner.y + 8))
 
-            # Textos
             txt_topo = self.fonte_sub.render("🏆 CONQUISTA DESBLOQUEADA!", True, (255, 215, 0))
             txt_nome = self.fonte_notificacao.render(notif["nome"], True, (255, 255, 255))
             tela.blit(txt_topo, (rect_banner.x + 60, rect_banner.y + 8))
             tela.blit(txt_nome, (rect_banner.x + 60, rect_banner.y + 28))
-
 
 sistema_conquistas = SistemaConquistas()

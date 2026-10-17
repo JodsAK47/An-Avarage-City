@@ -1,6 +1,8 @@
 import pygame
 from Sistemas.SistemaUI import Botao
 from Sistemas.Fontes import obter_fonte
+from Sistemas.SaveSystem import save_global
+from Sistemas.Conquistas import sistema_conquistas
 from Entidades.Personagem import personagem
 from Sistemas.Recursos import caminho_botao, caminho_dados
 
@@ -13,7 +15,6 @@ def carregar_arvores():
     try:
         with open(caminho_dados("arvores.json"), "r", encoding="utf-8") as f:
             dados = json.load(f)
-            # Converter listas de posição para tuplas
             for verso, arvore in dados.items():
                 for hab in arvore:
                     if isinstance(hab.get("pos"), list):
@@ -45,7 +46,6 @@ SPRITES_POR_VERSO = {
     "Feiticeiro": "SOCERERC.png",
 }
 
-
 class GerenciadorVerso:
     def __init__(self, tela):
         self.tela = tela
@@ -56,14 +56,15 @@ class GerenciadorVerso:
         self.aviso = ""
         self.voltar_clicado = False
 
-        from SaveSystem import save_global
         self.pontos = save_global.obter_pontos()
         self.verso_atual = "Sobrevivente"
+        self.verso_ativo = None
+        self.modo = "menu"
         self.habilidades_desbloqueadas = []
         self.habilidade_foco = None
         self.arvores_por_verso = {verso: arvore[:] for verso, arvore in ARVORE_POR_VERSO.items()}
         self.versos = ["Sobrevivente", "Agente", "Feiticeiro"]
-        self.progresso_por_verso = {verso: [] for verso in self.versos}
+        self.progresso_por_verso = {verso: list(save_global.obter_progresso_verso(verso)) for verso in self.versos}
         self.sincronizar_habilidades_ativas()
 
         self.botao_voltar = Botao(
@@ -100,29 +101,53 @@ class GerenciadorVerso:
             return None
 
     def sincronizar_habilidades_ativas(self):
-        from SaveSystem import save_global
         self.pontos = save_global.obter_pontos()
+        progresso_salvo = save_global.obter_progresso_versos()
+        for v in self.versos:
+            if v in progresso_salvo:
+                self.progresso_por_verso[v] = list(progresso_salvo[v])
         self.progresso_por_verso.setdefault(self.verso_atual, [])
         self.habilidades_desbloqueadas = list(self.progresso_por_verso.get(self.verso_atual, []))
         self.aplicar_talentos_ao_personagem()
 
-    def aplicar_talentos_ao_personagem(self, target_personagem=None):
-        alvo = target_personagem if target_personagem is not None else personagem
-        alvo.talentos = set(self.progresso_por_verso.get(self.verso_atual, []))
+    def aplicar_talentos_ao_personagem(self, personagem_alvo=None, verso=None):
+        alvo = personagem_alvo if personagem_alvo is not None else personagem
+        verso_alvo = verso if verso is not None else self.verso_atual
+        talentos_verso = list(self.progresso_por_verso.get(verso_alvo, []))
+        alvo.talentos = set(talentos_verso)
+
+        mapa_nodos = {"Sobrevivente": "S4", "Agente": "A4", "Feiticeiro": "F4"}
+        if not hasattr(alvo, "ultimates_desbloqueadas"):
+            alvo.ultimates_desbloqueadas = set()
+
+        nodo_ult = mapa_nodos.get(verso_alvo)
+        if nodo_ult and nodo_ult in talentos_verso:
+            alvo.ultimates_desbloqueadas.add(verso_alvo)
+            for c in ["Físico", "Distância", "Magia"]:
+                alvo.ultimates_desbloqueadas.add((verso_alvo, c))
+        else:
+            alvo.ultimates_desbloqueadas.discard(verso_alvo)
+            for c in ["Físico", "Distância", "Magia"]:
+                alvo.ultimates_desbloqueadas.discard((verso_alvo, c))
 
     def obter_arvore_ativa(self):
         return self.arvores_por_verso.get(self.verso_atual, self.arvores_por_verso["Sobrevivente"])
 
     def atualizar_eventos(self, evento, posicao_mouse):
         if self.botao_voltar.checar_clique(evento, posicao_mouse):
+            save_global.salvar()
             self.voltar_clicado = True
             return None
 
         if self.botao_selecionar.checar_clique(evento, posicao_mouse):
             self.aplicar_talentos_ao_personagem()
+            save_global.salvar()
+            if self.modo == "menu":
+                self.verso_ativo = self.verso_atual
+                self.aviso = f"Verso {self.verso_atual} definido como ativo!"
             return self.verso_atual
 
-        if self.botao_comprar.checar_clique(evento, posicao_mouse):
+        if self.modo == "menu" and self.botao_comprar.checar_clique(evento, posicao_mouse):
             if self.habilidade_foco:
                 if self.habilidade_foco["id"] not in self.habilidades_desbloqueadas:
                     pode_comprar = True
@@ -130,21 +155,18 @@ class GerenciadorVerso:
                         if req not in self.habilidades_desbloqueadas:
                             pode_comprar = False
                     if pode_comprar and self.pontos >= self.habilidade_foco["preco"]:
-                        from SaveSystem import save_global
                         save_global.adicionar_pontos(-self.habilidade_foco["preco"])
                         self.pontos = save_global.obter_pontos()
                         self.habilidades_desbloqueadas.append(self.habilidade_foco["id"])
                         self.progresso_por_verso[self.verso_atual] = list(self.habilidades_desbloqueadas)
+                        save_global.definir_progresso_verso(self.verso_atual, self.habilidades_desbloqueadas)
+                        save_global.salvar()
                         self.aplicar_talentos_ao_personagem()
                         self.aviso = f"Desbloqueado: {self.habilidade_foco['nome']}!"
-                        
-                        from Conquistas import sistema_conquistas
+
                         sistema_conquistas.desbloquear("primeiro_talento")
 
                         if self.habilidade_foco["id"] in {"S4", "A4", "F4"}:
-                            personagem.ultimates_desbloqueadas = set(getattr(personagem, "ultimates_desbloqueadas", set()))
-                            for classe in ["Físico", "Distância", "Magia"]:
-                                personagem.ultimates_desbloqueadas.add((self.verso_atual, classe))
                             self.aviso = f"Ultimate desbloqueada para {self.verso_atual}!"
                             sistema_conquistas.desbloquear("ultimate_desbloqueada")
             return None
@@ -159,8 +181,8 @@ class GerenciadorVerso:
 
             for hab in self.obter_arvore_ativa():
                 x, y = hab["pos"]
-                rect_hab = pygame.Rect(x - 35, y - 35, 70, 70)
-                if rect_hab.collidepoint(posicao_mouse):
+                retangulo_habilidade = pygame.Rect(x - 35, y - 35, 70, 70)
+                if retangulo_habilidade.collidepoint(posicao_mouse):
                     self.habilidade_foco = hab
                     return None
 
@@ -168,8 +190,16 @@ class GerenciadorVerso:
 
     def atualizar(self, posicao_mouse, estado_clique_mouse):
         self.botao_voltar.atualizar(posicao_mouse, estado_clique_mouse)
+        if self.modo == "visualizacao":
+            self.botao_selecionar.texto = "CONFIRMAR VERSO"
+        else:
+            if self.verso_atual == getattr(self, "verso_ativo", None):
+                self.botao_selecionar.texto = "VERSO ATIVO"
+            else:
+                self.botao_selecionar.texto = "DEFINIR COMO ATIVO"
         self.botao_selecionar.atualizar(posicao_mouse, estado_clique_mouse)
-        self.botao_comprar.atualizar(posicao_mouse, estado_clique_mouse)
+        if self.modo == "menu":
+            self.botao_comprar.atualizar(posicao_mouse, estado_clique_mouse)
 
     def _quebrar_texto(self, texto, fonte, largura_maxima):
         linhas = []
@@ -234,9 +264,9 @@ class GerenciadorVerso:
         arvore_ativa = self.obter_arvore_ativa()
 
         for hab in arvore_ativa:
-            for req_id in hab["req"]:
+            for id_requisito in hab["req"]:
                 for h in arvore_ativa:
-                    if h["id"] == req_id:
+                    if h["id"] == id_requisito:
                         cor_linha = AZUL_DESTAQUE if (hab["id"] in self.habilidades_desbloqueadas) else BORDA
                         pygame.draw.line(self.tela, cor_linha, h["pos"], hab["pos"], 4)
 
@@ -268,26 +298,43 @@ class GerenciadorVerso:
             txt_nome = self.fonte_titulo.render(self.habilidade_foco["nome"].upper(), True, TEXTO)
             self.tela.blit(txt_nome, txt_nome.get_rect(centerx=840, top=62))
 
-            y_offset = 120
+            deslocamento_y = 120
             for linha in self._quebrar_texto(self.habilidade_foco["desc"], self.fonte_desc, 240):
                 txt_desc = self.fonte_desc.render(linha, True, TEXTO_SECUNDARIO)
-                self.tela.blit(txt_desc, txt_desc.get_rect(centerx=840, top=y_offset))
-                y_offset += 22
+                self.tela.blit(txt_desc, txt_desc.get_rect(centerx=840, top=deslocamento_y))
+                deslocamento_y += 22
 
-            estado_txt = "BLOQUEADO"
+            texto_estado = "BLOQUEADO"
             if self.habilidade_foco["id"] in self.habilidades_desbloqueadas:
-                estado_txt = "DESBLOQUEADO"
-            txt_estado = self.fonte_desc.render(estado_txt, True, AZUL_DESTAQUE)
-            self.tela.blit(txt_estado, txt_estado.get_rect(centerx=840, top=y_offset + 18))
+                texto_estado = "DESBLOQUEADO"
+            txt_estado = self.fonte_desc.render(texto_estado, True, AZUL_DESTAQUE)
+            self.tela.blit(txt_estado, txt_estado.get_rect(centerx=840, top=deslocamento_y + 18))
 
         else:
-            txt_nada = self.fonte_desc.render("Selecione um poder", True, TEXTO_SECUNDARIO)
-            self.tela.blit(txt_nada, txt_nada.get_rect(centerx=840, top=62))
+            txt_nome = self.fonte_titulo.render(self.verso_atual.upper(), True, CORES_VERSO.get(self.verso_atual, TEXTO))
+            self.tela.blit(txt_nome, txt_nome.get_rect(centerx=840, top=62))
 
-        pygame.draw.rect(self.tela, FUNDO, (712, 470, 256, 40))
-        txt_pontos = self.fonte_titulo.render(f"PONTOS: {self.pontos}", True, TEXTO)
-        self.tela.blit(txt_pontos, txt_pontos.get_rect(center=(840, 490)))
+            descricoes = {
+                "Sobrevivente": "Resiliente e adaptável. Especialista em sobrevivência, defesa e resistência.",
+                "Agente": "Ágil, preciso e letal. Focado em velocidade, ataques críticos e táticas avançadas.",
+                "Feiticeiro": "Místico e destruidor. Canaliza energia arcana e conjura magias de alto impacto.",
+            }
+            desc = descricoes.get(self.verso_atual, "Selecione uma habilidade para ver detalhes.")
+            deslocamento_y = 110
+            for linha in self._quebrar_texto(desc, self.fonte_desc, 240):
+                txt_desc = self.fonte_desc.render(linha, True, TEXTO_SECUNDARIO)
+                self.tela.blit(txt_desc, txt_desc.get_rect(centerx=840, top=deslocamento_y))
+                deslocamento_y += 22
 
-        self.botao_comprar.desenhar(self.tela)
+            dica = "Clique nas habilidades para inspecionar."
+            txt_dica = self.fonte_desc.render(dica, True, (140, 160, 180))
+            self.tela.blit(txt_dica, txt_dica.get_rect(centerx=840, top=deslocamento_y + 15))
+
+        if self.modo == "menu":
+            pygame.draw.rect(self.tela, FUNDO, (712, 470, 256, 40))
+            txt_pontos = self.fonte_titulo.render(f"PONTOS: {self.pontos}", True, TEXTO)
+            self.tela.blit(txt_pontos, txt_pontos.get_rect(center=(840, 490)))
+            self.botao_comprar.desenhar(self.tela)
+
         self.botao_selecionar.desenhar(self.tela)
         self.botao_voltar.desenhar(self.tela)

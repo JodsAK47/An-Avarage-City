@@ -3,13 +3,11 @@ from Sistemas.Recursos import caminho_fonte
 
 CAMINHO_FONTE = caminho_fonte("Minecraftia-Regular.ttf")
 
-
 def obter_fonte(tamanho):
     try:
         return pygame.font.Font(CAMINHO_FONTE, tamanho)
     except (pygame.error, FileNotFoundError):
         return pygame.font.SysFont(["consolas", "courier"], tamanho, bold=True)
-
 
 def quebrar_texto(texto, fonte, largura_maxima):
     palavras = texto.split()

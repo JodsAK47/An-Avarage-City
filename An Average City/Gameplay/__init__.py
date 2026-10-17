@@ -9,7 +9,11 @@ from .GeracaoFases import (
     FaseAleatoria,
     GeradorFase,
     BANCO_INIMIGOS,
+    BANCO_EVENTOS,
     _criar_inimigo_a_partir_template,
+    obter_evento_por_nome,
+    obter_dialogo_evento,
+    executar_efeito_evento,
 )
 
 __all__ = [
@@ -21,5 +25,9 @@ __all__ = [
     "FaseAleatoria",
     "GeradorFase",
     "BANCO_INIMIGOS",
+    "BANCO_EVENTOS",
     "_criar_inimigo_a_partir_template",
+    "obter_evento_por_nome",
+    "obter_dialogo_evento",
+    "executar_efeito_evento",
 ]

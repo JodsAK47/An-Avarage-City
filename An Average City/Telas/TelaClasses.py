@@ -16,7 +16,6 @@ CORES_CLASSES = {
     "Magia": (128, 78, 168),
 }
 
-
 class GerenciadorClasses:
     def __init__(self, tela):
         self.tela = tela
@@ -73,6 +72,10 @@ class GerenciadorClasses:
 
         subtitulo = self.fonte_desc.render("Escolha a forma de combate do seu personagem.", True, TEXTO_SECUNDARIO)
         self.tela.blit(subtitulo, subtitulo.get_rect(center=(500, 110)))
+
+        if getattr(self, "aviso", None):
+            aviso_txt = self.fonte_desc.render(self.aviso, True, (255, 230, 100))
+            self.tela.blit(aviso_txt, aviso_txt.get_rect(center=(500, 145)))
 
         for nome in self.opcoes:
             rect = self.rects[nome]

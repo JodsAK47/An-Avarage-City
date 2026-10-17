@@ -3,7 +3,7 @@
         "id": "primeiro_sangue",
         "nome": "Primeiro Sangue",
         "como_liberar": "Derrote qualquer inimigo em um combate.",
-        "icone": "Maldição1.png",
+        "icone": "Maldicao1.png",
         "desbloqueada": false
     },
     {
@@ -11,7 +11,7 @@
         "nome": "Sobrevivente Nato",
         "como_liberar": "Vença uma batalha usando o verso Sobrevivente.",
         "icone": "SURVIVORC.png",
-        "desbloqueada": true
+        "desbloqueada": false
     },
     {
         "id": "vitoria_agente",

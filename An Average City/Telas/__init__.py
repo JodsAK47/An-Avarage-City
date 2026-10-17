@@ -11,6 +11,10 @@ from .TelaCenarios import GerenciadorSelecao
 from .TelaDescanco import GerenciadorPosLuta
 from .TelaDialogo import GerenciadorDialogo
 from .TelaInventario import TelaInventario
+from .TelaConfiguracoes import GerenciadorConfiguracoesTela
+from .TelaPosDialogo import GerenciadorPosDialogo
+
+TelaConfiguracoes = GerenciadorConfiguracoesTela
 
 __all__ = [
     "GerenciadorMenu",
@@ -26,4 +30,7 @@ __all__ = [
     "GerenciadorPosLuta",
     "GerenciadorDialogo",
     "TelaInventario",
+    "GerenciadorConfiguracoesTela",
+    "TelaConfiguracoes",
+    "GerenciadorPosDialogo",
 ]

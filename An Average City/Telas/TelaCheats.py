@@ -6,7 +6,6 @@ from Sistemas.SaveSystem import save_global
 from Sistemas.Conquistas import sistema_conquistas
 from Entidades.Personagem import personagem
 
-# Cores tema Hacker / Esgoto Neon
 FUNDO = (14, 18, 22)
 PAINEL = (22, 28, 36)
 PAINEL_CARD = (30, 38, 48)
@@ -20,7 +19,6 @@ TEXTO_CLARO = (240, 245, 250)
 TEXTO_CINZA = (150, 165, 180)
 BORDA_PAINEL = (45, 60, 75)
 
-
 class GerenciadorCheatsTela:
     def __init__(self, tela):
         self.tela = tela
@@ -31,10 +29,9 @@ class GerenciadorCheatsTela:
         self.fonte_mini = obter_fonte(11)
 
         self.voltar_clicado = False
-        self.msg_feedback = "Terminal pronto. Selecione uma função."
+        self.mensagem_feedback = "Terminal pronto. Selecione uma função."
         self.cor_feedback = VERDE_NEON
 
-        # Botões principais de Cheats
         self.btn_pontos = Botao(
             60, 140, 390, 50, "+999.999 PONTOS INFINITOS",
             (25, 55, 45), (35, 85, 65), 395, 54,
@@ -66,14 +63,13 @@ class GerenciadorCheatsTela:
             sprite_base_path="BACK.png", sprite_hover_path="BACK.png", sprite_clique_path="BACK.png"
         )
 
-        # Definição do catálogo de Skins
         self.catalogo_skins = [
             {"nome": "Pixil Clássico", "arquivo": "pixil.png", "desc": "Visual tradicional"},
             {"nome": "Campeão Dourado", "arquivo": "pixil_ouro.png", "desc": "Armadura de Ouro puro"},
             {"nome": "Agente Cibernético", "arquivo": "pixil_cyber.png", "desc": "Tecnologia de ponta neon"},
             {"nome": "Guerreiro Sombrio", "arquivo": "pixil_sombra.png", "desc": "Energia do Vazio"},
             {"nome": "Sukuna (Chefe)", "arquivo": "Sukuna1.png", "desc": "O Rei das Maldições"},
-            {"nome": "Maldição Espiritual", "arquivo": "Maldição1.png", "desc": "Espírito amaldiçoado"},
+            {"nome": "Maldição Espiritual", "arquivo": "Maldicao1.png", "desc": "Espírito amaldiçoado"},
         ]
 
         self.miniaturas_skins = {}
@@ -94,13 +90,11 @@ class GerenciadorCheatsTela:
             self.voltar_clicado = True
             return "menu"
 
-        # Clique em Pontos Infinitos
         if self.btn_pontos.checar_clique(evento, posicao_mouse):
             save_global.adicionar_pontos(999999)
-            self.msg_feedback = "✓ +999.999 Pontos adicionados com sucesso ao Save!"
+            self.mensagem_feedback = "✓ +999.999 Pontos adicionados com sucesso ao Save!"
             self.cor_feedback = VERDE_NEON
 
-        # Clique em God Mode
         if self.btn_godmode.checar_clique(evento, posicao_mouse):
             personagem.god_mode = not getattr(personagem, 'god_mode', False)
             if personagem.god_mode:
@@ -110,7 +104,7 @@ class GerenciadorCheatsTela:
                 personagem.mp = 99
                 self.btn_godmode.texto = "GOD MODE: ATIVADO (ON)"
                 self.btn_godmode.cor_texto = VERDE_NEON
-                self.msg_feedback = "⚡ MODO DEUS ATIVADO! (Invencível + 999 HP + Mana Infinita)"
+                self.mensagem_feedback = "⚡ MODO DEUS ATIVADO! (Invencível + 999 HP + Mana Infinita)"
                 self.cor_feedback = VERDE_NEON
             else:
                 personagem.max_hp = 100
@@ -119,19 +113,17 @@ class GerenciadorCheatsTela:
                 personagem.mp = 10
                 self.btn_godmode.texto = "GOD MODE: DESATIVADO"
                 self.btn_godmode.cor_texto = ROXO_NEON
-                self.msg_feedback = "Modo Deus desativado. Vida e mana normalizadas."
+                self.mensagem_feedback = "Modo Deus desativado. Vida e mana normalizadas."
                 self.cor_feedback = TEXTO_CINZA
 
-        # Clique em Desbloquear Todas Conquistas
         if self.btn_conquistas.checar_clique(evento, posicao_mouse):
             for c in sistema_conquistas.conquistas:
                 c.desbloqueada = True
                 save_global.desbloquear_conquista(c.id)
             sistema_conquistas.salvar()
-            self.msg_feedback = "🏆 Todas as 14 conquistas foram desbloqueadas e salvas!"
+            self.mensagem_feedback = "🏆 Todas as 14 conquistas foram desbloqueadas e salvas!"
             self.cor_feedback = AMARELO_OURO
 
-        # Clique em Restaurar Padrões
         if self.btn_restaurar.checar_clique(evento, posicao_mouse):
             personagem.god_mode = False
             personagem.max_hp = 100
@@ -141,10 +133,9 @@ class GerenciadorCheatsTela:
             self.btn_godmode.texto = "GOD MODE: DESATIVADO"
             self.btn_godmode.cor_texto = ROXO_NEON
             personagem.trocar_skin("pixil.png")
-            self.msg_feedback = "Padrões restaurados (God Mode desativado e skin padrão aplicada)."
+            self.mensagem_feedback = "Padrões restaurados (God Mode desativado e skin padrão aplicada)."
             self.cor_feedback = TEXTO_CLARO
 
-        # Clique no seletor de skins
         if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
             x_ini = 510
             y_ini = 270
@@ -154,7 +145,7 @@ class GerenciadorCheatsTela:
                 rect_skin = pygame.Rect(x_ini + col * 220, y_ini + lin * 110, 205, 95)
                 if rect_skin.collidepoint(posicao_mouse):
                     personagem.trocar_skin(s["arquivo"])
-                    self.msg_feedback = f"🎭 Skin '{s['nome']}' equipada com sucesso!"
+                    self.mensagem_feedback = f"🎭 Skin '{s['nome']}' equipada com sucesso!"
                     self.cor_feedback = CIANO
 
         return None
@@ -166,7 +157,6 @@ class GerenciadorCheatsTela:
         self.btn_restaurar.atualizar(posicao_mouse, estado_clique_mouse)
         self.btn_voltar.atualizar(posicao_mouse, estado_clique_mouse)
 
-        # Manter texto do botão de god mode atualizado
         if getattr(personagem, 'god_mode', False):
             self.btn_godmode.texto = "GOD MODE: ATIVADO (ON)"
             self.btn_godmode.cor_texto = VERDE_NEON
@@ -177,7 +167,6 @@ class GerenciadorCheatsTela:
     def desenhar(self):
         self.tela.fill(FUNDO)
 
-        # Cabeçalho Cyberpunk / Hacker
         pygame.draw.rect(self.tela, PAINEL, (40, 20, 920, 60), border_radius=8)
         pygame.draw.rect(self.tela, VERDE_NEON, (40, 20, 920, 60), width=2, border_radius=8)
 
@@ -186,9 +175,6 @@ class GerenciadorCheatsTela:
         self.tela.blit(txt_tit, (60, 28))
         self.tela.blit(txt_sub, (60, 56))
 
-        # -------------------------------------------------------------
-        # 1. PAINEL DA ESQUERDA: CHEATS GERAIS
-        # -------------------------------------------------------------
         rect_painel_esq = pygame.Rect(40, 100, 430, 590)
         pygame.draw.rect(self.tela, PAINEL, rect_painel_esq, border_radius=8)
         pygame.draw.rect(self.tela, BORDA_PAINEL, rect_painel_esq, width=2, border_radius=8)
@@ -201,10 +187,9 @@ class GerenciadorCheatsTela:
         self.btn_conquistas.desenhar(self.tela)
         self.btn_restaurar.desenhar(self.tela)
 
-        # Painel de Status do Jogador / Save
-        rect_status_box = pygame.Rect(60, 430, 390, 240)
-        pygame.draw.rect(self.tela, (18, 22, 28), rect_status_box, border_radius=6)
-        pygame.draw.rect(self.tela, BORDA_PAINEL, rect_status_box, width=1, border_radius=6)
+        retangulo_caixa_status = pygame.Rect(60, 430, 390, 240)
+        pygame.draw.rect(self.tela, (18, 22, 28), retangulo_caixa_status, border_radius=6)
+        pygame.draw.rect(self.tela, BORDA_PAINEL, retangulo_caixa_status, width=1, border_radius=6)
 
         lbl_stats = self.fonte_sub.render("STATUS ATUAL DO SISTEMA:", True, CIANO)
         self.tela.blit(lbl_stats, (75, 442))
@@ -229,9 +214,6 @@ class GerenciadorCheatsTela:
             self.tela.blit(surf_info, (75, y_lin))
             y_lin += 26
 
-        # -------------------------------------------------------------
-        # 2. PAINEL DA DIREITA: SELETOR DE SKINS
-        # -------------------------------------------------------------
         rect_painel_dir = pygame.Rect(490, 100, 470, 590)
         pygame.draw.rect(self.tela, PAINEL, rect_painel_dir, border_radius=8)
         pygame.draw.rect(self.tela, BORDA_PAINEL, rect_painel_dir, width=2, border_radius=8)
@@ -239,21 +221,18 @@ class GerenciadorCheatsTela:
         lbl_sec2 = self.fonte_status.render("ARMÁRIO DE SKINS DO PERSONAGEM", True, CIANO)
         self.tela.blit(lbl_sec2, (510, 115))
 
-        # Preview da Skin Atual
-        frame_preview = pygame.Rect(510, 145, 100, 110)
-        pygame.draw.rect(self.tela, (18, 22, 28), frame_preview, border_radius=8)
-        pygame.draw.rect(self.tela, CIANO, frame_preview, width=2, border_radius=8)
+        quadro_previo = pygame.Rect(510, 145, 100, 110)
+        pygame.draw.rect(self.tela, (18, 22, 28), quadro_previo, border_radius=8)
+        pygame.draw.rect(self.tela, CIANO, quadro_previo, width=2, border_radius=8)
 
         skin_atual = getattr(personagem, 'nome_imagem', 'pixil.png')
         if skin_atual in self.miniaturas_skins:
-            surf_preview = self.miniaturas_skins[skin_atual]["grande"]
-            # Encaixa no frame
-            surf_preview_peq = pygame.transform.scale(surf_preview, (80, 95))
-            self.tela.blit(surf_preview_peq, (frame_preview.x + 10, frame_preview.y + 7))
+            superficie_previa = self.miniaturas_skins[skin_atual]["grande"]
+            superficie_previa_pequena = pygame.transform.scale(superficie_previa, (80, 95))
+            self.tela.blit(superficie_previa_pequena, (quadro_previo.x + 10, quadro_previo.y + 7))
 
-        txt_prev_nome = self.fonte_status.render("EQUIPADA AGORA:", True, TEXTO_CINZA)
-        self.tela.blit(txt_prev_nome, (625, 160))
-        # Encontra o nome amigável
+        txt_previa_nome = self.fonte_status.render("EQUIPADA AGORA:", True, TEXTO_CINZA)
+        self.tela.blit(txt_previa_nome, (625, 160))
         nome_skin_amigavel = skin_atual
         for s in self.catalogo_skins:
             if s["arquivo"] == skin_atual:
@@ -264,7 +243,6 @@ class GerenciadorCheatsTela:
         txt_dica_skin = self.fonte_mini.render("Clique em qualquer skin abaixo para vestir:", True, TEXTO_CINZA)
         self.tela.blit(txt_dica_skin, (625, 218))
 
-        # Grade de Skins (2 colunas x 3 linhas)
         x_ini = 510
         y_ini = 270
         for idx, s in enumerate(self.catalogo_skins):
@@ -280,12 +258,10 @@ class GerenciadorCheatsTela:
             pygame.draw.rect(self.tela, cor_bg, rect_skin, border_radius=8)
             pygame.draw.rect(self.tela, cor_borda, rect_skin, width=largura_b, border_radius=8)
 
-            # Miniatura
             if s["arquivo"] in self.miniaturas_skins:
                 mini = self.miniaturas_skins[s["arquivo"]]["mini"]
                 self.tela.blit(mini, (rect_skin.x + 8, rect_skin.y + 16))
 
-            # Nome e Descrição
             cor_titulo_s = VERDE_NEON if esta_equipada else TEXTO_CLARO
             txt_n = self.fonte_sub.render(s["nome"], True, cor_titulo_s)
             self.tela.blit(txt_n, (rect_skin.x + 72, rect_skin.y + 16))
@@ -300,16 +276,13 @@ class GerenciadorCheatsTela:
                 txt_eq = self.fonte_mini.render("[ USAR ]", True, CIANO)
                 self.tela.blit(txt_eq, (rect_skin.x + 72, rect_skin.y + 68))
 
-        # -------------------------------------------------------------
-        # 3. BARRA INFERIOR COM MENSAGEM DE FEEDBACK E BOTÃO VOLTAR
-        # -------------------------------------------------------------
         pygame.draw.rect(self.tela, (18, 24, 32), (40, 710, 660, 58), border_radius=6)
         pygame.draw.rect(self.tela, BORDA_PAINEL, (40, 710, 660, 58), width=1, border_radius=6)
 
         txt_prompt = self.fonte_mini.render("> CONSOLE:", True, CIANO)
         self.tela.blit(txt_prompt, (55, 720))
 
-        surf_fb = self.fonte_sub.render(self.msg_feedback, True, self.cor_feedback)
+        surf_fb = self.fonte_sub.render(self.mensagem_feedback, True, self.cor_feedback)
         self.tela.blit(surf_fb, (55, 740))
 
         self.btn_voltar.desenhar(self.tela)

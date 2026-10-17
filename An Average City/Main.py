@@ -2,18 +2,9 @@ import os
 import sys
 from pathlib import Path
 
-# Configuração robusta do sys.path para garantir resolução em qualquer ambiente
 DIRETORIO_RAIZ = Path(__file__).resolve().parent
-for pasta in [
-    DIRETORIO_RAIZ,
-    DIRETORIO_RAIZ / "Telas",
-    DIRETORIO_RAIZ / "Sistemas",
-    DIRETORIO_RAIZ / "Gameplay",
-    DIRETORIO_RAIZ / "Entidades",
-]:
-    p_str = str(pasta)
-    if p_str not in sys.path:
-        sys.path.insert(0, p_str)
+if str(DIRETORIO_RAIZ) not in sys.path:
+    sys.path.insert(0, str(DIRETORIO_RAIZ))
 
 import pygame
 from Telas import (
@@ -30,25 +21,31 @@ from Telas import (
     GerenciadorPosLuta,
     GerenciadorDialogo,
     TelaInventario,
+    GerenciadorConfiguracoesTela,
+    GerenciadorPosDialogo,
 )
 from Sistemas import (
     save_global,
     sistema_conquistas,
     inventario_global,
     caminho_musica,
+    sistema_config,
 )
 from Entidades import personagem
+from Gameplay import obter_dialogo_evento
 
 pygame.init()
 pygame.mixer.init()
 
 LARGURA = 1000
 ALTURA = 800
-tela_real = pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
 tela = pygame.Surface((LARGURA, ALTURA))
+tela_cheia = sistema_config.obter_tela_cheia()
+tela_real = sistema_config.aplicar_video()
+if tela_real is None:
+    tela_real = pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
 pygame.display.set_caption("Menu RPG")
-clock = pygame.time.Clock()
-tela_cheia = False
+relogio = pygame.time.Clock()
 
 menu_tela = GerenciadorMenu(tela)
 jogo_tela = GerenciadorJogo(tela)
@@ -61,18 +58,21 @@ classes_tela = GerenciadorClasses(tela)
 verso_tela = GerenciadorVerso(tela)
 pos_luta_tela = GerenciadorPosLuta(tela)
 dialogo_tela = GerenciadorDialogo(tela)
+pos_dialogo_tela = GerenciadorPosDialogo(tela)
 vitoria_tela = GerenciadorVitoria(tela)
 inventario_tela = TelaInventario(tela)
+config_tela = GerenciadorConfiguracoesTela(tela)
 
-player1_class = None
-player2_class = None
-classes_target = None
+classe_jogador1 = None
+classe_jogador2 = None
+alvo_classes = None
+verso_menu_selecionado = None
 
 def tocar_musica(nome_arquivo):
     pygame.mixer.music.stop()
     try:
         pygame.mixer.music.load(caminho_musica(nome_arquivo))
-        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.set_volume(sistema_config.obter_volume_musica_efetivo())
         pygame.mixer.music.play(-1)
     except pygame.error as erro:
         print(f"⚠️ Aviso: Não foi possível tocar '{nome_arquivo}'.")
@@ -83,6 +83,8 @@ estado = "menu"
 rodando = True
 
 def reiniciar_para_menu():
+    global alvo_classes
+    alvo_classes = None
     from Sistemas.Inventario import inventario_global
     inventario_global.resetar()
     personagem.resetar()
@@ -92,6 +94,8 @@ def reiniciar_para_menu():
     jogo_tela.duas_pessoas = False
     jogo_tela.personagem2 = None
     jogo_tela.classe_jogador2 = None
+    menu_tela.duas_pessoas = False
+    menu_tela.switch_2p.ativo = False
     tocar_musica("Menu.mp3")
     return "menu"
 
@@ -103,45 +107,65 @@ def registrar_pontos_partida():
     return pontos_partida
 
 def tratar_eventos_menu(evento, posicao_mouse):
-    global estado, rodando, classes_target
+    global estado, rodando, alvo_classes, verso_menu_selecionado
     botoes_menu = menu_tela.botoes
 
     if botoes_menu["jogar"].checar_clique(evento, posicao_mouse):
-        verso_ja_selecionado = getattr(jogo_tela, 'classe_atual', 'Nenhuma') != 'Nenhuma'
+        verso_escolhido_anteriormente = verso_menu_selecionado or (
+            jogo_tela.classe_atual if getattr(jogo_tela, 'classe_atual', 'Nenhuma') != 'Nenhuma' else None
+        )
         if getattr(menu_tela, 'duas_pessoas', False):
-            if verso_ja_selecionado:
-                classes_target = 1
-                classes_tela.aviso = "Escolha CLASSE para JOGADOR 1"
+            if verso_escolhido_anteriormente:
+                jogo_tela.classe_atual = verso_escolhido_anteriormente
+                alvo_classes = 1
+                classes_tela.aviso = f"J1: {verso_escolhido_anteriormente} | Escolha CLASSE para JOGADOR 1"
                 return "classes"
-            classes_target = None
+            alvo_classes = 1
+            verso_tela.modo = "visualizacao"
             verso_tela.verso_atual = "Sobrevivente"
+            verso_tela.aviso = "Escolha o Verso para JOGADOR 1"
             return "verso"
         else:
-            if verso_ja_selecionado:
-                classes_target = 1
-                classes_tela.aviso = "Escolha SUA CLASSE"
+            if verso_escolhido_anteriormente:
+                jogo_tela.classe_atual = verso_escolhido_anteriormente
+                alvo_classes = 1
+                classes_tela.aviso = f"Verso: {verso_escolhido_anteriormente} | Escolha SUA CLASSE"
                 return "classes"
-            classes_target = None
+            alvo_classes = 1
+            verso_tela.modo = "visualizacao"
             verso_tela.verso_atual = "Sobrevivente"
+            verso_tela.aviso = "Escolha seu Verso"
             return "verso"
 
     if botoes_menu["classe"].checar_clique(evento, posicao_mouse):
-        verso_tela.verso_atual = getattr(jogo_tela, 'classe_atual', 'Sobrevivente') if getattr(jogo_tela, 'classe_atual', 'Nenhuma') != 'Nenhuma' else 'Sobrevivente'
+        verso_tela.modo = "menu"
+        verso_ativo = verso_menu_selecionado or (
+            jogo_tela.classe_atual if getattr(jogo_tela, 'classe_atual', 'Nenhuma') != 'Nenhuma' else None
+        )
+        verso_tela.verso_ativo = verso_ativo
+        verso_tela.verso_atual = verso_ativo if verso_ativo else "Sobrevivente"
         verso_tela.pontos = save_global.obter_pontos()
         verso_tela.sincronizar_habilidades_ativas()
+        verso_tela.aviso = ""
         return "verso"
 
     if botoes_menu["conquistas"].checar_clique(evento, posicao_mouse):
         return "conquistas"
 
+    if "config" in botoes_menu and botoes_menu["config"].checar_clique(evento, posicao_mouse):
+        return "config"
+
     if menu_tela.botao_salvar.checar_clique(evento, posicao_mouse):
         save_global.salvar()
+        sistema_conquistas.salvar()
         menu_tela.mostrar_feedback("✓ JOGO SALVO COM SUCESSO!", (100, 255, 140))
         return None
 
     if menu_tela.botao_reset.checar_clique(evento, posicao_mouse):
         save_global.resetar_tudo()
         sistema_conquistas.resetar_todas()
+        verso_menu_selecionado = None
+        verso_tela.verso_ativo = None
         verso_tela.progresso_por_verso = {verso: [] for verso in verso_tela.versos}
         verso_tela.pontos = save_global.obter_pontos()
         verso_tela.sincronizar_habilidades_ativas()
@@ -175,11 +199,11 @@ def tratar_eventos_menu(evento, posicao_mouse):
     return None
 
 def tratar_eventos_classes(evento, posicao_mouse):
-    global classes_target, player1_class, player2_class
+    global alvo_classes, classe_jogador1, classe_jogador2
     escolha_classe = classes_tela.atualizar_eventos(evento, posicao_mouse)
 
     if classes_tela.voltar_clicado:
-        classes_target = None
+        alvo_classes = None
         classes_tela.voltar_clicado = False
         return "menu"
 
@@ -188,15 +212,20 @@ def tratar_eventos_classes(evento, posicao_mouse):
             verso_escolhido, classe_escolhida = escolha_classe
         else:
             classe_escolhida = escolha_classe
-            verso_escolhido = getattr(verso_tela, 'verso_atual', getattr(jogo_tela, 'classe_atual', 'Sobrevivente'))
+            verso_escolhido = getattr(jogo_tela, 'classe_atual', getattr(verso_tela, 'verso_atual', 'Sobrevivente'))
+            if verso_escolhido == "Nenhuma":
+                verso_escolhido = getattr(verso_tela, 'verso_atual', 'Sobrevivente')
 
-        if classes_target == 1:
+        target = alvo_classes if alvo_classes is not None else 1
+        if target == 1:
+            from Sistemas.Inventario import inventario_global
+            inventario_global.resetar()
             jogo_tela.configurar_classe(verso_escolhido, classe_escolhida)
-            player1_class = verso_escolhido
+            classe_jogador1 = verso_escolhido
             classes_tela.aviso = f"J1: {verso_escolhido} - {classe_escolhida}"
-            verso_tela.aplicar_talentos_ao_personagem(personagem)
+            verso_tela.aplicar_talentos_ao_personagem(personagem, verso=verso_escolhido)
             if getattr(menu_tela, 'duas_pessoas', False):
-                classes_target = 2
+                alvo_classes = 2
                 classes_tela.aviso = "Escolha CLASSE para JOGADOR 2"
                 return None
             else:
@@ -207,37 +236,55 @@ def tratar_eventos_classes(evento, posicao_mouse):
                 jogo_tela.reiniciar()
                 tocar_musica("Combate.mp3")
                 return "jogo"
-        elif classes_target == 2:
-            player2_class = verso_escolhido
+        elif target == 2:
+            classe_jogador2 = verso_escolhido
             classes_tela.aviso = f"J2: {verso_escolhido} - {classe_escolhida}"
             jogo_tela.classe_jogador2 = verso_escolhido
             jogo_tela.classe_jogador2_tipo = classe_escolhida
             jogo_tela.duas_pessoas = True
             if jogo_tela.personagem2 is not None:
-                jogo_tela.personagem2.talentos = set(verso_tela.progresso_por_verso.get(verso_escolhido, []))
+                verso_tela.aplicar_talentos_ao_personagem(jogo_tela.personagem2, verso=verso_escolhido)
             jogo_tela.reiniciar()
             tocar_musica("Combate.mp3")
             return "jogo"
         else:
+            from Sistemas.Inventario import inventario_global
+            inventario_global.resetar()
             jogo_tela.configurar_classe(verso_escolhido, classe_escolhida)
-            verso_tela.aplicar_talentos_ao_personagem(personagem)
-            return "menu"
+            verso_tela.aplicar_talentos_ao_personagem(personagem, verso=verso_escolhido)
+            jogo_tela.reiniciar()
+            tocar_musica("Combate.mp3")
+            return "jogo"
     return None
 
 def tratar_eventos_verso(evento, posicao_mouse):
+    global alvo_classes, verso_menu_selecionado
     escolha_verso = verso_tela.atualizar_eventos(evento, posicao_mouse)
 
     if verso_tela.voltar_clicado:
-        save_global.salvar()
         verso_tela.voltar_clicado = False
+        alvo_classes = None
         return "menu"
 
     if escolha_verso:
-        verso_tela.aviso = f"Verso selecionado: {escolha_verso}"
-        jogo_tela.classe_atual = escolha_verso
-        save_global.salvar()
-        verso_tela.aplicar_talentos_ao_personagem(personagem)
-        return "classes"
+        if getattr(verso_tela, "modo", "menu") == "visualizacao":
+            verso_tela.aviso = f"Verso selecionado: {escolha_verso}"
+            jogo_tela.classe_atual = escolha_verso
+            verso_tela.aplicar_talentos_ao_personagem(personagem, verso=escolha_verso)
+            alvo_classes = 1
+            if getattr(menu_tela, 'duas_pessoas', False):
+                classes_tela.aviso = f"J1: {escolha_verso} | Escolha CLASSE para JOGADOR 1"
+            else:
+                classes_tela.aviso = f"Verso: {escolha_verso} | Escolha SUA CLASSE"
+            return "classes"
+        else:
+            verso_menu_selecionado = escolha_verso
+            jogo_tela.classe_atual = escolha_verso
+            verso_tela.verso_ativo = escolha_verso
+            verso_tela.aplicar_talentos_ao_personagem(personagem, verso=escolha_verso)
+            verso_tela.aviso = f"Verso {escolha_verso} definido como ativo!"
+            save_global.salvar()
+            return None
     return None
 
 def tratar_eventos_pos_luta(evento, posicao_mouse):
@@ -247,26 +294,22 @@ def tratar_eventos_pos_luta(evento, posicao_mouse):
         pos_luta_tela.jogadores = [personagem]
 
     resultado_tela = pos_luta_tela.atualizar_eventos(evento, posicao_mouse)
-    if resultado_tela in ("continuar", "dormir"):
-        jogo_tela.recuperar_apos_batalha(dormir=resultado_tela == "dormir")
+    if resultado_tela == "continuar":
         selecao_tela.recarregar_opcoes()
         return "selecao_cenario"
     return None
 
 def tratar_eventos_selecao_cenario(evento, posicao_mouse):
     escolha_cenario = selecao_tela.atualizar_eventos(evento, posicao_mouse)
-    if escolha_cenario:
+    if escolha_cenario == "dormir":
+        jogo_tela.recuperar_apos_batalha(dormir=True)
+        jogo_tela.configurar_cenario("dormir")
+        jogo_tela.reiniciar()
+        tocar_musica(jogo_tela.musica_luta)
+        return "jogo"
+    elif escolha_cenario:
         if "evento" in escolha_cenario:
-            dados_dialogo = [
-                {
-                    "nome": "Andarilho Misterioso",
-                    "texto": "Você encontrou um evento misterioso pelo caminho.\nO que deseja fazer a seguir?",
-                    "opcoes": [
-                        {"texto": "Explorar o local", "retorno": escolha_cenario},
-                        {"texto": "Ignorar e seguir em frente", "retorno": "cancelar_evento"}
-                    ]
-                }
-            ]
+            dados_dialogo = obter_dialogo_evento(escolha_cenario)
             dialogo_tela.iniciar(dados_dialogo)
             return "dialogo"
         else:
@@ -279,14 +322,25 @@ def tratar_eventos_selecao_cenario(evento, posicao_mouse):
 def tratar_eventos_dialogo(evento, posicao_mouse):
     resultado_dialogo = dialogo_tela.atualizar_eventos(evento, posicao_mouse)
     if resultado_dialogo == "cancelar_evento":
-        jogo_tela.configurar_cenario("fase_aleatoria")
+        jogo_tela.configurar_cenario("ignorar_evento")
         jogo_tela.reiniciar()
-        tocar_musica("Combate.mp3")
+        tocar_musica(jogo_tela.musica_luta)
         return "jogo"
     elif resultado_dialogo:
-        jogo_tela.configurar_cenario(resultado_dialogo)
+        dados_efeito = jogo_tela.configurar_cenario(resultado_dialogo)
+        if dados_efeito and isinstance(dados_efeito, dict):
+            pos_dialogo_tela.configurar(dados_efeito)
+            return "pos_dialogo"
         jogo_tela.reiniciar()
-        tocar_musica("Combate.mp3")
+        tocar_musica(jogo_tela.musica_luta)
+        return "jogo"
+    return None
+
+def tratar_eventos_pos_dialogo(evento, posicao_mouse):
+    resultado_pos = pos_dialogo_tela.atualizar_eventos(evento, posicao_mouse)
+    if resultado_pos == "continuar":
+        jogo_tela.reiniciar()
+        tocar_musica(jogo_tela.musica_luta)
         return "jogo"
     return None
 
@@ -310,7 +364,21 @@ def tratar_eventos_cheats(evento, posicao_mouse):
         return "menu"
     return None
 
-DISPATCH_EVENTOS = {
+def tratar_eventos_config(evento, posicao_mouse):
+    global tela_real, tela_cheia
+    resultado_config = config_tela.atualizar_eventos(evento, posicao_mouse)
+    if resultado_config == "menu" or config_tela.voltar_clicado:
+        config_tela.voltar_clicado = False
+        return "menu"
+    elif resultado_config == "video_alterado":
+        nova_tela = pygame.display.get_surface()
+        if nova_tela is not None:
+            tela_real = nova_tela
+        tela_cheia = sistema_config.obter_tela_cheia()
+        return None
+    return None
+
+DISTRIBUIDOR_EVENTOS = {
     "menu": tratar_eventos_menu,
     "classes": tratar_eventos_classes,
     "verso": tratar_eventos_verso,
@@ -319,7 +387,9 @@ DISPATCH_EVENTOS = {
     "pos_luta": tratar_eventos_pos_luta,
     "selecao_cenario": tratar_eventos_selecao_cenario,
     "dialogo": tratar_eventos_dialogo,
+    "pos_dialogo": tratar_eventos_pos_dialogo,
     "conquistas": tratar_eventos_conquistas,
+    "config": tratar_eventos_config,
     "sewer": tratar_eventos_sewer,
     "cheats": tratar_eventos_cheats,
 }
@@ -335,6 +405,8 @@ def atualizar_estado_atual(posicao_mouse, estado_clique_mouse):
         elif resultado_jogo == "vitoria":
             registrar_pontos_partida()
             tocar_musica("Menu.mp3")
+            if hasattr(jogo_tela, 'ultimo_resultado_batalha') and jogo_tela.ultimo_resultado_batalha:
+                pos_luta_tela.definir_popup_notificacao(jogo_tela.ultimo_resultado_batalha)
             estado = "pos_luta"
         elif resultado_jogo == "fim_jogo":
             registrar_pontos_partida()
@@ -345,6 +417,8 @@ def atualizar_estado_atual(posicao_mouse, estado_clique_mouse):
                 pos_luta_tela.jogadores = [personagem, jogo_tela.personagem2]
             else:
                 pos_luta_tela.jogadores = [personagem]
+            if hasattr(jogo_tela, 'ultimo_resultado_batalha') and jogo_tela.ultimo_resultado_batalha:
+                pos_luta_tela.definir_popup_notificacao(jogo_tela.ultimo_resultado_batalha)
             tocar_musica("Menu.mp3")
             estado = "pos_luta"
         elif resultado_jogo == "batalha_encerrada":
@@ -356,11 +430,14 @@ def atualizar_estado_atual(posicao_mouse, estado_clique_mouse):
         "classes": classes_tela,
         "verso": verso_tela,
         "conquistas": conquistas_tela,
+        "config": config_tela,
         "sewer": sewer_tela,
         "cheats": cheats_tela,
         "game_over": game_over_tela,
         "tela_vitoria": vitoria_tela,
         "pos_luta": pos_luta_tela,
+        "selecao_cenario": selecao_tela,
+        "pos_dialogo": pos_dialogo_tela,
     }
     if tela_alvo := telas_atualizacao.get(estado):
         tela_alvo.atualizar(posicao_mouse, estado_clique_mouse)
@@ -371,12 +448,14 @@ def desenhar_estado_atual(posicao_mouse):
         "classes": classes_tela.desenhar,
         "verso": verso_tela.desenhar,
         "conquistas": conquistas_tela.desenhar,
+        "config": config_tela.desenhar,
         "sewer": sewer_tela.desenhar,
         "cheats": cheats_tela.desenhar,
         "jogo": lambda: jogo_tela.desenhar(posicao_mouse),
         "pos_luta": pos_luta_tela.desenhar,
         "selecao_cenario": lambda: selecao_tela.desenhar(posicao_mouse),
         "dialogo": lambda: (selecao_tela.desenhar(posicao_mouse), dialogo_tela.desenhar()),
+        "pos_dialogo": lambda: (selecao_tela.desenhar(posicao_mouse), pos_dialogo_tela.desenhar(posicao_mouse)),
         "game_over": game_over_tela.desenhar,
         "tela_vitoria": vitoria_tela.desenhar,
     }
@@ -394,12 +473,12 @@ def loop_principal():
         escala = min(largura_real / LARGURA, altura_real / ALTURA) if LARGURA > 0 and ALTURA > 0 else 1
         nova_largura = int(LARGURA * escala)
         nova_altura = int(ALTURA * escala)
-        x_offset = (largura_real - nova_largura) // 2
-        y_offset = (altura_real - nova_altura) // 2
+        deslocamento_x = (largura_real - nova_largura) // 2
+        deslocamento_y = (altura_real - nova_altura) // 2
 
         if escala > 0:
-            mx = int((posicao_mouse_real[0] - x_offset) / escala)
-            my = int((posicao_mouse_real[1] - y_offset) / escala)
+            mx = int((posicao_mouse_real[0] - deslocamento_x) / escala)
+            my = int((posicao_mouse_real[1] - deslocamento_y) / escala)
         else:
             mx, my = 0, 0
         posicao_mouse = (max(0, min(mx, LARGURA)), max(0, min(my, ALTURA)))
@@ -410,27 +489,27 @@ def loop_principal():
             elif evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_F11:
                     tela_cheia = not tela_cheia
-                    if tela_cheia:
-                        tela_real = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-                    else:
-                        tela_real = pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
-            if handler := DISPATCH_EVENTOS.get(estado):
-                novo_estado = handler(evento, posicao_mouse)
+                    sistema_config.definir_tela_cheia(tela_cheia)
+                    sistema_config.salvar()
+                    nova_tela = sistema_config.aplicar_video()
+                    if nova_tela is not None:
+                        tela_real = nova_tela
+            if manipulador := DISTRIBUIDOR_EVENTOS.get(estado):
+                novo_estado = manipulador(evento, posicao_mouse)
                 if novo_estado:
                     estado = novo_estado
 
         atualizar_estado_atual(posicao_mouse, estado_clique_mouse)
         desenhar_estado_atual(posicao_mouse)
 
-        # Notificações visuais de conquistas na tela (overlay global)
         sistema_conquistas.atualizar_notificacoes()
         sistema_conquistas.desenhar_notificacao(tela)
 
         tela_redimensionada = pygame.transform.scale(tela, (nova_largura, nova_altura))
         tela_real.fill((0, 0, 0))
-        tela_real.blit(tela_redimensionada, (x_offset, y_offset))
+        tela_real.blit(tela_redimensionada, (deslocamento_x, deslocamento_y))
         pygame.display.flip()
-        clock.tick(60)
+        relogio.tick(60)
 
     pygame.quit()
 

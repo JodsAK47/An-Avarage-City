@@ -19,7 +19,6 @@ TEXTO_BLOQUEADO = (120, 130, 145)
 VERDE_STATUS = (70, 220, 120)
 VERMELHO_STATUS = (210, 80, 80)
 
-
 class GerenciadorConquistasTela:
     def __init__(self, tela):
         self.tela = tela
@@ -70,44 +69,39 @@ class GerenciadorConquistasTela:
             self.voltar_clicado = True
             return "menu"
 
-        # Rolagem suave do mouse
         if evento.type == pygame.MOUSEWHEEL:
             if self.rect_lista.collidepoint(posicao_mouse):
                 self.scroll_alvo -= evento.y * 55
 
-        # Clique nas conquistas dentro da lista
         if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
             if self.rect_lista.collidepoint(posicao_mouse):
-                y_offset = self.rect_lista.y + 10 - int(self.scroll_y)
-                card_w = self.rect_lista.width - 24
-                card_h = 76
+                deslocamento_y = self.rect_lista.y + 10 - int(self.scroll_y)
+                largura_card = self.rect_lista.width - 24
+                altura_card = 76
                 espacamento = 10
 
                 for c in sistema_conquistas.conquistas:
-                    rect_item = pygame.Rect(self.rect_lista.x + 10, y_offset, card_w, card_h)
+                    rect_item = pygame.Rect(self.rect_lista.x + 10, deslocamento_y, largura_card, altura_card)
                     if rect_item.collidepoint(posicao_mouse):
                         self.conquista_selecionada = c
                         break
-                    y_offset += card_h + espacamento
+                    deslocamento_y += altura_card + espacamento
 
         return None
 
     def atualizar(self, posicao_mouse, estado_clique_mouse):
         self.botao_voltar.atualizar(posicao_mouse, estado_clique_mouse)
 
-        # Atualiza limite do scroll
         total_itens = len(sistema_conquistas.conquistas)
         altura_conteudo = total_itens * (76 + 10) + 20
         max_scroll = max(0, altura_conteudo - self.rect_lista.height)
 
         self.scroll_alvo = max(0.0, min(self.scroll_alvo, float(max_scroll)))
-        # Interpolação suave
         self.scroll_y += (self.scroll_alvo - self.scroll_y) * 0.35
 
     def desenhar(self):
         self.tela.fill(FUNDO)
 
-        # Cabeçalho Superior
         pygame.draw.rect(self.tela, PAINEL, (40, 20, 920, 55), border_radius=8)
         pygame.draw.rect(self.tela, BORDA_DESBLOQUEADA, (40, 20, 920, 55), width=2, border_radius=8)
 
@@ -120,25 +114,20 @@ class GerenciadorConquistasTela:
         txt_progresso = self.fonte_desc.render(f"Progresso: {desbloqueadas}/{total} ({porcentagem}%)", True, TEXTO_BRANCO)
         self.tela.blit(txt_progresso, (960 - 40 - txt_progresso.get_width(), 36))
 
-        # -------------------------------------------------------------
-        # 1. PAINEL SCROLÁVEL DA ESQUERDA (LISTA DE CONQUISTAS)
-        # -------------------------------------------------------------
         pygame.draw.rect(self.tela, PAINEL, self.rect_lista, border_radius=8)
         pygame.draw.rect(self.tela, BORDA_DESBLOQUEADA, self.rect_lista, width=2, border_radius=8)
 
-        # Superfície com clipping para recorte do scroll
         superficie_clip = self.tela.subsurface(self.rect_lista)
 
-        card_w = self.rect_lista.width - 24
-        card_h = 76
+        largura_card = self.rect_lista.width - 24
+        altura_card = 76
         espacamento = 10
         y_rel = 10 - int(self.scroll_y)
 
         for c in sistema_conquistas.conquistas:
-            rect_card_local = pygame.Rect(10, y_rel, card_w, card_h)
+            retangulo_card_local = pygame.Rect(10, y_rel, largura_card, altura_card)
 
-            # Apenas desenha se estiver visível no viewport
-            if rect_card_local.bottom >= 0 and rect_card_local.top <= self.rect_lista.height:
+            if retangulo_card_local.bottom >= 0 and retangulo_card_local.top <= self.rect_lista.height:
                 esta_ativa = c.desbloqueada
                 selecionada = (self.conquista_selecionada == c)
 
@@ -146,29 +135,25 @@ class GerenciadorConquistasTela:
                 cor_borda = BORDA_SELECIONADA if selecionada else (BORDA_DESBLOQUEADA if esta_ativa else BORDA_BLOQUEADA)
                 largura_borda = 3 if selecionada else 1
 
-                pygame.draw.rect(superficie_clip, cor_fundo_card, rect_card_local, border_radius=8)
-                pygame.draw.rect(superficie_clip, cor_borda, rect_card_local, width=largura_borda, border_radius=8)
+                pygame.draw.rect(superficie_clip, cor_fundo_card, retangulo_card_local, border_radius=8)
+                pygame.draw.rect(superficie_clip, cor_borda, retangulo_card_local, width=largura_borda, border_radius=8)
 
-                # Ícone (Colorido se desbloqueada, Preto e Branco se bloqueada)
                 icone_surf = c.obter_icone(desbloqueada=esta_ativa, tamanho=(52, 52))
-                superficie_clip.blit(icone_surf, (rect_card_local.x + 10, rect_card_local.y + 12))
+                superficie_clip.blit(icone_surf, (retangulo_card_local.x + 10, retangulo_card_local.y + 12))
 
-                # Nome
                 cor_texto_nome = TEXTO_BRANCO if esta_ativa else TEXTO_BLOQUEADO
                 txt_nome = self.fonte_nome.render(c.nome, True, cor_texto_nome)
-                superficie_clip.blit(txt_nome, (rect_card_local.x + 72, rect_card_local.y + 14))
+                superficie_clip.blit(txt_nome, (retangulo_card_local.x + 72, retangulo_card_local.y + 14))
 
-                # Status Badge
                 if esta_ativa:
                     txt_st = self.fonte_status.render("✓ DESBLOQUEADA", True, VERDE_STATUS)
                 else:
                     txt_st = self.fonte_status.render("🔒 BLOQUEADA", True, TEXTO_BLOQUEADO)
-                superficie_clip.blit(txt_st, (rect_card_local.x + 72, rect_card_local.y + 44))
+                superficie_clip.blit(txt_st, (retangulo_card_local.x + 72, retangulo_card_local.y + 44))
 
-            y_rel += card_h + espacamento
+            y_rel += altura_card + espacamento
 
-        # Barra de rolagem visual
-        total_altura_conteudo = len(sistema_conquistas.conquistas) * (card_h + espacamento) + 20
+        total_altura_conteudo = len(sistema_conquistas.conquistas) * (altura_card + espacamento) + 20
         if total_altura_conteudo > self.rect_lista.height:
             trilho_h = self.rect_lista.height - 16
             proporcao = self.rect_lista.height / total_altura_conteudo
@@ -178,9 +163,6 @@ class GerenciadorConquistasTela:
             rect_polegar = pygame.Rect(self.rect_lista.right - 10, self.rect_lista.y + 8 + pos_y_polegar, 5, polegar_h)
             pygame.draw.rect(self.tela, OURO, rect_polegar, border_radius=3)
 
-        # -------------------------------------------------------------
-        # 2. PAINEL DE DETALHES DA DIREITA (ÍCONE, NOME E COMO LIBERAR)
-        # -------------------------------------------------------------
         pygame.draw.rect(self.tela, PAINEL_DETALHES, self.rect_detalhes, border_radius=8)
         pygame.draw.rect(self.tela, BORDA_DESBLOQUEADA, self.rect_detalhes, width=2, border_radius=8)
 
@@ -188,29 +170,24 @@ class GerenciadorConquistasTela:
             c = self.conquista_selecionada
             esta_ativa = c.desbloqueada
 
-            # Moldura grande do ícone
             frame_icone = pygame.Rect(self.rect_detalhes.centerx - 70, self.rect_detalhes.y + 30, 140, 140)
             cor_moldura = OURO if esta_ativa else BORDA_BLOQUEADA
             pygame.draw.rect(self.tela, (20, 24, 32), frame_icone, border_radius=12)
             pygame.draw.rect(self.tela, cor_moldura, frame_icone, width=3, border_radius=12)
 
-            # Ícone grande (Colorido se desbloqueada, Preto e Branco se bloqueada)
             icone_grande = c.obter_icone(desbloqueada=esta_ativa, tamanho=(110, 110))
             rect_icone_grande = icone_grande.get_rect(center=frame_icone.center)
             self.tela.blit(icone_grande, rect_icone_grande)
 
-            # Badge de Estado abaixo do ícone
             if esta_ativa:
                 txt_badge = self.fonte_nome.render("★ CONQUISTADA ★", True, OURO)
             else:
                 txt_badge = self.fonte_nome.render("🔒 NÃO OBTIDA (P&B)", True, TEXTO_BLOQUEADO)
             self.tela.blit(txt_badge, txt_badge.get_rect(center=(self.rect_detalhes.centerx, frame_icone.bottom + 25)))
 
-            # Linha divisória
             y_div = frame_icone.bottom + 50
             pygame.draw.line(self.tela, BORDA_BLOQUEADA, (self.rect_detalhes.x + 30, y_div), (self.rect_detalhes.right - 30, y_div), 2)
 
-            # Nome da Conquista
             y_cursor = y_div + 20
             cor_nome = OURO if esta_ativa else TEXTO_BRANCO
             for linha in self._quebrar_texto(c.nome.upper(), self.fonte_titulo, self.rect_detalhes.width - 60):
@@ -218,22 +195,19 @@ class GerenciadorConquistasTela:
                 self.tela.blit(surf_l, surf_l.get_rect(centerx=self.rect_detalhes.centerx, top=y_cursor))
                 y_cursor += 26
 
-            # Seção: "COMO LIBERAR"
             y_cursor += 15
             txt_sec = self.fonte_status.render("COMO LIBERAR:", True, OURO)
             self.tela.blit(txt_sec, (self.rect_detalhes.x + 35, y_cursor))
             y_cursor += 22
 
-            # Caixa com a descrição de como liberá-la
-            rect_desc_box = pygame.Rect(self.rect_detalhes.x + 30, y_cursor, self.rect_detalhes.width - 60, 130)
-            pygame.draw.rect(self.tela, (25, 30, 42), rect_desc_box, border_radius=6)
-            pygame.draw.rect(self.tela, BORDA_BLOQUEADA, rect_desc_box, width=1, border_radius=6)
+            retangulo_caixa_desc = pygame.Rect(self.rect_detalhes.x + 30, y_cursor, self.rect_detalhes.width - 60, 130)
+            pygame.draw.rect(self.tela, (25, 30, 42), retangulo_caixa_desc, border_radius=6)
+            pygame.draw.rect(self.tela, BORDA_BLOQUEADA, retangulo_caixa_desc, width=1, border_radius=6)
 
-            y_texto_desc = rect_desc_box.y + 12
-            for linha in self._quebrar_texto(c.como_liberar, self.fonte_desc, rect_desc_box.width - 24):
+            y_texto_desc = retangulo_caixa_desc.y + 12
+            for linha in self._quebrar_texto(c.como_liberar, self.fonte_desc, retangulo_caixa_desc.width - 24):
                 surf_desc = self.fonte_desc.render(linha, True, TEXTO_BRANCO)
-                self.tela.blit(surf_desc, (rect_desc_box.x + 12, y_texto_desc))
+                self.tela.blit(surf_desc, (retangulo_caixa_desc.x + 12, y_texto_desc))
                 y_texto_desc += 20
 
-        # Botão Voltar
         self.botao_voltar.desenhar(self.tela)

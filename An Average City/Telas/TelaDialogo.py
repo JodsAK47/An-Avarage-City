@@ -2,7 +2,6 @@ import pygame
 from Sistemas.Fontes import obter_fonte
 from Sistemas.SistemaUI import Botao
 
-
 class GerenciadorDialogo:
     def __init__(self, tela):
         self.tela = tela
@@ -37,7 +36,7 @@ class GerenciadorDialogo:
     def iniciar(self, dados_dialogo):
         if not dados_dialogo:
             return
-            
+
         self.dados = dados_dialogo
         self.indice_atual = 0
         self.ativo = True
@@ -59,7 +58,7 @@ class GerenciadorDialogo:
         y_base = caixa_y + caixa_h - 60 - (qtd_opcoes * 56)
 
         for i in range(qtd_opcoes):
-            rect = pygame.Rect(lista_x - 220, y_base + i * 56, 440, 40)
+            rect = pygame.Rect(int(lista_x - 250), int(y_base + i * 56), 500, 40)
             self.opcoes_retangulos.append(rect)
 
     def atualizar_eventos(self, evento, posicao_mouse):
@@ -104,7 +103,7 @@ class GerenciadorDialogo:
                         return self._avancar_ou_retornar(retorno)
 
         return None
-        
+
     def _avancar_ou_retornar(self, retorno):
         self.indice_atual += 1
         if self.indice_atual < len(self.dados):
@@ -152,12 +151,12 @@ class GerenciadorDialogo:
         txt_nome = self.fonte_nome.render(nome, True, self.cor_nome)
         self.tela.blit(txt_nome, (texto_x, texto_y))
 
-        y_offset = texto_y + 42
+        deslocamento_y = texto_y + 42
         linhas = self._quebrar_texto(texto, self.fonte_texto, texto_w)
         for linha in linhas:
             txt_surf = self.fonte_texto.render(linha, True, self.cor_texto)
-            self.tela.blit(txt_surf, (texto_x, y_offset))
-            y_offset += 24
+            self.tela.blit(txt_surf, (texto_x, deslocamento_y))
+            deslocamento_y += 24
 
         opcoes = no_atual.get("opcoes", [])
         if len(opcoes) == 0:
@@ -166,7 +165,7 @@ class GerenciadorDialogo:
         lista_x = caixa_x + caixa_w * 0.68
         y_base = caixa_y + caixa_h - 60 - (len(opcoes) * 56)
         for i, opcao in enumerate(opcoes):
-            rect = pygame.Rect(lista_x - 220, y_base + i * 56, 440, 40)
+            rect = pygame.Rect(int(lista_x - 250), int(y_base + i * 56), 500, 40)
             selecionado = (i == self.indice_selecionado)
             cor_fundo = self.cor_opcao_hover if selecionado else self.cor_opcao_normal
             cor_borda = (255, 220, 100) if selecionado else self.cor_borda

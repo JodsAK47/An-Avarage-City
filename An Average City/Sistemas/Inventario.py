@@ -1,6 +1,5 @@
 from Entidades.Personagem import personagem
 
-
 class Consumivel:
     def __init__(self, nome, descricao, rec_hp=0, rec_mp=0):
         self.nome = nome
@@ -19,7 +18,6 @@ class Consumivel:
             from Sistemas.Conquistas import sistema_conquistas
             sistema_conquistas.desbloquear("alquimista")
 
-
 class Material:
     def __init__(self, nome, descricao):
         self.nome = nome
@@ -30,6 +28,15 @@ class Material:
     def usar(self):
         return False
 
+class ItemBilhete:
+    def __init__(self, quantidade=1):
+        self.nome = "Bilhete do Dormitório"
+        self.descricao = "Permite dormir no dormitório para recuperar mais HP e PM."
+        self.quantidade = quantidade
+        self.tipo = "bilhete"
+
+    def usar(self, alvo=None):
+        return False
 
 class Equipamento:
     def __init__(self, nome, atributos_bonus):
@@ -43,12 +50,33 @@ class Equipamento:
             if self.atributos_bonus[k] > 0:
                 self.atributos_bonus[k] += 1
 
-
 class SistemaInventario:
     def __init__(self):
         self.consumiveis = []
         self.materiais = []
         self.equipamento_slot = None
+        self.item_bilhete = ItemBilhete(quantidade=1)
+
+    @property
+    def bilhetes_dormitorio(self):
+        return self.item_bilhete.quantidade
+
+    @bilhetes_dormitorio.setter
+    def bilhetes_dormitorio(self, valor):
+        self.item_bilhete.quantidade = max(0, int(valor))
+
+    def obter_bilhetes_dormitorio(self):
+        return self.item_bilhete.quantidade
+
+    def adicionar_bilhete_dormitorio(self, quantidade=1):
+        self.item_bilhete.quantidade += max(0, int(quantidade))
+
+    def consumir_bilhete_dormitorio(self, quantidade=1):
+        qtd = max(0, int(quantidade))
+        if self.item_bilhete.quantidade >= qtd and qtd > 0:
+            self.item_bilhete.quantidade -= qtd
+            return True
+        return False
 
     def adicionar_consumivel(self, nome, descricao, rec_hp, rec_mp):
         for c in self.consumiveis:
@@ -63,7 +91,7 @@ class SistemaInventario:
                 m.quantidade += 1
                 return
         self.materiais.append(Material(nome, descricao))
-        
+
     def equipar(self, equipamento):
         self.equipamento_slot = equipamento
 
@@ -71,9 +99,13 @@ class SistemaInventario:
         self.consumiveis.clear()
         self.materiais.clear()
         self.equipamento_slot = None
+        self.item_bilhete = ItemBilhete(quantidade=1)
 
     def itens_do_inventario(self):
-        return self.consumiveis + self.materiais
+        itens = list(self.consumiveis) + list(self.materiais)
+        if self.item_bilhete.quantidade > 0:
+            itens.append(self.item_bilhete)
+        return itens
 
     def custo_melhoria(self):
         if not self.equipamento_slot: return 0
@@ -93,10 +125,8 @@ class SistemaInventario:
                 gastos += 1
         self.materiais = [m for m in self.materiais if m.quantidade > 0]
 
-
 inventario_global = SistemaInventario()
 
-# Retrocompatibilidade: exporta TelaInventario sob demanda
 def __getattr__(name):
     if name == "TelaInventario":
         from Telas.TelaInventario import TelaInventario

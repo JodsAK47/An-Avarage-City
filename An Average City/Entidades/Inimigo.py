@@ -31,22 +31,31 @@ def carregar_habilidades_inimigos():
         print("⚠️ Erro: arquivo habilidades_inimigos.json não encontrado.")
         return {}
 
-_banco_habilidades_inimigos = carregar_habilidades_inimigos()
+_banco_habilidades_inimigos = None
+
+def obter_banco_habilidades_inimigos():
+    global _banco_habilidades_inimigos
+    if _banco_habilidades_inimigos is None:
+        _banco_habilidades_inimigos = carregar_habilidades_inimigos()
+    return _banco_habilidades_inimigos
 
 class Inimigo:
-    def __init__(self, x, y, vida_maxima, nome_imagem, nome="Inimigo", ataques=None, xp=0, atributos=None, max_mp=None):
+    def __init__(self, x, y, vida_maxima, nome_imagem, nome="Inimigo", ataques=None, xp=0, atributos=None, max_mp=None, tipo="comum"):
         self.nome = nome
+        self.tipo = tipo
         self.arquivo_imagem = nome_imagem
         self.max_hp = vida_maxima
         self.hp = vida_maxima
         self.ataques = ataques if ataques is not None else ["Soco"]
+        banco = obter_banco_habilidades_inimigos()
         if max_mp is not None:
             self.max_mp = max_mp
         else:
             custo_max_mp = max(
                 (
-                    _banco_habilidades_inimigos.get(nome_ataque, _banco_habilidades_inimigos["Soco"]).custo_mp
+                    banco[nome_ataque].custo_mp
                     for nome_ataque in self.ataques
+                    if nome_ataque in banco
                 ),
                 default=0,
             )
@@ -56,23 +65,28 @@ class Inimigo:
         self.congelado = False
         self.xp = xp
 
-        self.atributos = atributos if atributos is not None else {"For": 1, "Agi": 1, "Int": 1}
+        self.atributos = atributos if atributos is not None else {"For": 1, "Agi": 1, "Int": 1, "Sor": 1}
         self.is_player = False
-        
+
         try:
             self.imagem_original = pygame.image.load(caminho_imagem(nome_imagem))
-            self.imagem = pygame.transform.scale(self.imagem_original, (100, 120))
+            w_orig, h_orig = self.imagem_original.get_size()
+            altura_desejada = 125 if ("chefe" in nome.lower() or "sukuna" in nome.lower() or "especial" in nome.lower()) else 110
+            largura_desejada = int(w_orig * (altura_desejada / max(1, h_orig)))
+            img_escala = pygame.transform.scale(self.imagem_original, (largura_desejada, altura_desejada))
+            self.imagem = pygame.transform.flip(img_escala, True, False)
         except (pygame.error, FileNotFoundError) as e:
             print(f"⚠️ Erro ao carregar imagem do inimigo ({nome_imagem}): {e}")
-            self.imagem = pygame.Surface((100, 120))
+            self.imagem = pygame.Surface((100, 110))
             self.imagem.fill((200, 50, 50))
 
         self.rect = self.imagem.get_rect(topleft=(x, y))
         self.convertida = False
-        self.fonte_nome = obter_fonte(16)
+        self.fonte_nome = obter_fonte(13)
 
     def obter_habilidade(self, nome):
-        return _banco_habilidades_inimigos.get(nome, _banco_habilidades_inimigos["Soco"])
+        banco = obter_banco_habilidades_inimigos()
+        return banco.get(nome, banco.get("Soco"))
 
     def clone(self):
         novo_inimigo = Inimigo(
@@ -84,14 +98,15 @@ class Inimigo:
             list(self.ataques),
             self.xp,
             dict(self.atributos),
-            max_mp=self.max_mp
+            max_mp=self.max_mp,
+            tipo=self.tipo
         )
         novo_inimigo.hp = self.hp
         novo_inimigo.mp = self.mp
         novo_inimigo.congelado = self.congelado
         return novo_inimigo
 
-    def desenhar(self, tela):
+    def desenhar(self, tela, desenhar_nome=True):
         if self.hp > 0:
             if not self.convertida:
                 try:
@@ -101,7 +116,8 @@ class Inimigo:
                 self.convertida = True
 
             tela.blit(self.imagem, self.rect)
-             
-            txt = self.fonte_nome.render(self.nome, True, (255, 255, 255))
-            tela.blit(txt, (self.rect.centerx - txt.get_width()//2, self.rect.y - 20))
+
+            if desenhar_nome:
+                txt = self.fonte_nome.render(self.nome, True, (255, 255, 255))
+                tela.blit(txt, (self.rect.centerx - txt.get_width()//2, self.rect.y - 20))
 

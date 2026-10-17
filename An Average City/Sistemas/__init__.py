@@ -2,6 +2,7 @@ from .Recursos import (
     DIRETORIO_PROJETO,
     caminho_recurso,
     caminho_dados,
+    caminho_saves,
     caminho_imagem,
     caminho_botao,
     caminho_musica,
@@ -18,11 +19,13 @@ from .Inventario import (
     inventario_global,
 )
 from .SistemaUI import Botao, TelaBase, GerenciadorTelas
+from .Configuracoes import GerenciadorConfiguracoes, sistema_config
 
 __all__ = [
     "DIRETORIO_PROJETO",
     "caminho_recurso",
     "caminho_dados",
+    "caminho_saves",
     "caminho_imagem",
     "caminho_botao",
     "caminho_musica",
@@ -42,4 +45,6 @@ __all__ = [
     "Botao",
     "TelaBase",
     "GerenciadorTelas",
+    "GerenciadorConfiguracoes",
+    "sistema_config",
 ]

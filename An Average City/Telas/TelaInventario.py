@@ -3,7 +3,6 @@ from Sistemas.SistemaUI import Botao
 from Sistemas.Fontes import obter_fonte
 from Sistemas.Inventario import inventario_global
 
-
 class TelaInventario:
     def __init__(self, tela):
         self.tela = tela
@@ -16,13 +15,13 @@ class TelaInventario:
     def atualizar_eventos(self, evento, posicao_mouse):
         if self.botao_voltar.checar_clique(evento, posicao_mouse):
             return "voltar"
-            
+
         if self.botao_melhorar.checar_clique(evento, posicao_mouse):
             custo = inventario_global.custo_melhoria()
             if inventario_global.equipamento_slot and inventario_global.materiais_totais() >= custo:
                 inventario_global.consumir_materiais(custo)
                 inventario_global.equipamento_slot.melhorar()
-                
+
         for nome, botao in self.botoes_consumir.items():
             if botao.checar_clique(evento, posicao_mouse):
                 for c in inventario_global.consumiveis:
@@ -46,16 +45,15 @@ class TelaInventario:
         titulo = self.fonte_titulo.render("INVENTÁRIO E EQUIPAMENTOS", True, (255, 255, 255))
         self.tela.blit(titulo, (50, 50))
 
-        # Equipamento
         pygame.draw.rect(self.tela, (40, 50, 70), (50, 150, 400, 150), border_radius=8)
-        txt_equip = self.fonte_texto.render("Equipamento Atual:", True, (200, 200, 200))
-        self.tela.blit(txt_equip, (70, 170))
-        
+        txt_equipamento = self.fonte_texto.render("Equipamento Atual:", True, (200, 200, 200))
+        self.tela.blit(txt_equipamento, (70, 170))
+
         if inventario_global.equipamento_slot:
             eq = inventario_global.equipamento_slot
             nome = self.fonte_titulo.render(f"{eq.nome} +{eq.nivel-1}", True, (255, 215, 0))
             self.tela.blit(nome, (70, 200))
-            
+
             y_attr = 240
             for k, v in eq.atributos_bonus.items():
                 if v > 0:
@@ -66,13 +64,11 @@ class TelaInventario:
             nenhum = self.fonte_texto.render("Nenhum equipamento.", True, (100, 100, 100))
             self.tela.blit(nenhum, (70, 200))
 
-        # Melhoria
         mats = inventario_global.materiais_totais()
         txt_mats = self.fonte_texto.render(f"Materiais disponíveis: {mats}", True, (200, 200, 200))
         self.tela.blit(txt_mats, (700, 150))
         self.botao_melhorar.desenhar(self.tela)
 
-        # Consumíveis
         pygame.draw.rect(self.tela, (40, 50, 70), (50, 350, 850, 300), border_radius=8)
         txt_cons = self.fonte_texto.render("Consumíveis:", True, (200, 200, 200))
         self.tela.blit(txt_cons, (70, 370))
@@ -85,6 +81,12 @@ class TelaInventario:
 
             if getattr(item, "tipo", None) == "material":
                 txt_item = self.fonte_texto.render(f"{item.quantidade}x {item.nome} - {item.descricao}", True, (255, 220, 130))
+                self.tela.blit(txt_item, (70, y_cons))
+                y_cons += 40
+                continue
+
+            if getattr(item, "tipo", None) == "bilhete" or item.nome == "Bilhete do Dormitório":
+                txt_item = self.fonte_texto.render(f"{item.quantidade}x {item.nome} - {item.descricao}", True, (255, 205, 110))
                 self.tela.blit(txt_item, (70, y_cons))
                 y_cons += 40
                 continue

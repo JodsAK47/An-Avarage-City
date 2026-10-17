@@ -18,7 +18,7 @@ class GerenciadorVitoria(TelaBase):
     def desenhar_conteudo(self):
         titulo = self.fonte_titulo.render("VITÓRIA!", True, (255, 215, 0))
         texto = self.fonte_texto.render("O Chefe foi derrotado e seu bolso está a salvo!", True, (200, 255, 200))
-        
+
         self.tela.blit(titulo, (self.largura // 2 - titulo.get_width() // 2, 250))
         self.tela.blit(texto, (self.largura // 2 - texto.get_width() // 2, 350))
 
