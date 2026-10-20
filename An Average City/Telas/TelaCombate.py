@@ -1,4 +1,3 @@
-
 import math
 import pygame
 import random
@@ -8,12 +7,14 @@ from Gameplay.Habilidades import banco_habilidades, obter_ultimate
 from Sistemas.Fontes import obter_fonte, quebrar_texto
 from Gameplay.GeracaoFases import GeradorFase, BANCO_INIMIGOS, _criar_inimigo_a_partir_template, executar_efeito_evento
 from Sistemas.Recursos import caminho_imagem
+
 MAPA_ATRIBUTO_CLASSE = {
     "Físico": "For",
     "Fisico": "For",
     "Magia": "Int",
     "Distância": "Agi",
     "Distancia": "Agi",
+    "Invocador": "Sab",
 }
 
 TABELA_EQUIPAMENTOS_INICIAIS = {
@@ -22,33 +23,39 @@ TABELA_EQUIPAMENTOS_INICIAIS = {
     ("Sobrevivente", "Distância"): ("Estilingue", {"Agi": 2}),
     ("Sobrevivente", "Distancia"): ("Estilingue", {"Agi": 2}),
     ("Sobrevivente", "Magia"): ("Pedra Preciosa Multicor", {"Int": 2}),
+    ("Sobrevivente", "Invocador"): ("Flauta de Pã", {"Sab": 2}),
     ("Survivor", "Físico"): ("Machado", {"For": 2}),
     ("Survivor", "Fisico"): ("Machado", {"For": 2}),
     ("Survivor", "Distância"): ("Estilingue", {"Agi": 2}),
     ("Survivor", "Distancia"): ("Estilingue", {"Agi": 2}),
     ("Survivor", "Magia"): ("Pedra Preciosa Multicor", {"Int": 2}),
+    ("Survivor", "Invocador"): ("Flauta de Pã", {"Sab": 2}),
 
     ("Agente", "Físico"): ("Faca de Confronto", {"For": 2}),
     ("Agente", "Fisico"): ("Faca de Confronto", {"For": 2}),
     ("Agente", "Distância"): ("Vandal", {"Agi": 2}),
     ("Agente", "Distancia"): ("Vandal", {"Agi": 2}),
     ("Agente", "Magia"): ("Rocha De Radianita", {"Int": 2}),
+    ("Agente", "Invocador"): ("Bracelete de Comando", {"Sab": 2}),
     ("Agent", "Físico"): ("Faca de Confronto", {"For": 2}),
     ("Agent", "Fisico"): ("Faca de Confronto", {"For": 2}),
     ("Agent", "Distância"): ("Vandal", {"Agi": 2}),
     ("Agent", "Distancia"): ("Vandal", {"Agi": 2}),
     ("Agent", "Magia"): ("Rocha De Radianita", {"Int": 2}),
+    ("Agent", "Invocador"): ("Bracelete de Comando", {"Sab": 2}),
 
     ("Feiticeiro", "Físico"): ("Katana", {"For": 2}),
     ("Feiticeiro", "Fisico"): ("Katana", {"For": 2}),
     ("Feiticeiro", "Distância"): ("Amplificador de alcance", {"Agi": 2}),
     ("Feiticeiro", "Distancia"): ("Amplificador de alcance", {"Agi": 2}),
     ("Feiticeiro", "Magia"): ("Ferramenta Amaldiçoada", {"Int": 2}),
+    ("Feiticeiro", "Invocador"): ("Amuleto das Dez Sombras", {"Sab": 2}),
     ("Sorcerer", "Físico"): ("Katana", {"For": 2}),
     ("Sorcerer", "Fisico"): ("Katana", {"For": 2}),
     ("Sorcerer", "Distância"): ("Amplificador de alcance", {"Agi": 2}),
     ("Sorcerer", "Distancia"): ("Amplificador de alcance", {"Agi": 2}),
     ("Sorcerer", "Magia"): ("Ferramenta Amaldiçoada", {"Int": 2}),
+    ("Sorcerer", "Invocador"): ("Amuleto das Dez Sombras", {"Sab": 2}),
 }
 
 def _obter_equipamento_inicial(verso, classe_dano):
@@ -71,6 +78,7 @@ def _obter_equipamento_inicial(verso, classe_dano):
         "fisico": "Físico", "físico": "Físico",
         "distancia": "Distância", "distância": "Distância",
         "magia": "Magia",
+        "invocador": "Invocador",
     }
     v_norm = mapa_v.get(v_str, verso)
     c_norm = mapa_c.get(c_str, classe_dano)
@@ -87,6 +95,12 @@ MULTIPLICADORES_VERSO_TIPO = {
     ("Agente", "Distancia"): 1.8,
     ("Agent", "Distância"): 1.8,
     ("Agent", "Distancia"): 1.8,
+    ("Sobrevivente", "Invocador"): 1.8,
+    ("Survivor", "Invocador"): 1.8,
+    ("Agente", "Invocador"): 1.8,
+    ("Agent", "Invocador"): 1.8,
+    ("Feiticeiro", "Invocador"): 2.0,
+    ("Sorcerer", "Invocador"): 2.0,
 }
 
 class GerenciadorJogo:
@@ -95,7 +109,8 @@ class GerenciadorJogo:
         self.duas_pessoas = False
         self.personagem2 = None
         self.classe_jogador2 = None
-        self.ordem_turnos = [personagem] 
+        self.ordem_turnos = [personagem]
+        self.minions_ativos = []
 
         self.indice_turno = 0
         self.classe_atual = "Nenhuma"
@@ -165,6 +180,54 @@ class GerenciadorJogo:
         if not hasattr(personagem, 'atributos'): 
             personagem.atributos = {"For": 1, "Agi": 1, "Con": 1, "Sab": 1, "Int": 1, "Sor": 1}
 
+    def eh_minion(self, entidade):
+        return bool(getattr(entidade, "is_minion", False))
+
+    def eh_inimigo(self, entidade):
+        return not getattr(entidade, "is_player", False) and not getattr(entidade, "is_minion", False)
+
+    def obter_minions_vivos(self, dono=None):
+        minions = [
+            ent for ent in self.ordem_turnos
+            if self.eh_minion(ent) and getattr(ent, "hp", 0) > 0
+        ]
+        if dono is not None:
+            minions = [m for m in minions if getattr(m, "dono", None) is dono]
+        return minions
+
+    def limite_minions(self, jogador=None):
+        alvo = jogador if jogador is not None else personagem
+        return 3 if self.tem_talento(alvo, "I3") else 2
+
+    def invocar_minion(self, nome_minion, dono=None):
+        from Entidades.Minion import criar_minion
+        dono_final = dono if dono is not None else personagem
+        vivos_dono = self.obter_minions_vivos(dono_final)
+        limite = self.limite_minions(dono_final)
+
+        if len(vivos_dono) >= limite:
+            mesmo_tipo = next((m for m in vivos_dono if m.nome == nome_minion), None)
+            alvo_reforco = mesmo_tipo if mesmo_tipo is not None else min(vivos_dono, key=lambda m: m.hp)
+            sab_bonus = max(1, dono_final.obter_atributo_total("Sab") // 2) if hasattr(dono_final, "obter_atributo_total") else 2
+            alvo_reforco.curar_e_fortalecer(bonus_sab=sab_bonus)
+            self.atualizar_posicoes_inimigos()
+            return alvo_reforco
+
+        novo_minion = criar_minion(nome_minion, dono=dono_final)
+        if novo_minion not in self.minions_ativos:
+            self.minions_ativos.append(novo_minion)
+        if hasattr(dono_final, "minions") and novo_minion not in dono_final.minions:
+            dono_final.minions.append(novo_minion)
+        if hasattr(dono_final, "estatisticas_minions"):
+            dono_final.estatisticas_minions["invocacoes"] = dono_final.estatisticas_minions.get("invocacoes", 0) + 1
+
+        if novo_minion not in self.ordem_turnos:
+            pos_insercao = min(len(self.ordem_turnos), self.indice_turno + 1)
+            self.ordem_turnos.insert(pos_insercao, novo_minion)
+
+        self.atualizar_posicoes_inimigos()
+        return novo_minion
+
     def _carregar_fundo_luta(self):
         try:
             imagem = pygame.image.load(caminho_imagem("Fight.png"))
@@ -191,6 +254,7 @@ class GerenciadorJogo:
 
         is_desbloqueada = (
             (nodo_req and nodo_req in talentos_jogador)
+            or (classe_dano == "Invocador" and "I4" in talentos_jogador)
             or (verso in ultimates_desbloqueadas)
             or ((verso, classe_dano) in ultimates_desbloqueadas)
             or (ultimate and ultimate.nome in ultimates_desbloqueadas)
@@ -223,7 +287,7 @@ class GerenciadorJogo:
         self.personagem2.classe_aplicada = chave_aplicada
 
     def atualizar_posicoes_inimigos(self):
-        inimigos_vivos = [entidade for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False) and entidade.hp > 0]
+        inimigos_vivos = [entidade for entidade in self.ordem_turnos if self.eh_inimigo(entidade) and entidade.hp > 0]
         quantidade_inimigos = len(inimigos_vivos)
 
         posicoes_inimigos = {
@@ -244,6 +308,17 @@ class GerenciadorJogo:
         elif len(jogadores_vivos) == 2:
             jogadores_vivos[0].rect.center = (centro_x_jogadores, 335)
             jogadores_vivos[1].rect.center = (centro_x_jogadores, 465)
+
+        minions_vivos = self.obter_minions_vivos()
+        qtd_minions = len(minions_vivos)
+        posicoes_minions = {
+            1: [(395, 405)],
+            2: [(395, 340), (395, 465)],
+            3: [(395, 290), (395, 400), (395, 510)],
+        }
+        layout_minions = posicoes_minions.get(qtd_minions, [(395, 320 + idx * 90) for idx in range(qtd_minions)])
+        for minion, (mx, my) in zip(minions_vivos, layout_minions):
+            minion.rect.center = (mx, my)
 
     def gerar_botoes_ataque(self, jogador=None):
         self.botoes_habilidades_dinamicos = []
@@ -294,7 +369,7 @@ class GerenciadorJogo:
 
         from Sistemas.Inventario import inventario_global, Equipamento
         eq_nome, eq_attr = _obter_equipamento_inicial(novo_verso, nova_classe_dano)
-        inventario_global.equipar(Equipamento(eq_nome, eq_attr))
+        inventario_global.equipar(Equipamento(eq_nome, eq_attr, categoria="arma"))
 
         self.gerar_botoes_ataque(personagem)
 
@@ -321,11 +396,16 @@ class GerenciadorJogo:
         self.evento_neutro = None
         self.multiplicador_recompensa = 1.0
         self.gerador_fases.fase_num = self.fase_numero
+        self.minions_ativos.clear()
+        if hasattr(personagem, "minions"):
+            personagem.minions.clear()
 
         if getattr(self, 'duas_pessoas', False):
             if self.personagem2 is None:
                 self.personagem2 = Personagem(150, 350, "pixil.png")
                 setattr(self.personagem2, 'is_player', True)
+            if hasattr(self.personagem2, "minions"):
+                self.personagem2.minions.clear()
             self._aplicar_classe_personagem2()
 
         if id_cenario in ("ignorar_evento", "cancelar_evento", "dormir"):
@@ -401,9 +481,13 @@ class GerenciadorJogo:
         return dados_efeito
 
     def reiniciar(self):
-        inimigos_atuais = [entidade for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False)]
+        inimigos_atuais = [entidade for entidade in self.ordem_turnos if self.eh_inimigo(entidade)]
         if not inimigos_atuais:
             inimigos_atuais = self.gerador_fases.gerar_inimigos_aleatorios(self.fase_numero, quantidade=2, verso=self.classe_atual)
+
+        self.minions_ativos.clear()
+        if hasattr(personagem, "minions"):
+            personagem.minions.clear()
 
         if not getattr(self, 'duas_pessoas', False):
             self.personagem2 = None
@@ -411,13 +495,15 @@ class GerenciadorJogo:
         elif self.personagem2 is None:
             self.personagem2 = Personagem(150, 350, "pixil.png")
             setattr(self.personagem2, 'is_player', True)
+        if self.personagem2 is not None and hasattr(self.personagem2, "minions"):
+            self.personagem2.minions.clear()
 
         if getattr(self, 'classe_atual', 'Nenhuma') != 'Nenhuma' and getattr(self, 'classe_dano_atual', None):
             self._atualizar_ataques_jogador(personagem, self.classe_atual, self.classe_dano_atual)
             from Sistemas.Inventario import inventario_global, Equipamento
             if inventario_global.equipamento_slot is None:
                 eq_nome, eq_attr = _obter_equipamento_inicial(self.classe_atual, self.classe_dano_atual)
-                inventario_global.equipar(Equipamento(eq_nome, eq_attr))
+                inventario_global.equipar(Equipamento(eq_nome, eq_attr, categoria="arma"))
         self._aplicar_classe_personagem2()
 
         self.ordem_turnos = [personagem]
@@ -467,6 +553,21 @@ class GerenciadorJogo:
         else:
             return 0.05
 
+    def calcular_chance_drop_equipamento(self, inimigo):
+        tipo = getattr(inimigo, "tipo", "").lower()
+        max_hp = getattr(inimigo, "max_hp", 30)
+        xp = getattr(inimigo, "xp", 20)
+        nome = getattr(inimigo, "nome", "").lower()
+
+        if tipo == "chefe" or "chefe" in nome or "sukuna" in nome or "nemesis" in nome or "comandante supremo" in nome or max_hp >= 120 or xp >= 200:
+            return 0.50
+        elif tipo == "grande" or "especial" in nome or "aberração" in nome or "gigante" in nome or "mecanoide" in nome or max_hp >= 60 or xp >= 70:
+            return 0.30
+        elif tipo == "medio" or max_hp >= 40 or xp >= 40:
+            return 0.20
+        else:
+            return 0.12
+
     def recuperar_apos_batalha(self, dormir=False):
         from Sistemas.Inventario import inventario_global
         dormiu = False
@@ -515,8 +616,7 @@ class GerenciadorJogo:
         bonus = getattr(atacante, 'atributos', {}).get(attr, 0)
         if getattr(atacante, 'is_player', False):
             from Sistemas.Inventario import inventario_global
-            if eq := inventario_global.equipamento_slot:
-                bonus += eq.atributos_bonus.get(attr, 0)
+            bonus += inventario_global.obter_bonus_atributo(attr)
         return bonus
 
     def obter_jogadores(self):
@@ -550,19 +650,121 @@ class GerenciadorJogo:
 
     def velocidade_esquiva(self, entidade):
         agilidade = int(getattr(getattr(entidade, 'atributos', {}), 'get', lambda *args, **kwargs: 1)('Agi', 1))
+        if getattr(entidade, 'is_player', False):
+            from Sistemas.Inventario import inventario_global
+            agilidade += inventario_global.obter_bonus_atributo("Agi")
         reducao = max(0.0, agilidade * 0.001)
         vel = max(2.5, self.esquiva_vel * (1 - reducao))
         if self.tem_talento(entidade, "A3"):
             vel = max(2.0, vel * 0.85)
         return vel
 
+    def executar_turno_minion(self, minion, alvo_forcado=None):
+        if not minion or getattr(minion, "hp", 0) <= 0:
+            return None
+        inimigos_vivos = [e for e in self.ordem_turnos if self.eh_inimigo(e) and e.hp > 0]
+        if not inimigos_vivos:
+            return None
+
+        nome_golpe = minion.escolher_ataque()
+        hab = minion.obter_habilidade(nome_golpe)
+        custo = getattr(hab, "custo_mp", 0)
+        if callable(custo):
+            custo = custo(minion)
+        minion.mp = max(0, minion.mp - int(custo))
+
+        dano_final = minion.calcular_dano_ataque(hab)
+        dono = getattr(minion, "dono", None) or personagem
+        tem_i2 = self.tem_talento(dono, "I2")
+
+        sorte_minion = int(getattr(minion, "atributos", {}).get("Sor", 2))
+        chance_crit = min(1.0, 0.08 + (sorte_minion * 0.01))
+        critico = False
+        if getattr(dono, "god_mode", False):
+            critico = True
+            dano_final = max(dano_final, 9999)
+        elif random.random() < chance_crit:
+            critico = True
+            dano_final = int(dano_final * 1.6)
+
+        precisao_final = 1.0 if getattr(dono, "god_mode", False) else float(hab.precisao)
+        if tem_i2:
+            precisao_final = min(1.0, precisao_final + 0.10)
+
+        if not critico and random.random() > precisao_final:
+            minion.registrar_ataque(dano=0, acertou=False, critico=False, abates=0)
+            self.mensagem_log = f"🐾 {minion.nome} usou {hab.nome}, mas ERROU!"
+            return self.mensagem_log
+
+        alvo_principal = alvo_forcado if (alvo_forcado in inimigos_vivos) else random.choice(inimigos_vivos)
+        alvos = inimigos_vivos if hab.em_area else [alvo_principal]
+
+        dano_total_turno = 0
+        abates_turno = 0
+        congelou_alguem = False
+
+        for alvo in alvos:
+            alvo.hp = max(0, alvo.hp - dano_final)
+            dano_total_turno += int(dano_final)
+            self.dano_causado_total += int(dano_final)
+            if alvo.hp <= 0:
+                abates_turno += 1
+                self.kills_total += 1
+                self.dificuldade_total += max(1, int(getattr(alvo, "xp", 0)))
+                from Sistemas.Conquistas import sistema_conquistas
+                sistema_conquistas.desbloquear("primeiro_sangue")
+            elif hab.efeito and random.random() < hab.chance_efeito:
+                if hab.efeito == "Congelar":
+                    alvo.congelado = True
+                    congelou_alguem = True
+
+        minion.registrar_ataque(dano=dano_total_turno, acertou=True, critico=critico, abates=abates_turno)
+
+        if tem_i2 and (critico or abates_turno > 0):
+            dono.mp = min(dono.max_mp, dono.mp + 1)
+
+        prefixo = "🎯 CRÍTICO DO MINION! " if critico else "🐾 "
+        txt_alvo = "EM ÁREA" if hab.em_area else self.nome_exibicao(alvo_principal)
+        msg = f"{prefixo}{minion.nome} usou {hab.nome} em {txt_alvo}! ({dano_final} dano)"
+        if congelou_alguem and len(alvos) == 1:
+            msg += " CONGELOU!"
+        self.mensagem_log = msg
+
+        self.pontos_jogo = self.calcular_pontos_desempenho(
+            xp_ganho=sum(getattr(e, "xp", 0) for e in self.ordem_turnos if self.eh_inimigo(e) and e.hp <= 0),
+            dano_causado=self.dano_causado_total,
+            inimigos_eliminados=self.kills_total,
+            dificuldade_total=self.dificuldade_total,
+        )
+        return self.mensagem_log
+
     def executar_ataque_jogador(self, nome_habilidade, alvo_principal=None, jogador_ativo=None):
         jogador_ativo = jogador_ativo or personagem
         hab = banco_habilidades[nome_habilidade]
-        inimigos_vivos = [entidade for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False) and entidade.hp > 0]
+        inimigos_vivos = [entidade for entidade in self.ordem_turnos if self.eh_inimigo(entidade) and entidade.hp > 0]
         custo_mp = self._custo_habilidade(hab, jogador_ativo)
 
         jogador_ativo.mp = max(0, jogador_ativo.mp - custo_mp)
+
+        if getattr(hab, "minion", None) or hab.tipo == "Invocador":
+            minion_invocado = None
+            if getattr(hab, "minion", None):
+                minion_invocado = self.invocar_minion(hab.minion, dono=jogador_ativo)
+                if getattr(hab, "is_ultimate", False):
+                    for m in self.obter_minions_vivos(jogador_ativo):
+                        if m is not minion_invocado:
+                            m.curar_e_fortalecer(bonus_sab=3)
+
+            if getattr(hab, "is_ultimate", False):
+                self.mensagem_log = f"✨ {self.nome_exibicao(jogador_ativo)} liberou {hab.nome} e invocou {minion_invocado.nome if minion_invocado else 'seu minion'}!"
+            else:
+                self.mensagem_log = f"✨ {self.nome_exibicao(jogador_ativo)} invocou {minion_invocado.nome if minion_invocado else 'seu minion'}!"
+
+            self.menu_acoes_estado = "principal"
+            self.ataque_selecionado = None
+            self.avancar_turno()
+            return
+
         dano_base = hab.dano
 
         classe_jogador = self.classe_do_jogador(jogador_ativo)
@@ -574,6 +776,9 @@ class GerenciadorJogo:
         tem_a2 = self.tem_talento(jogador_ativo, "A2")
         chance_crit_base = 0.15 if tem_a2 else 0.05
         sorte_jogador = getattr(jogador_ativo, "atributos", {}).get("Sor", 1)
+        if getattr(jogador_ativo, 'is_player', False):
+            from Sistemas.Inventario import inventario_global
+            sorte_jogador += inventario_global.obter_bonus_atributo("Sor")
         chance_crit = min(1.0, chance_crit_base + (sorte_jogador * 0.001))
         mult_crit = 3.0 if tem_a2 else 1.5
 
@@ -592,12 +797,20 @@ class GerenciadorJogo:
             precisao_final = min(1.0, precisao_final + 0.05)
 
         if not critico and random.random() > precisao_final:
-            self.mensagem_log = f"💨 {self.nome_exibicao(jogador_ativo)} tentou {hab.nome}, mas ERROU!"
+            if minion_invocado is not None:
+                self.mensagem_log = f"✨ {self.nome_exibicao(jogador_ativo)} invocou {minion_invocado.nome}, mas o golpe inicial errou!"
+            else:
+                self.mensagem_log = f"💨 {self.nome_exibicao(jogador_ativo)} tentou {hab.nome}, mas ERROU!"
         else:
-            alvos = inimigos_vivos if hab.em_area else [alvo_principal]
+            if alvo_principal is None and inimigos_vivos:
+                alvo_principal = inimigos_vivos[0]
+            alvos = inimigos_vivos if hab.em_area else ([alvo_principal] if alvo_principal else [])
             msg = f"⚡ GOD MODE! " if getattr(jogador_ativo, 'god_mode', False) else (f"🎯 CRÍTICO! " if critico else f"💥 ")
             texto_alvo = "EM ÁREA" if hab.em_area else (self.nome_exibicao(alvo_principal) if alvo_principal else "alvo")
-            msg += f"{self.nome_exibicao(jogador_ativo)} usou {hab.nome} em {texto_alvo}! ({dano_final} dano)"
+            if minion_invocado is not None:
+                msg += f"{self.nome_exibicao(jogador_ativo)} invocou {minion_invocado.nome} contra {texto_alvo}! ({dano_final} dano)"
+            else:
+                msg += f"{self.nome_exibicao(jogador_ativo)} usou {hab.nome} em {texto_alvo}! ({dano_final} dano)"
 
             for alvo in alvos:
                 alvo.hp -= dano_final
@@ -618,7 +831,7 @@ class GerenciadorJogo:
 
             self.mensagem_log = msg
             self.pontos_jogo = self.calcular_pontos_desempenho(
-                xp_ganho=sum(getattr(entidade, 'xp', 0) for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False) and entidade.hp <= 0),
+                xp_ganho=sum(getattr(entidade, 'xp', 0) for entidade in self.ordem_turnos if self.eh_inimigo(entidade) and entidade.hp <= 0),
                 dano_causado=self.dano_causado_total,
                 inimigos_eliminados=self.kills_total,
                 dificuldade_total=self.dificuldade_total,
@@ -636,12 +849,12 @@ class GerenciadorJogo:
                 j.mp = j.max_mp
                 j.congelado = False
 
-        inimigos_vivos = [entidade for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False) and entidade.hp > 0]
+        inimigos_vivos = [entidade for entidade in self.ordem_turnos if self.eh_inimigo(entidade) and entidade.hp > 0]
         jogadores_vivos = [entidade for entidade in self.ordem_turnos if getattr(entidade, 'is_player', False) and entidade.hp > 0]
 
         if not jogadores_vivos:
             self.pontos_jogo = self.calcular_pontos_desempenho(
-                xp_ganho=sum(getattr(entidade, 'xp', 0) for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False) and entidade.hp <= 0),
+                xp_ganho=sum(getattr(entidade, 'xp', 0) for entidade in self.ordem_turnos if self.eh_inimigo(entidade) and entidade.hp <= 0),
                 dano_causado=self.dano_causado_total,
                 inimigos_eliminados=self.kills_total,
                 dificuldade_total=self.dificuldade_total,
@@ -651,7 +864,7 @@ class GerenciadorJogo:
         if not inimigos_vivos:
             if not self.xp_calculado:
                 multiplicador_rec = getattr(self, "multiplicador_recompensa", 1.0)
-                xp_base = sum(getattr(entidade, 'xp', 0) for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False))
+                xp_base = sum(getattr(entidade, 'xp', 0) for entidade in self.ordem_turnos if self.eh_inimigo(entidade))
                 xp_ganho = int(xp_base * multiplicador_rec)
                 jogadores_participantes = [entidade for entidade in self.ordem_turnos if getattr(entidade, 'is_player', False)]
                 for jogador in jogadores_participantes:
@@ -674,7 +887,7 @@ class GerenciadorJogo:
                     sistema_conquistas.desbloquear("vitoria_feiticeiro")
 
                 from Sistemas.Inventario import inventario_global
-                inimigos_derrotados = [e for e in self.ordem_turnos if not getattr(e, 'is_player', False)]
+                inimigos_derrotados = [e for e in self.ordem_turnos if self.eh_inimigo(e)]
                 drop_msg = []
                 itens_obtidos = []
                 for inimigo in inimigos_derrotados:
@@ -696,6 +909,13 @@ class GerenciadorJogo:
                         inventario_global.adicionar_bilhete_dormitorio(1)
                         drop_msg.append("Bilhete Dormitório")
                         itens_obtidos.append("Bilhete do Dormitório")
+
+                    chance_equip = self.calcular_chance_drop_equipamento(inimigo)
+                    if random.random() < chance_equip:
+                        novo_eq = inventario_global.gerar_equipamento_aleatorio()
+                        inventario_global.adicionar_equipamento(novo_eq, auto_equipar=True)
+                        drop_msg.append(novo_eq.nome)
+                        itens_obtidos.append(novo_eq.nome)
 
                 if drop_msg:
                     self.mensagem_log = f"🎁 Drops: {', '.join(drop_msg)}"
@@ -724,7 +944,7 @@ class GerenciadorJogo:
                 break
 
         entidade_atual = self.ordem_turnos[self.indice_turno]
-        clique_agora = estado_clique_mouse[0]
+        clique_agora = estado_clique_mouse[0] if isinstance(estado_clique_mouse, (tuple, list)) else bool(estado_clique_mouse)
         clicou = not clique_agora and self.clique_anterior
 
         if entidade_atual == personagem or (getattr(self, 'personagem2', None) is not None and entidade_atual == self.personagem2):
@@ -756,6 +976,24 @@ class GerenciadorJogo:
             self.clique_anterior = clique_agora
             return None
 
+        if self.eh_minion(entidade_atual):
+            if entidade_atual.congelado:
+                if self.timer_inimigo == 0:
+                    self.mensagem_log = f"❄️ {entidade_atual.nome} está CONGELADO!"
+                self.timer_inimigo += 1
+                if self.timer_inimigo >= max(25, self.tempo_espera_inimigo // 2):
+                    entidade_atual.congelado = False
+                    self.avancar_turno()
+            else:
+                self.timer_inimigo += 1
+                if self.timer_inimigo >= max(25, self.tempo_espera_inimigo // 2):
+                    if entidade_atual.mp < entidade_atual.max_mp:
+                        entidade_atual.mp = min(entidade_atual.max_mp, entidade_atual.mp + 1)
+                    self.executar_turno_minion(entidade_atual)
+                    self.avancar_turno()
+            self.clique_anterior = clique_agora
+            return None
+
         if self.menu_acoes_estado == "esquivando":
             for barra in self.barras_esquiva:
                 if barra["ativa"]:
@@ -770,7 +1008,6 @@ class GerenciadorJogo:
                     barra_alvo = max(barras_visiveis, key=lambda b: b["x"])
                     distancia = abs(barra_alvo["x"] - 200)
                     barra_alvo["ativa"] = False
-
                     if distancia <= 20:
                         self.acertos_centro_esquiva += 1
                         self.reducao_esquiva += 0.33
@@ -791,6 +1028,13 @@ class GerenciadorJogo:
                 dano_tomado = max(1, int(self.dano_pendente * (1 - reducao_total)))
                 if getattr(alvo_esquivando, 'god_mode', False):
                     dano_tomado = 0
+
+                minions_guarda = self.obter_minions_vivos(alvo_esquivando)
+                if dano_tomado > 1 and self.tem_talento(alvo_esquivando, "I3") and minions_guarda:
+                    absorvido = max(1, int(dano_tomado * 0.25))
+                    minions_guarda[0].receber_dano(absorvido)
+                    dano_tomado = max(1, dano_tomado - absorvido)
+
                 alvo_esquivando.hp = max(0, alvo_esquivando.hp - dano_tomado)
 
                 if condicoes_evitadas:
@@ -825,7 +1069,7 @@ class GerenciadorJogo:
                 if self.timer_inimigo >= self.tempo_espera_inimigo:
                     ataques_possiveis = [a for a in entidade_atual.ataques if entidade_atual.obter_habilidade(a).custo_mp <= entidade_atual.mp]
                     if not ataques_possiveis:
-                        ataques_possiveis = ["Soco" if "Soco" in entidade_atual.ataques else "Mordida"]
+                        ataques_possiveis = [entidade_atual.ataques[0]] if entidade_atual.ataques else ["Soco"]
 
                     nome_golpe_inimigo = random.choice(ataques_possiveis)
                     hab_usada = entidade_atual.obter_habilidade(nome_golpe_inimigo)
@@ -846,7 +1090,25 @@ class GerenciadorJogo:
                         critico = True
                         dano_inimigo = int(dano_inimigo * 1.5)
 
-                    jogadores_vivos = self.obter_jogadores()
+                    jogadores_vivos = [j for j in self.obter_jogadores() if j.hp > 0]
+                    minions_vivos = self.obter_minions_vivos()
+
+                    if minions_vivos and random.random() < 0.45:
+                        alvo_minion = random.choice(minions_vivos)
+                        if not critico and random.random() > hab_usada.precisao:
+                            self.mensagem_log = f"💨 {nome_inimigo} atacou {alvo_minion.nome}, mas ERROU!"
+                        else:
+                            alvo_minion.receber_dano(dano_inimigo)
+                            if hab_usada.efeito == "Congelar" and random.random() < hab_usada.chance_efeito:
+                                alvo_minion.congelado = True
+                            if alvo_minion.hp <= 0:
+                                self.mensagem_log = f"💥 {nome_inimigo} destruiu {alvo_minion.nome}! ({dano_inimigo} dano)"
+                            else:
+                                self.mensagem_log = f"🐾 {nome_inimigo} atacou {alvo_minion.nome}! ({dano_inimigo} dano)"
+                        self.avancar_turno()
+                        self.clique_anterior = clique_agora
+                        return None
+
                     alvo_jogador = random.choice(jogadores_vivos)
                     self.alvo_jogador_pendente = alvo_jogador
 
@@ -916,20 +1178,23 @@ class GerenciadorJogo:
             return
 
         rect = entidade.rect
+        eh_aliado = self.eh_minion(entidade)
         largura_placa = max(95, rect.width + 12)
         altura_placa = 28 if getattr(entidade, 'max_mp', 0) > 0 else 20
         x_placa = rect.centerx - (largura_placa // 2)
         y_placa = rect.top - altura_placa - 14 + int(deslocamento_flutuacao)
 
         fundo_placa = pygame.Surface((largura_placa, altura_placa), pygame.SRCALPHA)
-        pygame.draw.rect(fundo_placa, (16, 18, 28, 195), (0, 0, largura_placa, altura_placa), border_radius=6)
-        pygame.draw.rect(fundo_placa, (70, 80, 105, 220), (0, 0, largura_placa, altura_placa), width=1, border_radius=6)
+        cor_borda = (52, 210, 180, 230) if eh_aliado else (70, 80, 105, 220)
+        pygame.draw.rect(fundo_placa, (16, 22, 30, 205), (0, 0, largura_placa, altura_placa), border_radius=6)
+        pygame.draw.rect(fundo_placa, cor_borda, (0, 0, largura_placa, altura_placa), width=1, border_radius=6)
         self.tela.blit(fundo_placa, (x_placa, y_placa))
 
-        nome_texto = entidade.nome[:14]
+        nome_texto = f"★ {entidade.nome[:12]}" if eh_aliado else entidade.nome[:14]
         if entidade.congelado:
             nome_texto = f"❄ {nome_texto}"
-        txt_nome = self.fonte_inimigo.render(nome_texto, True, (240, 240, 240))
+        cor_nome = (170, 255, 235) if eh_aliado else (240, 240, 240)
+        txt_nome = self.fonte_inimigo.render(nome_texto, True, cor_nome)
         self.tela.blit(txt_nome, (x_placa + (largura_placa - txt_nome.get_width()) // 2, y_placa + 2))
 
         bar_w = largura_placa - 12
@@ -939,7 +1204,10 @@ class GerenciadorJogo:
         pygame.draw.rect(self.tela, (70, 15, 20), (x_bar, y_bar, bar_w, bar_h), border_radius=2)
         if getattr(entidade, 'max_hp', 0) > 0:
             porc_hp = max(0.0, min(1.0, entidade.hp / entidade.max_hp))
-            cor_hp = (45, 215, 85) if porc_hp > 0.35 else (230, 70, 50)
+            if eh_aliado:
+                cor_hp = (52, 225, 185) if porc_hp > 0.35 else (235, 165, 50)
+            else:
+                cor_hp = (45, 215, 85) if porc_hp > 0.35 else (230, 70, 50)
             pygame.draw.rect(self.tela, cor_hp, (x_bar, y_bar, int(bar_w * porc_hp), bar_h), border_radius=2)
 
         if getattr(entidade, 'max_mp', 0) > 0:
@@ -989,7 +1257,7 @@ class GerenciadorJogo:
             self.tela.blit(seta_surf, (turno_ativo.rect.centerx - seta_surf.get_width() // 2, indicador_y))
 
         if self.menu_acoes_estado == "selecionar_alvo":
-            inimigos = [entidade for entidade in self.ordem_turnos if not getattr(entidade, 'is_player', False) and entidade.hp > 0]
+            inimigos = [entidade for entidade in self.ordem_turnos if self.eh_inimigo(entidade) and entidade.hp > 0]
             pulso = int(math.sin(self.tempo_animacao * 6.0) * 3)
             for alvo in inimigos:
                 if alvo.rect.collidepoint(posicao_mouse):
@@ -1085,6 +1353,11 @@ class GerenciadorJogo:
             cor_nome = (255, 230, 120) if eh_turno else (230, 230, 240)
             self.tela.blit(self.fonte_status.render(nome_jogador, True, cor_nome), (rect_status.x + 12, rect_status.y + 6))
 
+            minions_j = self.obter_minions_vivos(jogador)
+            if minions_j or getattr(self, "classe_dano_atual", None) == "Invocador":
+                txt_minions = self.fonte_status.render(f"MINIONS {len(minions_j)}/{self.limite_minions(jogador)}", True, (80, 235, 195))
+                self.tela.blit(txt_minions, (rect_status.right - txt_minions.get_width() - 12, rect_status.y + 6))
+
             x_hp = rect_status.x + 12
             y_hp = rect_status.y + 28
             w_bar = 150
@@ -1131,6 +1404,7 @@ class GerenciadorJogo:
         nome_turno = "Seu Turno!" if jogador_atual == personagem else "Turno do Jogador 2!"
         if (
             "usou" not in self.mensagem_log
+            and "invocou" not in self.mensagem_log
             and "ERROU" not in self.mensagem_log
             and "falhou" not in self.mensagem_log.lower()
             and "CRÍTICO" not in self.mensagem_log
@@ -1207,7 +1481,7 @@ class GerenciadorJogo:
                 if jogador_atual.mp >= custo_mp:
                     self.ataque_selecionado = item_habilidade["nome"]
                     self.ataque_jogador_ativo = jogador_atual
-                    if hab.em_area:
+                    if hab.em_area or hab.tipo == "Invocador" or getattr(hab, "minion", None):
                         self.executar_ataque_jogador(item_habilidade["nome"], jogador_ativo=jogador_atual)
                     else:
                         self.menu_acoes_estado = "selecionar_alvo"

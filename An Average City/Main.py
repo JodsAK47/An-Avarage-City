@@ -23,6 +23,7 @@ from Telas import (
     TelaInventario,
     GerenciadorConfiguracoesTela,
     GerenciadorPosDialogo,
+    GerenciadorLoja,
 )
 from Sistemas import (
     save_global,
@@ -62,6 +63,7 @@ pos_dialogo_tela = GerenciadorPosDialogo(tela)
 vitoria_tela = GerenciadorVitoria(tela)
 inventario_tela = TelaInventario(tela)
 config_tela = GerenciadorConfiguracoesTela(tela)
+loja_tela = GerenciadorLoja(tela)
 
 classe_jogador1 = None
 classe_jogador2 = None
@@ -338,7 +340,20 @@ def tratar_eventos_dialogo(evento, posicao_mouse):
 
 def tratar_eventos_pos_dialogo(evento, posicao_mouse):
     resultado_pos = pos_dialogo_tela.atualizar_eventos(evento, posicao_mouse)
+    if resultado_pos == "abrir_loja":
+        tipo = getattr(pos_dialogo_tela, "tipo_loja", "barista")
+        sucesso = getattr(pos_dialogo_tela, "sucesso", True)
+        loja_tela.configurar_loja(tipo, sucesso=sucesso)
+        return "loja"
     if resultado_pos == "continuar":
+        jogo_tela.reiniciar()
+        tocar_musica(jogo_tela.musica_luta)
+        return "jogo"
+    return None
+
+def tratar_eventos_loja(evento, posicao_mouse):
+    resultado_loja = loja_tela.atualizar_eventos(evento, posicao_mouse)
+    if resultado_loja in ("continuar", "jogo", "voltar"):
         jogo_tela.reiniciar()
         tocar_musica(jogo_tela.musica_luta)
         return "jogo"
@@ -388,6 +403,7 @@ DISTRIBUIDOR_EVENTOS = {
     "selecao_cenario": tratar_eventos_selecao_cenario,
     "dialogo": tratar_eventos_dialogo,
     "pos_dialogo": tratar_eventos_pos_dialogo,
+    "loja": tratar_eventos_loja,
     "conquistas": tratar_eventos_conquistas,
     "config": tratar_eventos_config,
     "sewer": tratar_eventos_sewer,
@@ -438,6 +454,7 @@ def atualizar_estado_atual(posicao_mouse, estado_clique_mouse):
         "pos_luta": pos_luta_tela,
         "selecao_cenario": selecao_tela,
         "pos_dialogo": pos_dialogo_tela,
+        "loja": loja_tela,
     }
     if tela_alvo := telas_atualizacao.get(estado):
         tela_alvo.atualizar(posicao_mouse, estado_clique_mouse)
@@ -456,6 +473,7 @@ def desenhar_estado_atual(posicao_mouse):
         "selecao_cenario": lambda: selecao_tela.desenhar(posicao_mouse),
         "dialogo": lambda: (selecao_tela.desenhar(posicao_mouse), dialogo_tela.desenhar()),
         "pos_dialogo": lambda: (selecao_tela.desenhar(posicao_mouse), pos_dialogo_tela.desenhar(posicao_mouse)),
+        "loja": lambda: loja_tela.desenhar(posicao_mouse),
         "game_over": game_over_tela.desenhar,
         "tela_vitoria": vitoria_tela.desenhar,
     }

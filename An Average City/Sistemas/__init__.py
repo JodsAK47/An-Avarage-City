@@ -14,6 +14,8 @@ from .Conquistas import Conquista, SistemaConquistas, sistema_conquistas
 from .Inventario import (
     Consumivel,
     Material,
+    ItemBilhete,
+    ItemPolidor,
     Equipamento,
     SistemaInventario,
     inventario_global,
@@ -39,6 +41,8 @@ __all__ = [
     "sistema_conquistas",
     "Consumivel",
     "Material",
+    "ItemBilhete",
+    "ItemPolidor",
     "Equipamento",
     "SistemaInventario",
     "inventario_global",

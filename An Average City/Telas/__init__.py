@@ -13,6 +13,7 @@ from .TelaDialogo import GerenciadorDialogo
 from .TelaInventario import TelaInventario
 from .TelaConfiguracoes import GerenciadorConfiguracoesTela
 from .TelaPosDialogo import GerenciadorPosDialogo
+from .TelaLoja import GerenciadorLoja, TelaLoja
 
 TelaConfiguracoes = GerenciadorConfiguracoesTela
 
@@ -33,4 +34,6 @@ __all__ = [
     "GerenciadorConfiguracoesTela",
     "TelaConfiguracoes",
     "GerenciadorPosDialogo",
+    "GerenciadorLoja",
+    "TelaLoja",
 ]

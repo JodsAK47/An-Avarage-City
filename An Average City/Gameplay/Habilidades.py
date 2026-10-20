@@ -5,7 +5,21 @@ from Sistemas.Recursos import caminho_dados
 CAMINHO_DADOS = caminho_dados()
 
 class Habilidade:
-    def __init__(self, nome, tipo, dano, custo_mp, precisao, descricao, efeito=None, chance_efeito=0.0, em_area=False, verso="Nenhum", is_ultimate=False):
+    def __init__(
+        self,
+        nome,
+        tipo,
+        dano,
+        custo_mp,
+        precisao,
+        descricao,
+        efeito=None,
+        chance_efeito=0.0,
+        em_area=False,
+        verso="Nenhum",
+        is_ultimate=False,
+        minion=None,
+    ):
         self.nome = nome
         self.tipo = tipo
         self.dano = dano
@@ -17,6 +31,7 @@ class Habilidade:
         self.em_area = em_area
         self.verso = verso
         self.is_ultimate = is_ultimate
+        self.minion = minion
 
     def custo_para(self, entidade=None):
         if callable(self.custo_mp):
@@ -47,7 +62,8 @@ def carregar_habilidades_jogador():
                     chance_efeito=v.get("chance_efeito", 0.0),
                     em_area=v.get("em_area", False),
                     verso=v.get("verso", "Nenhum"),
-                    is_ultimate=False
+                    is_ultimate=False,
+                    minion=v.get("minion"),
                 )
                 banco_habilidades[k] = hab
 
@@ -66,7 +82,8 @@ def carregar_habilidades_jogador():
                         chance_efeito=v.get("chance_efeito", 0.0),
                         em_area=v.get("em_area", False),
                         verso=v.get("verso", "Nenhum"),
-                        is_ultimate=True
+                        is_ultimate=True,
+                        minion=v.get("minion"),
                     )
                     ULTIMATES_POR_VERSO_CLASSE[(verso, classe)] = ult
                     banco_habilidades[ult.nome] = ult
@@ -84,4 +101,3 @@ def obter_habilidades_normais(verso, classe):
 
 def obter_ultimate(verso, classe):
     return ULTIMATES_POR_VERSO_CLASSE.get((verso, classe))
-

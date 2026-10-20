@@ -71,7 +71,7 @@ class Inimigo:
         try:
             self.imagem_original = pygame.image.load(caminho_imagem(nome_imagem))
             w_orig, h_orig = self.imagem_original.get_size()
-            altura_desejada = 125 if ("chefe" in nome.lower() or "sukuna" in nome.lower() or "especial" in nome.lower()) else 110
+            altura_desejada = 125 if (tipo in ("chefe", "grande") or "chefe" in nome.lower() or "sukuna" in nome.lower() or "especial" in nome.lower()) else 110
             largura_desejada = int(w_orig * (altura_desejada / max(1, h_orig)))
             img_escala = pygame.transform.scale(self.imagem_original, (largura_desejada, altura_desejada))
             self.imagem = pygame.transform.flip(img_escala, True, False)

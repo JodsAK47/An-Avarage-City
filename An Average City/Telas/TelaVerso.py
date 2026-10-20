@@ -114,21 +114,28 @@ class GerenciadorVerso:
         alvo = personagem_alvo if personagem_alvo is not None else personagem
         verso_alvo = verso if verso is not None else self.verso_atual
         talentos_verso = list(self.progresso_por_verso.get(verso_alvo, []))
-        alvo.talentos = set(talentos_verso)
+        talentos_invocador = list(save_global.obter_progresso_verso("Invocador"))
+        alvo.talentos = set(talentos_verso) | set(talentos_invocador)
 
         mapa_nodos = {"Sobrevivente": "S4", "Agente": "A4", "Feiticeiro": "F4"}
         if not hasattr(alvo, "ultimates_desbloqueadas"):
             alvo.ultimates_desbloqueadas = set()
 
+        classes_todas = ["Físico", "Distância", "Magia", "Invocador"]
         nodo_ult = mapa_nodos.get(verso_alvo)
         if nodo_ult and nodo_ult in talentos_verso:
             alvo.ultimates_desbloqueadas.add(verso_alvo)
-            for c in ["Físico", "Distância", "Magia"]:
+            for c in classes_todas:
                 alvo.ultimates_desbloqueadas.add((verso_alvo, c))
         else:
             alvo.ultimates_desbloqueadas.discard(verso_alvo)
-            for c in ["Físico", "Distância", "Magia"]:
+            for c in classes_todas:
                 alvo.ultimates_desbloqueadas.discard((verso_alvo, c))
+
+        if "I4" in talentos_invocador:
+            alvo.ultimates_desbloqueadas.add("Invocador")
+            for v in self.versos:
+                alvo.ultimates_desbloqueadas.add((v, "Invocador"))
 
     def obter_arvore_ativa(self):
         return self.arvores_por_verso.get(self.verso_atual, self.arvores_por_verso["Sobrevivente"])
@@ -231,7 +238,7 @@ class GerenciadorVerso:
             self.tela.blit(imagem_redimensionada, rect_imagem)
             pygame.draw.circle(self.tela, (200, 255, 50), (170, 180), 60, 5)
         else:
-            pygame.draw.circle(self.tela, CORES_VERSO[self.verso_atual], (170, 180), 60)
+            pygame.draw.circle(self.tela, CORES_VERSO.get(self.verso_atual, (100, 100, 100)), (170, 180), 60)
             pygame.draw.circle(self.tela, (200, 255, 50), (170, 180), 60, 5)
 
         nome_verso = self.verso_atual.upper()
@@ -255,9 +262,9 @@ class GerenciadorVerso:
                 sprite = pygame.transform.smoothscale(imagem_verso, (rect.width, rect.height))
                 self.tela.blit(sprite, rect.topleft)
             else:
-                pygame.draw.circle(self.tela, CORES_VERSO[nome], rect.center, 40)
+                pygame.draw.circle(self.tela, CORES_VERSO.get(nome, (100, 100, 100)), rect.center, 40)
             if borda:
-                pygame.draw.circle(self.tela, destaque_por_verso[nome], rect.center, 40, 5)
+                pygame.draw.circle(self.tela, destaque_por_verso.get(nome, (255, 255, 255)), rect.center, 40, 5)
 
         pygame.draw.rect(self.tela, PAINEL, (320, 40, 360, 720))
 

@@ -94,15 +94,17 @@ class GerenciadorPosLuta:
             return "continuar"
 
         if self.btn_melhorar_equip.checar_clique(evento, posicao_mouse):
-            custo = inventario_global.custo_melhoria()
-            if inventario_global.equipamento_slot and inventario_global.materiais_totais() >= custo:
+            alvo_eq = inventario_global.obter_equipamento_alvo()
+            custo = inventario_global.custo_melhoria(alvo_eq)
+            if alvo_eq and inventario_global.materiais_totais() >= custo:
                 inventario_global.consumir_materiais(custo)
-                inventario_global.equipamento_slot.melhorar()
-                self.mensagem = "Equipamento melhorado!"
+                alvo_eq.melhorar()
+                self.mensagem = f"{alvo_eq.nome} melhorado!"
                 sistema_conquistas.desbloquear("ferreiro")
             else:
                 self.mensagem = "Materiais insuficientes!"
             return None
+
 
         if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
             for indice, aba in enumerate(self.abas_jogadores):
@@ -125,6 +127,18 @@ class GerenciadorPosLuta:
                                 self.mensagem = f"{item.nome} guardado no inventário para melhoria."
                             elif getattr(item, "tipo", None) == "bilhete" or item.nome == "Bilhete do Dormitório":
                                 self.mensagem = f"Bilhete do Dormitório: possui {item.quantidade}. Gasta 1 para dormir."
+                            elif getattr(item, "tipo", None) == "polidor" or item.nome == "Polidor de Itens":
+                                alvo_eq = inventario_global.obter_equipamento_alvo()
+                                if inventario_global.usar_polidor_itens(alvo_eq):
+                                    nome_alvo = alvo_eq.nome if alvo_eq else "equipamento"
+                                    self.mensagem = f"Usou {item.nome}! Efeito de {nome_alvo} dobrado!"
+                                else:
+                                    self.mensagem = "Nenhum equipamento para polir!"
+                            elif getattr(item, "tipo", None) == "equipamento":
+                                if inventario_global.equipar(item):
+                                    self.mensagem = f"Equipou {item.nome}!"
+                                else:
+                                    self.mensagem = f"Não é possível equipar {item.nome} (máx. 3 amuletos sem repetir)!"
                             elif item.quantidade > 0:
                                 item.usar(jogador)
                                 self.mensagem = f"Usou {item.nome}!"
@@ -132,10 +146,16 @@ class GerenciadorPosLuta:
                                     inventario_global.consumiveis.remove(item)
                     else:
                         eq_idx = indice - len(inventario)
-                        if eq_idx == 0 and inventario_global.equipamento_slot:
-                            eq = inventario_global.equipamento_slot
-                            bonus_str = ", ".join(f"+{v} {k}" for k, v in eq.atributos_bonus.items() if v > 0)
-                            self.mensagem = f"{eq.nome} (+{eq.nivel - 1})" + (f": {bonus_str}" if bonus_str else "")
+                        slots_eq = inventario_global.obter_slots_equipamento()
+                        if 0 <= eq_idx < len(slots_eq):
+                            rotulo_slot, eq = slots_eq[eq_idx]
+                            if eq is not None:
+                                inventario_global.equipamento_selecionado = eq
+                                bonus_str = ", ".join(f"+{v} {k}" for k, v in eq.atributos_bonus.items() if v > 0)
+                                polido_str = " [Polido]" if getattr(eq, "polido", False) else ""
+                                self.mensagem = f"{eq.nome} (+{eq.nivel - 1}){polido_str}" + (f": {bonus_str}" if bonus_str else "")
+                            else:
+                                self.mensagem = f"Slot {rotulo_slot} vazio."
                     return None
 
         if self.jogador_selecionado >= len(self.jogadores):
@@ -191,21 +211,21 @@ class GerenciadorPosLuta:
         self.tela.blit(self.fonte_menor.render(
             f"HP: {int(jogador.hp)}/{int(jogador.max_hp)}    PM: {int(jogador.mp)}/{int(jogador.max_mp)}",
             True, (170, 220, 255)), (68, 210))
-        custo = inventario_global.custo_melhoria()
+        eq_alvo = inventario_global.obter_equipamento_alvo()
+        custo = inventario_global.custo_melhoria(eq_alvo)
         mats = inventario_global.materiais_totais()
 
         y_attr = 320
-        if inventario_global.equipamento_slot:
+        if eq_alvo:
             self.btn_melhorar_equip.texto = f"MELHORAR ({custo} MAT)"
             self.btn_melhorar_equip.desenhar(self.tela)
-            eq = inventario_global.equipamento_slot
-            self.tela.blit(self.fonte_menor.render(f"{eq.nome} +{eq.nivel-1}", True, (255, 215, 0)), (68, 300))
-            for k, v in eq.atributos_bonus.items():
+            sufixo_polido = " [Polido]" if getattr(eq_alvo, "polido", False) else ""
+            self.tela.blit(self.fonte_menor.render(f"{eq_alvo.nome} +{eq_alvo.nivel-1}{sufixo_polido}", True, (255, 215, 0)), (68, 300))
+            for k, v in eq_alvo.atributos_bonus.items():
                 if v > 0:
                     self.tela.blit(self.fonte_menor.render(f"+{v} {k}", True, (150, 255, 150)), (68, y_attr))
                     y_attr += 20
-        self.tela.blit(self.fonte_menor.render(f"Materiais disp.: {mats}", True, (200, 200, 200)), (68, y_attr + 20 if inventario_global.equipamento_slot else 300))
-        self.tela.blit(self.fonte_menor.render("Em desenvolvimento", True, (150, 160, 175)), (68, 565))
+        self.tela.blit(self.fonte_menor.render(f"Materiais disp.: {mats}", True, (200, 200, 200)), (68, y_attr + 15 if eq_alvo else 300))
 
         self.tela.blit(self.fonte_secao.render("INVENTARIO", True, (235, 220, 170)), (338, 132))
         self.tela.blit(self.fonte_menor.render("Itens carregados", True, (170, 180, 195)), (338, 163))
@@ -224,6 +244,12 @@ class GerenciadorPosLuta:
                 elif getattr(item, "tipo", None) == "bilhete" or item.nome == "Bilhete do Dormitório":
                     texto = f"BILH x{item.quantidade}"
                     cor_txt = (255, 190, 80)
+                elif getattr(item, "tipo", None) == "polidor" or item.nome == "Polidor de Itens":
+                    texto = f"POL x{item.quantidade}"
+                    cor_txt = (130, 235, 255)
+                elif getattr(item, "tipo", None) == "equipamento":
+                    texto = item.nome[:7]
+                    cor_txt = (255, 215, 100)
                 else:
                     nome = "HP" if item.rec_hp > 0 else "MP"
                     texto = f"{nome} x{item.quantidade}"
@@ -242,26 +268,33 @@ class GerenciadorPosLuta:
         for indice, (chave, nome) in enumerate(zip(chaves, nomes)):
             y = 195 + indice * 44
             pygame.draw.rect(self.tela, (59, 68, 88), (696, y, 185, 32))
-            valor = jogador.atributos.get(chave, 1)
-            self.tela.blit(self.fonte_menor.render(f"{nome}: {valor}", True, (235, 235, 235)), (708, y + 9))
+            valor_base = jogador.atributos.get(chave, 1)
+            bonus_eq = inventario_global.obter_bonus_atributo(chave)
+            texto_attr = f"{nome}: {valor_base + bonus_eq}" + (f" (+{bonus_eq})" if bonus_eq > 0 else "")
+            self.tela.blit(self.fonte_menor.render(texto_attr, True, (235, 235, 235)), (708, y + 9))
             if getattr(jogador, 'pontos_atributo', 0) > 0:
                 self.botoes_up[indice][0].desenhar(self.tela)
         pontos = getattr(jogador, 'pontos_atributo', 0)
         self.tela.blit(self.fonte_menor.render(f"Pontos disponiveis: {pontos}", True, (130, 230, 155)), (696, 468))
         self.tela.blit(self.fonte_secao.render("EQUIPAMENTOS", True, (235, 220, 170)), (696, 512))
+        slots_eq = inventario_global.obter_slots_equipamento()
         for indice, slot in enumerate(equipamentos):
             slot_indice = len(inventario) + indice
             cor = (76, 98, 122) if self.slot_selecionado == slot_indice else (38, 46, 62)
             pygame.draw.rect(self.tela, cor, slot)
             pygame.draw.rect(self.tela, (91, 103, 126), slot, 1)
 
-            if indice == 0 and inventario_global.equipamento_slot:
-                eq = inventario_global.equipamento_slot
-                nome_disp = eq.nome if len(eq.nome) <= 7 else eq.nome[:6] + "."
-                surf_nome = self.fonte_menor.render(nome_disp, True, (255, 215, 0))
-                self.tela.blit(surf_nome, (slot.x + max(2, (slot.width - surf_nome.get_width()) // 2), slot.y + 6))
-                surf_lvl = self.fonte_menor.render(f"+{eq.nivel - 1}", True, (150, 255, 150))
-                self.tela.blit(surf_lvl, (slot.x + max(2, (slot.width - surf_lvl.get_width()) // 2), slot.y + 26))
+            if indice < len(slots_eq):
+                rotulo_slot, eq = slots_eq[indice]
+                if eq is not None:
+                    nome_disp = eq.nome if len(eq.nome) <= 7 else eq.nome[:6] + "."
+                    surf_nome = self.fonte_menor.render(nome_disp, True, (255, 215, 0))
+                    self.tela.blit(surf_nome, (slot.x + max(2, (slot.width - surf_nome.get_width()) // 2), slot.y + 6))
+                    surf_lvl = self.fonte_menor.render(f"+{eq.nivel - 1}", True, (150, 255, 150))
+                    self.tela.blit(surf_lvl, (slot.x + max(2, (slot.width - surf_lvl.get_width()) // 2), slot.y + 26))
+                else:
+                    surf_rot = self.fonte_menor.render(rotulo_slot, True, (105, 115, 135))
+                    self.tela.blit(surf_rot, (slot.x + max(2, (slot.width - surf_rot.get_width()) // 2), slot.y + 16))
         self.btn_continuar.desenhar(self.tela)
 
         if self.notificacao_visivel and self.notificacao_popup:

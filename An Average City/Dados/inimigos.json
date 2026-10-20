@@ -156,10 +156,10 @@
     {
         "max_hp": 25,
         "max_mp": 5,
-        "arquivo_imagem": "Maldicao1.png",
-        "nome": "Guarda Iniciante",
+        "arquivo_imagem": "Torreta.png",
+        "nome": "Torreta",
         "ataques": [
-            "Soco"
+            "Tiro"
         ],
         "xp": 30,
         "atributos": {

@@ -29,6 +29,9 @@ class GerenciadorPosDialogo:
                                    (45, 95, 140), (65, 130, 190), largura_btn, altura_btn,
                                    cor_texto=(255, 255, 255), fonte_tamanho=14)
 
+        self.tem_loja = False
+        self.tipo_loja = "barista"
+        self.btn_loja = None
         self.superficie_overlay = pygame.Surface((self.largura, self.altura), pygame.SRCALPHA)
         self.superficie_overlay.fill((10, 10, 16, 215))
 
@@ -43,13 +46,43 @@ class GerenciadorPosDialogo:
 
         self.largura = self.tela.get_width()
         self.altura = self.tela.get_height()
-        largura_btn = 260
         altura_btn = 46
-        x_btn = (self.largura - largura_btn) // 2
         y_btn = min(self.altura - 130, int(self.altura * 0.76))
-        self.btn_continuar.rect = pygame.Rect(x_btn, y_btn, largura_btn, altura_btn)
+        nome_ev_lower = (self.nome_evento or "").lower()
+        self.tem_loja = bool("perigo" in nome_ev_lower or "barista" in nome_ev_lower or "mantimentos" in nome_ev_lower)
+
+        if self.tem_loja:
+            self.tipo_loja = "perigo" if "perigo" in nome_ev_lower else "barista"
+            if self.tipo_loja == "perigo" and not self.sucesso:
+                self.tem_loja = False
+
+        if self.tem_loja:
+            txt_loja = "ENTRAR NA LOJA DO PERIGO 🛒" if self.tipo_loja == "perigo" else "ENTRAR NA LOJA DO BARISTA ☕"
+            cor_norm = (140, 50, 50) if self.tipo_loja == "perigo" else (40, 115, 75)
+            cor_hov = (180, 70, 70) if self.tipo_loja == "perigo" else (60, 155, 100)
+            largura_loja = 250
+            largura_cont = 210
+            gap = 20
+            total_w = largura_loja + largura_cont + gap
+            x_loja = (self.largura - total_w) // 2
+            x_cont = x_loja + largura_loja + gap
+            self.btn_loja = Botao(x_loja, y_btn, largura_loja, altura_btn, txt_loja,
+                                  cor_norm, cor_hov, largura_loja, altura_btn,
+                                  cor_texto=(255, 255, 255), fonte_tamanho=12)
+            self.btn_continuar = Botao(x_cont, y_btn, largura_cont, altura_btn, "AVANÇAR",
+                                       (45, 95, 140), (65, 130, 190), largura_cont, altura_btn,
+                                       cor_texto=(255, 255, 255), fonte_tamanho=14)
+        else:
+            self.btn_loja = None
+            largura_btn = 260
+            x_btn = (self.largura - largura_btn) // 2
+            self.btn_continuar = Botao(x_btn, y_btn, largura_btn, altura_btn, "AVANÇAR",
+                                       (45, 95, 140), (65, 130, 190), largura_btn, altura_btn,
+                                       cor_texto=(255, 255, 255), fonte_tamanho=14)
 
     def atualizar_eventos(self, evento, posicao_mouse):
+        if self.tem_loja and self.btn_loja and self.btn_loja.checar_clique(evento, posicao_mouse):
+            return "abrir_loja"
         if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_RETURN, pygame.K_SPACE):
             return "continuar"
         if self.btn_continuar.checar_clique(evento, posicao_mouse):
@@ -57,6 +90,8 @@ class GerenciadorPosDialogo:
         return None
 
     def atualizar(self, posicao_mouse, estado_clique_mouse):
+        if self.tem_loja and self.btn_loja:
+            self.btn_loja.atualizar(posicao_mouse, estado_clique_mouse)
         self.btn_continuar.atualizar(posicao_mouse, estado_clique_mouse)
 
     def desenhar(self, posicao_mouse):

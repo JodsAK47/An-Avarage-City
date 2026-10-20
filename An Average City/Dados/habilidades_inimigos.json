@@ -82,5 +82,17 @@
         "chance_efeito": 0.0,
         "em_area": true,
         "verso": "Inimigo"
+    },
+    "Tiro": {
+        "nome": "Tiro",
+        "tipo": "Distância",
+        "dano": 5,
+        "custo_mp": 0,
+        "precisao": 0.90,
+        "descricao": "Dispara um projétil contra o alvo.",
+        "efeito": null,
+        "chance_efeito": 0.0,
+        "em_area": false,
+        "verso": "Inimigo"
     }
 }

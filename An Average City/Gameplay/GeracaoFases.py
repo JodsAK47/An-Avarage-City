@@ -191,14 +191,14 @@ def obter_dialogo_evento(identificador_evento):
             "A porta do achados e perdidos ficou aberta": (
                 f"{descricao}\n"
                 f"Teste de {atributo} (Dificuldade {dificuldade}):\n"
-                "• Sucesso: +1 For, +2 Sucatas, +Poção de Vida e +Bilhete.\n"
+                "• Sucesso: +1 For, +2 Sucatas, +Poção de Vida, +Bilhete e +Polidor de Itens.\n"
                 "• Falha: Alarme dispara (-15 HP e 3 inimigos fortalecidos)."
             ),
             "Comprar com o perigo": (
                 f"{descricao}\n"
                 f"Teste de {atributo} (Dificuldade {dificuldade}):\n"
-                "• Sucesso: Melhora Equipamento, +Poção de Vida, +1 For e +1 Sor.\n"
-                "• Falha: Golpe clandestino (-20 HP, perde 1 Sucata e emboscada)."
+                "• Sucesso: Negócio seguro! Acesso à Loja do Perigo para comprar e vender equipamentos.\n"
+                "• Falha: Você é ROUBADO! Perde equipamentos/materiais e sofre emboscada (-20 HP)."
             ),
             "Alguem na entrada do bar te chama": (
                 f"{descricao}\n"
@@ -214,9 +214,8 @@ def obter_dialogo_evento(identificador_evento):
             ),
             "Uma Pausa para comprar mantimentos": (
                 f"{descricao}\n"
-                f"Teste de {atributo} (Dificuldade {dificuldade}):\n"
-                "• Sucesso: +35 HP, +15 MP, +Poção de Vida, +Sucata e +1 For.\n"
-                "• Falha: Mantimentos estragados (-15 HP)."
+                "Pausa segura no balcão do Barista (Sem chance de falha):\n"
+                "• Mantimentos garantidos (+35 HP, +15 MP, +Equipamento, +Poção, +Sucata e +1 For) e acesso livre à Loja!"
             ),
         }
 
@@ -246,6 +245,8 @@ def _executar_teste_evento_neutro(evento, lista_jogadores, inv, rolagem_forcada=
     total = dado + valor_atributo
     sucesso = total >= dificuldade
     nome = evento.nome
+    if nome == "Uma Pausa para comprar mantimentos":
+        sucesso = True
     placar = f"[1d20({dado}) + {atributo_chave}({valor_atributo}) = {total} vs Dif.{dificuldade}]"
 
     quantidade_inimigos = 2
@@ -308,6 +309,27 @@ def _executar_teste_evento_neutro(evento, lista_jogadores, inv, rolagem_forcada=
         if bilhetes_ganhos > 0:
             inv.adicionar_bilhete_dormitorio(bilhetes_ganhos)
 
+        polidores_ganhos = info_resultado.get("polidores_itens", info_resultado.get("polidor_itens", 0))
+        if polidores_ganhos > 0:
+            inv.adicionar_polidor_itens(polidores_ganhos)
+
+        equipamentos_aleatorios = int(info_resultado.get("equipamentos_aleatorios", 0))
+        for _ in range(equipamentos_aleatorios):
+            if hasattr(inv, "gerar_equipamento_aleatorio") and hasattr(inv, "adicionar_equipamento"):
+                novo_eq = inv.gerar_equipamento_aleatorio()
+                inv.adicionar_equipamento(novo_eq, auto_equipar=True)
+
+        equipamentos_lista = info_resultado.get("equipamentos", [])
+        for eq_info in equipamentos_lista:
+            if isinstance(eq_info, dict) and hasattr(inv, "adicionar_equipamento"):
+                from Sistemas.Inventario import Equipamento
+                novo_eq = Equipamento(
+                    eq_info.get("nome", "Capacete de Ferro"),
+                    eq_info.get("atributos_bonus", {"Con": 2}),
+                    categoria=eq_info.get("categoria"),
+                )
+                inv.adicionar_equipamento(novo_eq, auto_equipar=True)
+
         materiais_lista = info_resultado.get("materiais", [])
         for mat in materiais_lista:
             if isinstance(mat, dict):
@@ -319,6 +341,37 @@ def _executar_teste_evento_neutro(evento, lista_jogadores, inv, rolagem_forcada=
         perder_mat = info_resultado.get("perder_materiais", 0)
         if perder_mat > 0 and inv.materiais_totais() > 0:
             inv.consumir_materiais(perder_mat)
+
+        if not sucesso and nome == "Comprar com o perigo":
+            item_roubado_nome = None
+            if hasattr(inv, "equipamentos_inventario") and inv.equipamentos_inventario:
+                roubado = inv.equipamentos_inventario.pop(0)
+                item_roubado_nome = getattr(roubado, "nome", "Equipamento")
+            elif hasattr(inv, "todos_equipamentos_equipados") and inv.todos_equipamentos_equipados():
+                equips = inv.todos_equipamentos_equipados()
+                alvo_roubo = next((e for e in equips if getattr(e, "categoria", "") != "arma"), equips[0])
+                inv.desequipar(alvo_roubo)
+                if alvo_roubo in inv.equipamentos_inventario:
+                    inv.equipamentos_inventario.remove(alvo_roubo)
+                item_roubado_nome = getattr(alvo_roubo, "nome", "Equipamento")
+
+            if item_roubado_nome:
+                efeitos = [
+                    f"O Perigo te roubou! Levou seu {item_roubado_nome}",
+                    "Sofreu ferimentos na emboscada (-20 HP)",
+                    "Inimigos chegam fortalecidos e em alerta"
+                ]
+                mensagem = f"⚑ 🎲 FALHA! O Perigo te roubou o item {item_roubado_nome} e -20 HP!"
+            else:
+                if inv.materiais_totais() > 0:
+                    inv.consumir_materiais(min(2, inv.materiais_totais()))
+                efeitos = [
+                    "O Perigo te roubou! Levou seus materiais da mochila",
+                    "Sofreu ferimentos na emboscada (-20 HP)",
+                    "Inimigos chegam fortalecidos e em alerta"
+                ]
+                mensagem = "⚑ 🎲 FALHA! O Perigo te roubou suas sucatas e -20 HP!"
+
 
         consumiveis_lista = info_resultado.get("consumiveis", [])
         for con in consumiveis_lista:
@@ -359,9 +412,10 @@ def _executar_teste_evento_neutro(evento, lista_jogadores, inv, rolagem_forcada=
                 inv.adicionar_material("Sucata", "Melhora equips.")
                 inv.adicionar_consumivel("Poção de Vida", "Restaura 30 HP", 30, 0)
                 inv.adicionar_bilhete_dormitorio(1)
+                inv.adicionar_polidor_itens(1)
                 narrativa = "Com passos silenciosos e precisos, você entrou na sala e vasculhou as gavetas sem fazer alarde, encontrando suprimentos valiosos deixados para trás."
-                efeitos = ["Ganhou +1 de Força", "Encontrou 2 Sucatas de metal", "Encontrou uma Poção de Vida", "Encontrou um Bilhete do Dormitório"]
-                mensagem = "⚑ 🎲 SUCESSO! Cofre aberto: +1 For, +2 Sucatas, +Poção e +Bilhete!"
+                efeitos = ["Ganhou +1 de Força", "Encontrou 2 Sucatas de metal", "Encontrou uma Poção de Vida", "Encontrou um Bilhete do Dormitório", "Encontrou um Polidor de Itens"]
+                mensagem = "⚑ 🎲 SUCESSO! Cofre aberto: +1 For, +2 Sucatas, +Poção, +Bilhete e +Polidor de Itens!"
             else:
                 for jog in lista_jogadores:
                     jog.hp = max(1, jog.hp - 15)
@@ -379,10 +433,12 @@ def _executar_teste_evento_neutro(evento, lista_jogadores, inv, rolagem_forcada=
                         jog.atributos["Sor"] = jog.atributos.get("Sor", 1) + 1
                 if inv.equipamento_slot is not None:
                     inv.equipamento_slot.melhorar()
+                if hasattr(inv, "gerar_equipamento_aleatorio") and hasattr(inv, "adicionar_equipamento"):
+                    inv.adicionar_equipamento(inv.gerar_equipamento_aleatorio(), auto_equipar=True)
                 inv.adicionar_consumivel("Poção de Vida", "Restaura 30 HP", 30, 0)
                 narrativa = "Você manteve a guarda alta e não caiu nas conversas do negociante. Impressionado com sua firmeza, ele te vendeu peças raras e um tônico restaurador."
-                efeitos = ["Ganhou +1 de Força e +1 de Sorte", "Equipamento aprimorado em 1 nível", "Recebeu uma Poção de Vida"]
-                mensagem = "⚑ 🎲 SUCESSO! Negócio fechado: Equipamento melhorado, +Poção, +1 For e +1 Sor!"
+                efeitos = ["Ganhou +1 de Força e +1 de Sorte", "Equipamento aprimorado em 1 nível", "Adquiriu um novo Equipamento na loja clandestina", "Recebeu uma Poção de Vida"]
+                mensagem = "⚑ 🎲 SUCESSO! Negócio fechado: Equipamento melhorado, +Equipamento, +Poção, +1 For e +1 Sor!"
             else:
                 for jog in lista_jogadores:
                     jog.hp = max(1, jog.hp - 20)
@@ -444,9 +500,11 @@ def _executar_teste_evento_neutro(evento, lista_jogadores, inv, rolagem_forcada=
                         jog.atributos[atributo_chave] = jog.atributos.get(atributo_chave, 1) + 1
                 inv.adicionar_consumivel("Poção de Vida", "Restaura 30 HP", 30, 0)
                 inv.adicionar_material("Sucata", "Melhora equips.")
+                if hasattr(inv, "gerar_equipamento_aleatorio") and hasattr(inv, "adicionar_equipamento"):
+                    inv.adicionar_equipamento(inv.gerar_equipamento_aleatorio(), auto_equipar=True)
                 narrativa = "O comerciante ofereceu provisões frescas e energéticas. Você se alimentou bem, recuperou o fôlego e reforçou sua preparação física para o próximo embate."
-                efeitos = ["Recuperou 35 de Vida e 15 de Mana", f"Ganhou +1 de {atributo_chave}", "Recebeu uma Poção de Vida", "Recebeu Sucata para melhorias"]
-                mensagem = f"⚑ 🎲 SUCESSO! Mantimentos obtidos: +35 HP, +15 MP, +Poção, +Sucata e +1 {atributo_chave}!"
+                efeitos = ["Recuperou 35 de Vida e 15 de Mana", f"Ganhou +1 de {atributo_chave}", "Adquiriu um Equipamento com o comerciante", "Recebeu uma Poção de Vida", "Recebeu Sucata para melhorias"]
+                mensagem = f"⚑ 🎲 SUCESSO! Mantimentos obtidos: +35 HP, +15 MP, +Equipamento, +Poção, +Sucata e +1 {atributo_chave}!"
             else:
                 for jog in lista_jogadores:
                     jog.hp = max(1, jog.hp - 15)
