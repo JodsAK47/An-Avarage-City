@@ -74,7 +74,7 @@ class Inimigo:
             altura_desejada = 125 if (tipo in ("chefe", "grande") or "chefe" in nome.lower() or "sukuna" in nome.lower() or "especial" in nome.lower()) else 110
             largura_desejada = int(w_orig * (altura_desejada / max(1, h_orig)))
             img_escala = pygame.transform.scale(self.imagem_original, (largura_desejada, altura_desejada))
-            self.imagem = pygame.transform.flip(img_escala, True, False)
+            self.imagem = pygame.transform.flip(img_escala, True, False)  # todos os inimigos ficam de frente para a esquerda
         except (pygame.error, FileNotFoundError) as e:
             print(f"⚠️ Erro ao carregar imagem do inimigo ({nome_imagem}): {e}")
             self.imagem = pygame.Surface((100, 110))

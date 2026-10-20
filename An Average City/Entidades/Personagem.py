@@ -35,6 +35,8 @@ class Personagem:
             altura_desejada = 115
             largura_desejada = int(w_orig * (altura_desejada / max(1, h_orig)))
             self.imagem = pygame.transform.scale(self.imagem_original, (largura_desejada, altura_desejada))
+            # skins e aliados devem ficar virados para a direita
+            self.imagem = self.imagem
         except (pygame.error, FileNotFoundError) as e:
             print(f"⚠️ Erro ao carregar imagem: {e}")
             self.imagem = pygame.Surface((100, 115))
@@ -62,6 +64,7 @@ class Personagem:
             altura_desejada = 115
             largura_desejada = int(w_orig * (altura_desejada / max(1, h_orig)))
             self.imagem = pygame.transform.scale(self.imagem_original, (largura_desejada, altura_desejada))
+            # skins do jogador sempre ficam para a direita
             self.rect.size = self.imagem.get_size()
             self.convertida = False
         except (pygame.error, FileNotFoundError) as e:

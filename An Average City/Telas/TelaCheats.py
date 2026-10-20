@@ -66,7 +66,7 @@ class GerenciadorCheatsTela:
         self.catalogo_skins = [
             {"nome": "Pixil Clássico", "arquivo": "pixil.png", "desc": "Visual tradicional"},
             {"nome": "Campeão Dourado", "arquivo": "pixil_ouro.png", "desc": "Armadura de Ouro puro"},
-            {"nome": "Agente Cibernético", "arquivo": "pixil_cyber.png", "desc": "Tecnologia de ponta neon"},
+            {"nome": "Agente Cibernético", "arquivo": "Cyborg Skin.png", "desc": "Tecnologia de ponta neon"},
             {"nome": "Guerreiro Sombrio", "arquivo": "pixil_sombra.png", "desc": "Energia do Vazio"},
             {"nome": "Sukuna (Chefe)", "arquivo": "Sukuna1.png", "desc": "O Rei das Maldições"},
             {"nome": "Maldição Espiritual", "arquivo": "Maldicao1.png", "desc": "Espírito amaldiçoado"},

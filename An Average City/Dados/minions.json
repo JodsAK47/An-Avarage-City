@@ -125,7 +125,7 @@
     "Drone Caçador": {
         "nome": "Drone Caçador",
         "verso": "Agente",
-        "arquivo_imagem": "pixil_cyber.png",
+        "arquivo_imagem": "Cyborg Skin.png",
         "inverter_horizontal": false,
         "max_hp": 32,
         "max_mp": 14,

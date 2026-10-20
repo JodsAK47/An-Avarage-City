@@ -141,10 +141,13 @@ class Minion:
             altura_desejada = 82
             largura_desejada = max(45, int(w_orig * (altura_desejada / max(1, h_orig))))
             img_escala = pygame.transform.scale(self.imagem_original, (largura_desejada, altura_desejada))
-            if self.inverter_horizontal:
-                self.imagem = pygame.transform.flip(img_escala, True, False)
-            else:
+            # aliados e skins ficam virados para a direita; inimigos são forçados para a esquerda
+            if getattr(self, "is_minion", False):
                 self.imagem = img_escala
+            elif getattr(self, "is_player", False):
+                self.imagem = img_escala
+            else:
+                self.imagem = pygame.transform.flip(img_escala, True, False)
         except (pygame.error, FileNotFoundError) as e:
             print(f"⚠️ Erro ao carregar imagem do minion ({nome_imagem}): {e}")
             self.imagem = pygame.Surface((70, 82))

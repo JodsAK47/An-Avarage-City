@@ -48,6 +48,7 @@ class GerenciadorPosLuta:
 
         cura = dados_resultado.get("cura", {})
         itens = dados_resultado.get("itens", [])
+        mensagem = dados_resultado.get("mensagem", "Batalha encerrada.")
 
         contagem_itens = {}
         for item in itens:
@@ -73,12 +74,13 @@ class GerenciadorPosLuta:
             "itens": lista_itens_formatada,
             "hp_curado": hp_curado,
             "mp_curado": mp_curado,
+            "mensagem": mensagem,
         }
         self.notificacao_visivel = True
 
     def _retangulos_slots(self):
-        inventario = [pygame.Rect(335 + coluna * 78, 218 + linha * 68, 62, 52)
-                      for linha in range(4) for coluna in range(3)]
+        inventario = [pygame.Rect(345 + coluna * 68, 220 + linha * 60, 60, 48)
+                      for linha in range(4) for coluna in range(4)]
         equipamentos = [pygame.Rect(688 + coluna * 62, 535 + linha * 62, 52, 48)
                         for linha in range(2) for coluna in range(4)]
         return inventario, equipamentos
@@ -328,15 +330,19 @@ class GerenciadorPosLuta:
         txt_x = self.fonte_menor.render("x", True, (210, 210, 210))
         self.tela.blit(txt_x, (self.btn_fechar_popup.x + 4, self.btn_fechar_popup.y + 1))
 
+        msg_texto = dados.get("mensagem", "Batalha encerrada.")
+        txt_msg = self.fonte_menor.render(msg_texto, True, (255, 235, 160))
+        self.tela.blit(txt_msg, (x + 10, y + 28))
+
         txt_cura_label = self.fonte_menor.render("Cura obtida:", True, (160, 220, 180))
-        self.tela.blit(txt_cura_label, (x + 10, y + 30))
+        self.tela.blit(txt_cura_label, (x + 10, y + 48))
         txt_cura_val = self.fonte_menor.render(dados.get("texto_cura", "+30% HP / +3 PM"), True, (130, 255, 160))
-        self.tela.blit(txt_cura_val, (x + 100, y + 30))
+        self.tela.blit(txt_cura_val, (x + 100, y + 48))
 
         txt_itens_label = self.fonte_menor.render("Itens obtidos:", True, (255, 215, 120))
-        self.tela.blit(txt_itens_label, (x + 10, y + 50))
+        self.tela.blit(txt_itens_label, (x + 10, y + 68))
 
-        y_item = y + 68
+        y_item = y + 86
         if itens:
             for item in itens:
                 txt_item = self.fonte_menor.render(f"- {item}", True, (240, 240, 240))

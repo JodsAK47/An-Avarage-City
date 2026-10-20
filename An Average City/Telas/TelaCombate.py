@@ -729,13 +729,6 @@ class GerenciadorJogo:
         if congelou_alguem and len(alvos) == 1:
             msg += " CONGELOU!"
         self.mensagem_log = msg
-
-        self.pontos_jogo = self.calcular_pontos_desempenho(
-            xp_ganho=sum(getattr(e, "xp", 0) for e in self.ordem_turnos if self.eh_inimigo(e) and e.hp <= 0),
-            dano_causado=self.dano_causado_total,
-            inimigos_eliminados=self.kills_total,
-            dificuldade_total=self.dificuldade_total,
-        )
         return self.mensagem_log
 
     def executar_ataque_jogador(self, nome_habilidade, alvo_principal=None, jogador_ativo=None):
@@ -830,12 +823,6 @@ class GerenciadorJogo:
                         if len(alvos) == 1: msg += " CONGELOU!"
 
             self.mensagem_log = msg
-            self.pontos_jogo = self.calcular_pontos_desempenho(
-                xp_ganho=sum(getattr(entidade, 'xp', 0) for entidade in self.ordem_turnos if self.eh_inimigo(entidade) and entidade.hp <= 0),
-                dano_causado=self.dano_causado_total,
-                inimigos_eliminados=self.kills_total,
-                dificuldade_total=self.dificuldade_total,
-            )
 
         self.avancar_turno()
 
@@ -853,12 +840,7 @@ class GerenciadorJogo:
         jogadores_vivos = [entidade for entidade in self.ordem_turnos if getattr(entidade, 'is_player', False) and entidade.hp > 0]
 
         if not jogadores_vivos:
-            self.pontos_jogo = self.calcular_pontos_desempenho(
-                xp_ganho=sum(getattr(entidade, 'xp', 0) for entidade in self.ordem_turnos if self.eh_inimigo(entidade) and entidade.hp <= 0),
-                dano_causado=self.dano_causado_total,
-                inimigos_eliminados=self.kills_total,
-                dificuldade_total=self.dificuldade_total,
-            )
+            self.pontos_jogo = 0
             return "game_over"
 
         if not inimigos_vivos:
@@ -924,7 +906,8 @@ class GerenciadorJogo:
                 self.ultimo_resultado_batalha = {
                     "cura": cura_info,
                     "itens": itens_obtidos,
-                    "xp": xp_ganho
+                    "xp": xp_ganho,
+                    "mensagem": f"Vitória! +{xp_ganho} XP e {self.pontos_jogo} pontos ganhos."
                 }
 
                 if self.partida_atual >= self.total_partidas:
@@ -1450,11 +1433,14 @@ class GerenciadorJogo:
             if random.random() < chance_fuga:
                 from Sistemas.Conquistas import sistema_conquistas
                 sistema_conquistas.desbloquear("fuga_estrategica")
+                self.pontos_jogo = 0
+                self.partida_atual = min(self.total_partidas, self.partida_atual + 1)
                 cura_info = self.recuperar_apos_batalha(dormir=False)
                 self.ultimo_resultado_batalha = {
                     "cura": cura_info,
                     "itens": [],
-                    "xp": 0
+                    "xp": 0,
+                    "mensagem": "Fuga bem-sucedida! Você saiu do combate sem ganhar pontos."
                 }
                 return "fugiu"
             else:
