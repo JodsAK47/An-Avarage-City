@@ -1,72 +1,154 @@
-# RPG Pygame - Jogo de Combate por Turnos em 2D ⚔️
+# An Average City
 
-Um jogo de RPG em 2D desenvolvido inteiramente em Python utilizando a biblioteca `pygame`. Este projeto apresenta um sistema clássico de combate por turnos, seleção de classes, progressão de atributos e uma mecânica interativa de esquiva de ataques.
+Jogo de RPG em Python com Pygame, desenvolvido como projeto de estudo em lógica, orientação a objetos e desenvolvimento de jogos 2D.
 
-## 🌟 Funcionalidades
+Status atual: em desenvolvimento ativo, com mecânicas principais já implementadas e diversas features de sistema, progressão e interface funcionando.
 
-* **Sistema de Batalha por Turnos:** Ordem de ataque definida dinamicamente pelo atributo de Agilidade (Iniciativa) das entidades.
-* **Múltiplas Classes:** Escolha entre **Lutador** (foco em Força), **Manipulador** (foco em Inteligência/Magia) e **Arqueiro** (foco em Agilidade/Distância).
-* **Progressão de Nível (RPG):** Ganha XP derrotando inimigos. Ao subir de nível, distribui pontos entre 5 atributos (Força, Agilidade, Constituição, Sabedoria, Intelecto) na tela de descanso.
-* **Habilidades e Efeitos:** Diferentes habilidades com custo de PM (Mana), chance de acerto crítico e efeitos secundários, como *Congelamento* ou ataques *Em Área* (AoE).
-* **Mecânica de Esquiva Interativa:** Durante o turno do inimigo, o jogador participa ativamente de um "Quick Time Event" (clicar no momento certo) para anular ou reduzir o dano recebido.
-* **Múltiplos Cenários:** Escolha a dificuldade enfrentando diferentes grupos de monstros em fases variadas: *Floresta (Fácil)*, *Caverna (Médio)*, *Ruínas (Difícil)* e *Covil (Chefe)*.
+## Visão geral
 
-## 📂 Estrutura do Projeto
+O projeto é um RPG por turnos com foco em combate, seleção de classes, árvore de habilidades, progresso de personagem, inventário, loja, conquistas e múltiplas telas de fluxo do jogo.
 
-Certifica-te de que o teu repositório tem a seguinte estrutura para que o jogo funcione corretamente (especialmente as pastas de *assets*):
+A estrutura atual do projeto está organizada em módulos e telas, com a lógica principal localizada em:
+
+- [An Average City/Main.py](An%20Average%20City/Main.py)
+- [An Average City/Telas](An%20Average%20City/Telas)
+- [An Average City/Sistemas](An%20Average%20City/Sistemas)
+- [An Average City/Entidades](An%20Average%20City/Entidades)
+- [An Average City/Gameplay](An%20Average%20City/Gameplay)
+
+## ✅ O que já foi implementado
+
+### Sistema de jogo
+
+- Menu principal com navegação entre telas
+- Seleção de classes e seleção de verso
+- Fluxo principal do jogo em estados
+- Combate por turnos com ordem de ação dinâmica
+- Sistema de esquiva interativa durante o ataque inimigo
+- Fases e geração de inimigos por template
+- Várias telas do jogo: menu, combate, descanso, loja, conquistas, configurações, game over e vitória
+
+### Progressão e RPG
+
+- Sistema de XP e níveis
+- Pontos de atributo distribuídos ao subir de nível
+- Atributos principais: Força, Agilidade, Constituição, Sabedoria, Intelecto e Sorte
+- Árvore de habilidades por verso
+- Talentos e ultimates desbloqueáveis
+- Minions/invocações e elementos de suporte no combate
+
+### Inventário e economia
+
+- Inventário com consumíveis, materiais e equipamentos
+- Equipamentos por categoria: arma, capacete, peitoral, calça, bota e amuleto
+- Melhoria e polimento de itens
+- Loja com compra e venda
+- Loja segura e loja clandestina
+- Materiais e recompensas relacionadas ao progresso
+
+### Persistência
+
+- Save em JSON
+- Progresso de versos salvo
+- Conquistas com notificações
+- Configurações de vídeo e áudio salvas
+- Reset do save e reinicialização do jogo
+
+### Conteúdo extra
+
+- Modo cooperativo de 2 jogadores
+- Acesso restrito por Member Card
+- Eventos neutros com testes de atributo e recompensas/penalidades
+- Sistema de conquistas e feedback visual
+
+## 🔄 O que está em andamento / em expansão
+
+- Refinamento da árvore de talentos e balanceamento de habilidades
+- Expansão de conteúdo de fases e inimigos
+- Melhorias no sistema de loja e recompensas
+- Ajustes no balanceamento de equipamentos e itens
+- Polimento visual e de UX das telas
+- Aprimoramento de efeitos sonoros e feedback de combate
+- Expansão da narrativa e eventos do mundo
+
+## ⚠️ O que ainda pode faltar
+
+- Animações mais elaboradas para habilidades e ataques
+- SFX mais completos e mais consistentes no combate
+- Melhor acabamento visual em cenas, fundos e elementos de interface
+- Mais conteúdo de exploração e mundo aberto/semiexploração
+- Mais fases, bosses e variedade narrativa
+- Refino final de balanceamento e acessibilidade
+
+## 🧭 Status por área
+
+### Concluído
+
+- [x] Base de jogo e fluxo principal
+- [x] Sistema de batalha por turnos
+- [x] Progressão por nível e atributos
+- [x] Inventário e equipamentos
+- [x] Loja
+- [x] Save e configurações
+- [x] Conquistas
+- [x] Versos/talentos/ultimates
+
+### Em desenvolvimento
+
+- [ ] Melhorias visuais e animações
+- [ ] Sons e efeitos sonoros de ataques
+- [ ] Expansão narrativa/mundo
+- [ ] Balanceamento final
+- [ ] Mais conteúdo de fases e inimigos
+
+## ▶️ Como executar
+
+### Pré-requisitos
+
+- Python 3.13
+- Biblioteca pygame
+
+### Instalação
+
+```bash
+pip install pygame
+```
+
+### Execução
+
+No diretório do projeto:
+
+```bash
+python Main.py
+```
+
+O projeto esta em uma pasta com subdiretório, [An Average City/Main.py](An%20Average%20City/Main.py), execute a partir da pasta correta:
+
+```bash
+cd "An Average City"
+python Main.py
+```
+
+## 📁 Estrutura principal
 
 ```text
-📁 Seu_Repositorio/
-│
-├── Main.py                # Ponto de entrada do jogo (Loop principal e Máquina de Estados)
-├── Jogo.py                # Núcleo mecânico de combate e renderização da batalha
-├── Menu.py                # Controlador do Menu Principal e classe base de Botões da UI
-├── MenuClasses.py         # Tela de seleção de Arquétipo/Classe
-├── Cenarios.py            # Tela de seleção de fases/dificuldades
-├── Habilidades.py         # Banco de dados de ataques e magias
-├── Descanço.py            # Tela de Status, XP e distribuição de Atributos
-├── GameOver.py            # Tela de fim de jogo
-│
-├── 📁 Entidades/          # Lógica dos personagens do jogo
-│   ├── Personagem.py      # Classe principal do Jogador
-│   └── Inimigo.py         # Classe e gerador de inimigos por cenário
-│
-├── 📁 Sprites/            # [IMPORTANTE] Pasta para as imagens (.png)
-│   ├── pixil.png          # Sprite do jogador
-│   ├── Maldição1.png      # Sprite base dos inimigos
-│   └── 📁 Botoes/         # Sprites de botões (base, hover, clique) - opcional
-│
-└── 📁 Ots's/              # [IMPORTANTE] Pasta para as músicas e sons (.mp3)
-    ├── Menu.mp3
-    ├── Combate.mp3
-    ├── Boss.mp3
-    └── GameOver.mp3
-🚀 Como Executar o Jogo
-Pré-requisitos
-Precisarás de ter o Python instalado na sua máquina, bem como a biblioteca pygame.
+An-Avarage-City/
+├── README.md
+├── README(Start).md
+├── An Average City/
+│   ├── Main.py
+│   ├── Entidades/
+│   ├── Gameplay/
+│   ├── Sistemas/
+│   ├── Telas/
+│   ├── Saves/
+│   ├── Dados/
+│   └── Sprites/
+└── OSTs/
+```
 
-Clone este repositório:
+## 📝 Observação
 
-Bash
-git clone [https://github.com/JodsAK47/An-Avarage-City.git](https://github.com/JodsAK47/An-Avarage-City.git)
-Instala a dependência do Pygame:
+Este README foi atualizado para refletir o estado real do projeto conforme a implementação atual no código. O arquivo anterior estava desatualizado e descrevia uma versão mais antiga do jogo.
 
-Bash
-pip install pygame
-Executa o arquivo principal na pasta do projeto:
-
-Bash
-python Main.py
-🎮 Controles
-Mouse: O jogo é inteiramente controlado via interface gráfica (Point and Click). Usa o clique esquerdo para interagir com menus, escolher habilidades, selecionar alvos, subir atributos e usar a barra de esquiva durante o combate.
-
-🛠️ Modificações e Adições Próximas
-[ Concluido ] Adicionar mais itens e sistema de inventário.
-
-[ Em falta ] Melhorar as animações durante o uso de habilidades.
-
-[ Ja Iniciado ] Adicionar mais músicas e efeitos sonoros (SFX) aos ataques.
-
-Projeto desenvolvido como estudo de lógica de programação, orientação a objetos e desenvolvimento de jogos 2D utilizando Python e Pygame.
-
-Este README Apresenta uma visão do projeto no dia 17 de agosto 2026.(ESTE DOCUMENTO FOI GERADO POR IA E VERIFICADO POR HUMANOS)
+Projeto desenvolvido como estudo de programação orientada a objetos, lógica de jogos e desenvolvimento com Python e Pygame.
