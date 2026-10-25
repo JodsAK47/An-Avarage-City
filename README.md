@@ -1,159 +1,160 @@
-# An Average City — RPG 2D em Pygame ⚔️🏙️
+# An Average City
 
-**An Average City** (Um Protótipo Médio) é um jogo de RPG 2D tático em turnos desenvolvido inteiramente em Python com a biblioteca **Pygame**. O projeto combina elementos de RPG clássico, ambientação urbana/cyberpunk contemporânea, combate estratégico, árvores de habilidades por arquétipos ("Versos"), minigames de esquiva em tempo real, modo cooperativo local e áreas secretas exploráveis.
+Jogo de RPG em Python com Pygame, desenvolvido como projeto de estudo em lógica, orientação a objetos e desenvolvimento de jogos 2D.
 
----
+Status atual: em desenvolvimento ativo, com mecânicas principais já implementadas e diversas features de sistema, progressão e interface funcionando.
 
-## 🌟 Principais Funcionalidades
+## Visão geral
 
-### ⚔️ 1. Sistema de Combate Tático por Turnos
-- **Iniciativa Dinâmica:** A ordem de ação de jogadores e inimigos é calculada com base no atributo de Agilidade.
-- **Habilidades & Ultimates:** Habilidades físicas, mágicas e de distância com custo de MP, precisão, efeitos de status (*Congelamento*, *Bloqueio*, etc.) e ataques em área (*AoE*).
-- **Ataques Especiais (Ultimates):** Golpes devastadores únicos para cada combinação de Verso e Classe que consomem todo o MP do personagem.
-- **Mecânica de Esquiva Interativa (QTE):** Durante o turno inimigo, uma barra de precisão em tempo real permite ao jogador sincronizar o clique para aparar, reduzir ou esquivar totalmente do dano.
-- **Modo 2 Jogadores (Co-op Local):** Ative a chave de 2 Jogadores no menu para jogar com dois heróis em turnos cooperativos contra hordas de monstros e chefes.
+O projeto é um RPG por turnos com foco em combate, seleção de classes, árvore de habilidades, progresso de personagem, inventário, loja, conquistas e múltiplas telas de fluxo do jogo.
 
-### 🎭 2. Arquétipos (Versos) e Classes
-- **Versos (Origens):**
-  - 🛡️ **Sobrevivente:** Especialista em resistência, combate rústico e sustentabilidade.
-  - 🕶️ **Agente:** Tático e furtivo, mestre em ataques críticos e armamentos precisos.
-  - 🔮 **Feiticeiro:** Manipulador arcano focado em feitiços de alto dano e controle elemental.
-- **Classes de Combate:** *Físico* (Força), *Distância* (Agilidade) e *Magia* (Intelecto).
-- **Árvores de Talentos:** Desbloqueio progressivo de habilidades passivas e ativas com visualização em nós interativos.
+A estrutura atual do projeto está organizada em módulos e telas, com a lógica principal localizada em:
 
-### 📦 3. Inventário, Descanso e Progressão
-- **Progressão por Atributos:** Ganho de XP e níveis para distribuição de pontos em 5 atributos centrais:
-  - `For` (Força) — Dano físico corpo a corpo.
-  - `Agi` (Agilidade) — Iniciativa de turnos e dano à distância.
-  - `Con` (Constituição) — Aumento de Vida Máxima (HP).
-  - `Sab` (Sabedoria) — Aumento de Mana Máxima (MP).
-  - `Int` (Intelecto) — Poder mágico e eficácia de feitiços.
-- **Sistema de Inventário:** Consumíveis (Poções de HP/MP) e Materiais (Sucata).
-- **Forja e Melhoria:** Aprimoramento contínuo de armas e equipamentos consumindo sucata na tela de descanso.
+- [An Average City/Main.py](An%20Average%20City/Main.py)
+- [An Average City/Telas](An%20Average%20City/Telas)
+- [An Average City/Sistemas](An%20Average%20City/Sistemas)
+- [An Average City/Entidades](An%20Average%20City/Entidades)
+- [An Average City/Gameplay](An%20Average%20City/Gameplay)
 
-### 🚪 4. Segredos, Esgoto e Terminal Hacker (Cheats)
-- **Porta do Esgoto (*Sewer Access*):** Interaja com a porta da esquerda no menu para descer aos esgotos da cidade e encontrar o lendário *Member Card*.
-- **Porta Restrita (*No Trespassing*):** Acesso trancado que só pode ser aberto com o *Member Card*, revelando o **Terminal Secreto de Cheats**.
-- **Terminal de Cheats:** Funções de debug e testes (pontos infinitos, god mode, desbloqueio total de talentos, alteração de skins e níveis).
+## ✅ O que já foi implementado
 
-### 🏆 5. Sistema de Conquistas e Persistência
-- **Galeria de Conquistas:** Painel dedicado com visualização de ícones em escala de cinza/coloridos e metas de desbloqueio.
-- **Notificações Animadas (*Toasts*):** Avisos visuais em tempo real quando uma nova conquista é atingida.
-- **Save Global:** Persistência automática em JSON (`Dados/save.json`), guardando recorde de pontuação, pontos acumulados, estado do cartão e conquistas liberadas.
+### Sistema de jogo
 
----
+- Menu principal com navegação entre telas
+- Seleção de classes e seleção de verso
+- Fluxo principal do jogo em estados
+- Combate por turnos com ordem de ação dinâmica
+- Sistema de esquiva interativa durante o ataque inimigo
+- Fases e geração de inimigos por template
+- Várias telas do jogo: menu, combate, descanso, loja, conquistas, configurações, game over e vitória
 
-## 📂 Arquitetura e Estrutura do Projeto
+### Progressão e RPG
 
-O código-fonte é organizado de forma modular, desacoplada e escalável:
+- Sistema de XP e níveis
+- Pontos de atributo distribuídos ao subir de nível
+- Atributos principais: Força, Agilidade, Constituição, Sabedoria, Intelecto e Sorte
+- Árvore de habilidades por verso
+- Talentos e ultimates desbloqueáveis
+- Minions/invocações e elementos de suporte no combate
 
-```
-Um Prototipo medio/
-│
-├── Main.py                     # Ponto de entrada do jogo (Loop principal e orquestrador)
-│
-├── Telas/                      # Carregadores e gerenciadores de telas (Screen Loaders)
-│   ├── __init__.py             # Exporta todos os gerenciadores de telas
-│   ├── TelaMenu.py             # Menu principal e portas interativas
-│   ├── TelaCombate.py          # Gerenciador de batalha, turnos e combate
-│   ├── TelaClasses.py          # Seleção de classes (Físico, Distância, Magia)
-│   ├── TelaVerso.py            # Árvore de talentos e arquétipos
-│   ├── TelaCenarios.py         # Seleção de desafios e rotas
-│   ├── TelaDescanco.py         # Tela pós-luta, distribuição de atributos e forja
-│   ├── TelaDialogo.py          # Sobreposição de diálogos narrativos
-│   ├── TelaInventario.py       # Interface visual do inventário e consumíveis
-│   ├── TelaCheats.py           # Terminal de trapaças / painel hacker
-│   ├── TelaConquistas.py       # Galeria de conquistas
-│   ├── TelaSewer.py            # Exploração do esgoto e coleta do Member Card
-│   ├── TelaGameOver.py         # Tela de derrota e registro de pontuação
-│   └── TelaVitoria.py          # Tela de vitória contra o chefe
-│
-├── Sistemas/                   # Motores centrais, persistência e utilitários
-│   ├── __init__.py             # Exporta sistemas e componentes
-│   ├── Recursos.py             # Resolução dinâmica da raiz do projeto e caminhos universais
-│   ├── Fontes.py               # Tipografia e utilitário de quebra de texto
-│   ├── SaveSystem.py           # Persistência de dados (Dados/save.json)
-│   ├── Conquistas.py           # Lógica e registro de conquistas (Dados/conquistas.json)
-│   ├── Inventario.py           # Lógica de itens, equipamentos e consumíveis
-│   └── SistemaUI.py            # Framework de UI (Botao, TelaBase, GerenciadorTelas)
-│
-├── Gameplay/                   # Regras de gameplay e geração procedural
-│   ├── __init__.py             # Exporta habilidades e gerador de fases
-│   ├── GeracaoFases.py         # Gerador de encontros e inimigos procedurais
-│   └── Habilidades.py          # Carregador de habilidades e Ultimates
-│
-├── Entidades/                  # Modelos de personagens e inimigos
-│   ├── __init__.py             # Exporta Personagem e Inimigo
-│   ├── Personagem.py           # Entidade do jogador e atributos globais
-│   └── Inimigo.py              # Entidade dos monstros e chefes
-│
-├── Dados/                      # Base de dados estruturada em JSON
-│   ├── arvores.json            # Nós e talentos dos Versos
-│   ├── conquistas.json         # Metas e dados de conquistas
-│   ├── eventos.json            # Eventos neutros de fases
-│   ├── habilidades_jogador.json# Lista de habilidades e ultimates dos heróis
-│   ├── habilidades_inimigos.json# Habilidades e golpes dos monstros
-│   ├── inimigos.json           # Templates de inimigos e chefes
-│   └── save.json               # Save game persistente
-│
-├── Sprites/                    # Texturas, planos de fundo e botões (.png)
-├── Fontes/                     # Fontes tipográficas (.ttf)
-└── OSTs/                       # Trilhas sonoras originais (.mp3)
-```
+### Inventário e economia
 
----
+- Inventário com consumíveis, materiais e equipamentos
+- Equipamentos por categoria: arma, capacete, peitoral, calça, bota e amuleto
+- Melhoria e polimento de itens
+- Loja com compra e venda
+- Loja segura e loja clandestina
+- Materiais e recompensas relacionadas ao progresso
 
-## 🚀 Como Executar o Jogo
+### Persistência
+
+- Save em JSON
+- Progresso de versos salvo
+- Conquistas com notificações
+- Configurações de vídeo e áudio salvas
+- Reset do save e reinicialização do jogo
+
+### Conteúdo extra
+
+- Modo cooperativo de 2 jogadores
+- Acesso restrito por Member Card
+- Eventos neutros com testes de atributo e recompensas/penalidades
+- Sistema de conquistas e feedback visual
+
+## 🔄 O que está em andamento / em expansão
+
+- Refinamento da árvore de talentos e balanceamento de habilidades
+- Expansão de conteúdo de fases e inimigos
+- Melhorias no sistema de loja e recompensas
+- Ajustes no balanceamento de equipamentos e itens
+- Polimento visual e de UX das telas
+- Aprimoramento de efeitos sonoros e feedback de combate
+- Expansão da narrativa e eventos do mundo
+
+## ⚠️ O que ainda pode faltar
+
+- Animações mais elaboradas para habilidades e ataques
+- SFX mais completos e mais consistentes no combate
+- Melhor acabamento visual em cenas, fundos e elementos de interface
+- Mais conteúdo de exploração e mundo aberto/semiexploração
+- Mais fases, bosses e variedade narrativa
+- Refino final de balanceamento e acessibilidade
+
+## 🧭 Status por área
+
+### Concluído
+
+- [x] Base de jogo e fluxo principal
+- [x] Sistema de batalha por turnos
+- [x] Progressão por nível e atributos
+- [x] Inventário e equipamentos
+- [x] Loja
+- [x] Save e configurações
+- [x] Conquistas
+- [x] Versos/talentos/ultimates
+
+### Em desenvolvimento
+
+- [ ] Melhorias visuais e animações
+- [ ] Sons e efeitos sonoros de ataques
+- [ ] Expansão narrativa/mundo
+- [ ] Balanceamento final
+- [ ] Mais conteúdo de fases e inimigos
+
+## ▶️ Como executar
 
 ### Pré-requisitos
-- **Python 3.10 ou superior** instalado.
-- Biblioteca **Pygame**.
 
-### 1. Clonar o Repositório
-```bash
-git clone https://github.com/JodsAK47/An-Avarage-City.git
-```
+- Python 3.13
+- Biblioteca pygame
 
 ### 2. Acessar a pasta do projeto
 ```bash
 cd "An-Avarage-City/An Average City"
 ```
 
-### 3. Instalar as Dependências
+### Instalação
+
 ```bash
 pip install pygame
 ```
 
-### 4. Iniciar o Jogo
+### Execução
+
+No diretório do projeto:
+
 ```bash
 python Main.py
 ```
-*(ou `py Main.py` no Windows)*
 
----
+O projeto esta em uma pasta com subdiretório, [An Average City/Main.py](An%20Average%20City/Main.py), execute a partir da pasta correta:
 
-## 🎮 Controles
+```bash
+cd "An Average City"
+python Main.py
+```
 
-| Ação | Controle |
-| :--- | :--- |
-| **Navegação nos Menus** | Botão Esquerdo do Mouse |
-| **Ações de Combate** | Clique sobre as habilidades / alvos |
-| **Minigame de Esquiva (QTE)** | Clique no momento exato em que o ponteiro atingir a área destacada |
-| **Diálogos** | Clique na tela, `Enter` ou setas `▲ / ▼` do teclado |
-| **Ativar 2 Jogadores** | Clique no botão alternador no topo superior direito do Menu Principal |
-| **Segredos no Menu** | Clique na porta da esquerda (Esgoto) ou na porta da direita (Cheats com cartão) |
+## 📁 Estrutura principal
 
----
+```text
+An-Avarage-City/
+├── README.md
+├── README(Start).md
+├── An Average City/
+│   ├── Main.py
+│   ├── Entidades/
+│   ├── Gameplay/
+│   ├── Sistemas/
+│   ├── Telas/
+│   ├── Saves/
+│   ├── Dados/
+│   └── Sprites/
+└── OSTs/
+```
 
-## 🛠️ Tecnologias e Padrões de Projeto
+## 📝 Observação
 
-- **Linguagem:** Python 3.13
-- **Engine Gráfica / Áudio:** Pygame 2.6
-- **Padrões de Arquitetura:**
-  - *State Pattern* / Máquina de Estados para gerenciamento de telas.
-  - *Data-Driven Design* com JSON para habilidades, inimigos, eventos e árvores de talentos.
-  - *Factory & Encapsulation* no framework de interface gráfica (`SistemaUI.py`).
-  - *Dynamic Root Resolution* para execução transparente independente do diretório de chamada.
+Este README foi atualizado para refletir o estado real do projeto conforme a implementação atual no código. O arquivo anterior estava desatualizado e descrevia uma versão mais antiga do jogo.
 
 ---
 
@@ -169,3 +170,5 @@ Desenvolvido para a disciplina de **Programação Orientada a Objetos** no **IFR
 ## 📄 Licença
 
 Este projeto é desenvolvido para fins educacionais e estudo de desenvolvimento de jogos 2D, lógica de programação e arquitetura de software orientada a objetos.
+
+Projeto desenvolvido como estudo de programação orientada a objetos, lógica de jogos e desenvolvimento com Python e Pygame.
