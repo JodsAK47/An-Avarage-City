@@ -23,7 +23,7 @@
                 "custo_mp": 0,
                 "precisao": 0.92,
                 "efeito": "Queimar",
-                "chance_efeito": 0.20,
+                "chance_efeito": 0.2,
                 "em_area": false,
                 "descricao": "Estocada rápida com ferrão ardente."
             },
@@ -43,7 +43,7 @@
     "Pássaro Olhudo": {
         "nome": "Pássaro Olhudo",
         "verso": "Sobrevivente",
-        "arquivo_imagem": "Pássaro Olhudo.png",
+        "arquivo_imagem": "Passaro_Olhudo.png",
         "inverter_horizontal": true,
         "max_hp": 42,
         "max_mp": 12,
@@ -144,7 +144,7 @@
                 "tipo": "Invocador",
                 "dano": 9,
                 "custo_mp": 0,
-                "precisao": 0.90,
+                "precisao": 0.9,
                 "efeito": "Queimar",
                 "chance_efeito": 0.25,
                 "em_area": false,
@@ -157,7 +157,7 @@
                 "custo_mp": 4,
                 "precisao": 0.85,
                 "efeito": "Congelar",
-                "chance_efeito": 0.30,
+                "chance_efeito": 0.3,
                 "em_area": true,
                 "descricao": "Onda eletromagnética que atinge todos os inimigos."
             }
@@ -185,7 +185,7 @@
                 "tipo": "Invocador",
                 "dano": 9,
                 "custo_mp": 0,
-                "precisao": 0.90,
+                "precisao": 0.9,
                 "efeito": null,
                 "chance_efeito": 0.0,
                 "em_area": false,
@@ -207,7 +207,7 @@
     "Nue": {
         "nome": "Nue",
         "verso": "Feiticeiro",
-        "arquivo_imagem": "Pássaro Olhudo.png",
+        "arquivo_imagem": "Passaro_Olhudo.png",
         "inverter_horizontal": true,
         "max_hp": 38,
         "max_mp": 15,
@@ -248,7 +248,7 @@
     "Mahoraga": {
         "nome": "Mahoraga",
         "verso": "Feiticeiro",
-        "arquivo_imagem": "pixil_ouro.png",
+        "arquivo_imagem": "Mahoraga.png",
         "inverter_horizontal": false,
         "max_hp": 65,
         "max_mp": 20,
@@ -280,9 +280,39 @@
                 "custo_mp": 5,
                 "precisao": 0.92,
                 "efeito": "Congelar",
-                "chance_efeito": 0.40,
+                "chance_efeito": 0.4,
                 "em_area": true,
                 "descricao": "Onda de choque devastadora contra todos os inimigos."
+            }
+        ]
+    },
+    "Pequeno Santuário": {
+        "nome": "Pequeno Santuário",
+        "verso": "Feiticeiro",
+        "arquivo_imagem": "Santuario.PNG",
+        "inverter_horizontal": false,
+        "max_hp": 100,
+        "max_mp": 0,
+        "descricao": "Pequeno santuário invocado pela ultimate do Sukuna. Destruído em 4 ataques ou 10% de desgaste por rodada.",
+        "atributos": {
+            "For": 8,
+            "Agi": 5,
+            "Con": 10,
+            "Sab": 10,
+            "Int": 12,
+            "Sor": 1
+        },
+        "ataques": [
+            {
+                "nome": "Cortes Malevolentes",
+                "tipo": "Magia",
+                "dano": 15,
+                "custo_mp": 0,
+                "precisao": 1.0,
+                "efeito": null,
+                "chance_efeito": 0.0,
+                "em_area": true,
+                "descricao": "Tempestade de cortes contínuos que atinge todos os oponentes em área."
             }
         ]
     }

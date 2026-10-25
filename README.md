@@ -116,7 +116,7 @@ git clone https://github.com/JodsAK47/An-Avarage-City.git
 
 ### 2. Acessar a pasta do projeto
 ```bash
-cd "An-Avarage-City/Um Prototipo medio"
+cd "An-Avarage-City/An Average City"
 ```
 
 ### 3. Instalar as Dependências
@@ -154,6 +154,15 @@ python Main.py
   - *Data-Driven Design* com JSON para habilidades, inimigos, eventos e árvores de talentos.
   - *Factory & Encapsulation* no framework de interface gráfica (`SistemaUI.py`).
   - *Dynamic Root Resolution* para execução transparente independente do diretório de chamada.
+
+---
+
+## 👥 Autores & Equipe do Projeto
+
+Desenvolvido para a disciplina de **Programação Orientada a Objetos** no **IFRN Campus Caicó**:
+- **Jusfran Medeiros do Nascimento** (*JodsAK47*)
+- **Luis Felipe Torres Josué** (*Gold*)
+- **Martiniano Dantas**
 
 ---
 

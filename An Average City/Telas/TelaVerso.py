@@ -1,5 +1,5 @@
 import pygame
-from Sistemas.SistemaUI import Botao
+from Sistemas.SistemaUI import Botao, TelaBase
 from Sistemas.Fontes import obter_fonte
 from Sistemas.SaveSystem import save_global
 from Sistemas.Conquistas import sistema_conquistas
@@ -46,8 +46,9 @@ SPRITES_POR_VERSO = {
     "Feiticeiro": "SOCERERC.png",
 }
 
-class GerenciadorVerso:
+class GerenciadorVerso(TelaBase):
     def __init__(self, tela):
+        super().__init__(tela, nome="verso")
         self.tela = tela
 
         self.fonte_titulo = obter_fonte(16)

@@ -1,8 +1,9 @@
 import math
 import pygame
-from Sistemas.SistemaUI import Botao
+from Sistemas.SistemaUI import Botao, TelaBase
 from Sistemas.Fontes import obter_fonte
-from Sistemas.Recursos import caminho_imagem
+import os
+from Sistemas.Recursos import caminho_imagem, caminho_cenario
 from Sistemas.SaveSystem import save_global
 
 COR_FUNDO = (12, 16, 20)
@@ -16,8 +17,9 @@ VERMELHO_ALERTA = (255, 75, 75)
 TEXTO_BRANCO = (245, 248, 250)
 TEXTO_CINZA = (160, 175, 190)
 
-class GerenciadorSewerTela:
+class GerenciadorSewerTela(TelaBase):
     def __init__(self, tela):
+        super().__init__(tela, nome="sewer")
         self.tela = tela
         self.largura = tela.get_width()
         self.altura = tela.get_height()
@@ -40,7 +42,12 @@ class GerenciadorSewerTela:
         self.escala_fundo = 1.0
 
         try:
-            raw_fundo = pygame.image.load(caminho_imagem("SewerAccess.png")).convert()
+            caminho_fundo = caminho_cenario("EsgotoTrancado.png")
+            if not os.path.exists(caminho_fundo):
+                caminho_fundo = caminho_imagem("EsgotoTrancado.png")
+            if not os.path.exists(caminho_fundo):
+                caminho_fundo = caminho_imagem("SewerAccess.png")
+            raw_fundo = pygame.image.load(caminho_fundo).convert()
             w_raw, h_raw = raw_fundo.get_size()
             escala = max(self.largura / w_raw, self.altura / h_raw)
             w_novo = int(w_raw * escala)
@@ -49,7 +56,7 @@ class GerenciadorSewerTela:
             self.posicao_fundo = ((self.largura - w_novo) // 2, (self.altura - h_novo) // 2)
             self.escala_fundo = escala
         except Exception as e:
-            print(f"⚠️ Erro ao carregar fundo do esgoto: {e}")
+            print(f"[Aviso] Erro ao carregar fundo do esgoto: {e}")
 
         self.rect_saida = pygame.Rect(
             self.posicao_fundo[0] + int(740 * self.escala_fundo),
@@ -82,7 +89,7 @@ class GerenciadorSewerTela:
             self.sprite_card_chao = pygame.transform.rotate(mini, -10)
             self.sprite_card_modal = pygame.transform.scale(card_bruto, (270, 180))
         except Exception as e:
-            print(f"⚠️ Erro ao carregar sprite do MemberCard: {e}")
+            print(f"[Aviso] Erro ao carregar sprite do MemberCard: {e}")
 
         modal_cx = self.largura // 2
         modal_cy = self.altura // 2

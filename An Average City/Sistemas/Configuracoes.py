@@ -212,6 +212,9 @@ class GerenciadorConfiguracoes:
             try:
                 pygame.mixer.music.set_volume(self.obter_volume_musica_efetivo())
             except Exception as e:
-                print(f"⚠️ Erro ao aplicar volume da música: {e}")
+                try:
+                    print(f"[Aviso] Erro ao aplicar volume da musica: {e}")
+                except Exception:
+                    pass
 
 sistema_config = GerenciadorConfiguracoes()

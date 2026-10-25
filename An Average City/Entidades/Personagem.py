@@ -1,12 +1,14 @@
 import pygame
 from Sistemas.Recursos import caminho_imagem
+from Entidades.EntidadeCombate import EntidadeCombate
 
-class Personagem:
+class Personagem(EntidadeCombate):
     def __init__(self, x, y, nome_imagem="pixil.png"):
+        super().__init__(nome="Jogador", max_hp=100, max_mp=10, is_player=True)
         self.max_hp = 100
         self.hp = 100
         self.max_mp = 10
-        self.mp = 10
+        self.mp = 0
 
         self.nivel = 1
         self.xp = 0
@@ -22,6 +24,7 @@ class Personagem:
         }
 
         self.congelado = False
+        self.atordoado = False
         self.bloqueando = False
         self.recuperando = False
         self.is_player = True

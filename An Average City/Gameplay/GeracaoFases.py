@@ -64,12 +64,13 @@ def _criar_inimigo_a_partir_template(template, x=0, y=0, multiplicador=1.0):
     xp = int(template.get("xp", 10) * multiplicador)
 
     atributos_base = template.get("atributos", {"For": 1, "Agi": 1, "Int": 1, "Sor": 1})
-    atributos = {
-        "For": max(1, int(atributos_base.get("For", 1) + (multiplicador - 1) * 3)),
-        "Agi": max(1, int(atributos_base.get("Agi", 1) + (multiplicador - 1) * 3)),
-        "Int": max(1, int(atributos_base.get("Int", 1) + (multiplicador - 1) * 3)),
-        "Sor": max(1, int(atributos_base.get("Sor", 1) + (multiplicador - 1) * 2)),
-    }
+    atributos = {}
+    for attr_nome, attr_val in atributos_base.items():
+        passo = 2 if attr_nome == "Sor" else 3
+        atributos[attr_nome] = max(1, int(attr_val + (multiplicador - 1) * passo))
+    for padrao in ("For", "Agi", "Int", "Sor"):
+        if padrao not in atributos:
+            atributos[padrao] = 1
 
     max_mp_base = template.get("max_mp")
     max_mp_calc = int(max_mp_base * multiplicador) if max_mp_base is not None else None
@@ -85,7 +86,8 @@ def _criar_inimigo_a_partir_template(template, x=0, y=0, multiplicador=1.0):
         xp,
         atributos,
         max_mp=max_mp_calc,
-        tipo=template.get("tipo", "comum")
+        tipo=template.get("tipo", "comum"),
+        classe=template.get("classe")
     )
 
 def listar_inimigos_disponiveis(verso=None, incluir_chefes=False):

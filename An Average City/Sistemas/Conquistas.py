@@ -2,7 +2,7 @@ import json
 import os
 import pygame
 from Sistemas.Fontes import obter_fonte
-from Sistemas.Recursos import caminho_imagem, caminho_botao, caminho_dados
+from Sistemas.Recursos import caminho_imagem, caminho_botao, caminho_dados, caminho_conquista
 
 CAMINHO_DADOS = caminho_dados()
 ARQUIVO_CONQUISTAS = caminho_dados("conquistas.json")
@@ -37,6 +37,7 @@ class Conquista:
 
         surf = None
         for tentativa in (
+            caminho_conquista(self.icone_arquivo),
             caminho_imagem(self.icone_arquivo),
             caminho_botao(self.icone_arquivo),
         ):

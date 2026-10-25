@@ -1,232 +1,240 @@
 [
-    {
-        "max_hp": 25,
-        "max_mp": 5,
-        "arquivo_imagem": "Maldicao1.png",
-        "nome": "Maldição Grau 4",
-        "ataques": [
-            "Mordida",
-            "Soco"
-        ],
-        "xp": 30,
-        "atributos": {
-            "For": 2,
-            "Agi": 3,
-            "Int": 0,
-            "Sor": 1
-        },
-        "verso": "Feiticeiro",
-        "tipo": "fraco"
+  {
+    "max_hp": 25,
+    "max_mp": 5,
+    "arquivo_imagem": "Maldicao1.png",
+    "nome": "Maldição Grau 4",
+    "ataques": [
+      "Mordida",
+      "Soco"
+    ],
+    "xp": 30,
+    "atributos": {
+      "For": 2,
+      "Agi": 3,
+      "Int": 0,
+      "Sor": 1
     },
-    {
-        "max_hp": 40,
-        "max_mp": 10,
-        "arquivo_imagem": "Maldicao1.png",
-        "nome": "Maldição Grau 2",
-        "ataques": [
-            "Gelo",
-            "Soco"
-        ],
-        "xp": 50,
-        "atributos": {
-            "For": 3,
-            "Agi": 4,
-            "Int": 3,
-            "Sor": 1
-        },
-        "verso": "Feiticeiro",
-        "tipo": "medio"
+    "verso": "Feiticeiro",
+    "tipo": "fraco"
+  },
+  {
+    "max_hp": 40,
+    "max_mp": 10,
+    "arquivo_imagem": "Maldicao1.png",
+    "nome": "Maldição Grau 2",
+    "ataques": [
+      "Gelo",
+      "Soco"
+    ],
+    "xp": 50,
+    "atributos": {
+      "For": 3,
+      "Agi": 4,
+      "Int": 3,
+      "Sor": 1
     },
-    {
-        "max_hp": 60,
-        "max_mp": 15,
-        "arquivo_imagem": "Maldicao1.png",
-        "nome": "Grau Especial",
-        "ataques": [
-            "Gelo",
-            "Porrete do Chefe"
-        ],
-        "xp": 80,
-        "atributos": {
-            "For": 6,
-            "Agi": 5,
-            "Int": 6,
-            "Sor": 1
-        },
-        "verso": "Feiticeiro",
-        "tipo": "grande"
+    "verso": "Feiticeiro",
+    "tipo": "medio"
+  },
+  {
+    "max_hp": 60,
+    "max_mp": 15,
+    "arquivo_imagem": "Jogo.png",
+    "nome": "Maldição Grau Especial",
+    "ataques": [
+      "Gelo",
+      "Porrete do Chefe"
+    ],
+    "xp": 80,
+    "atributos": {
+      "For": 6,
+      "Agi": 5,
+      "Int": 6,
+      "Sor": 1
     },
-    {
-        "max_hp": 150,
-        "max_mp": 40,
-        "arquivo_imagem": "Sukuna1.png",
-        "nome": "Sukuna",
-        "ataques": [
-            "Fogo",
-            "Soco",
-            "Nevasca",
-            "Terremoto"
-        ],
-        "xp": 300,
-        "atributos": {
-            "For": 10,
-            "Agi": 6,
-            "Int": 15,
-            "Sor": 1
-        },
-        "verso": "Feiticeiro",
-        "tipo": "chefe"
+    "verso": "Feiticeiro",
+    "tipo": "grande"
+  },
+  {
+    "max_hp": 150,
+    "max_mp": 40,
+    "arquivo_imagem": "Sukuna1.png",
+    "nome": "Sukuna",
+    "ataques": [
+      "Clivagem Amaldiçoada",
+      "Desmantelar",
+      "Fúria das Chamas",
+      "Santuário Malevolente"
+    ],
+    "xp": 300,
+    "atributos": {
+      "For": 10,
+      "Agi": 6,
+      "Int": 15,
+      "Sor": 1
     },
-    {
-        "max_hp": 30,
-        "max_mp": 5,
-        "arquivo_imagem": "Maldicao1.png",
-        "nome": "Zumbi Lento",
-        "ataques": [
-            "Mordida"
-        ],
-        "xp": 25,
-        "atributos": {
-            "For": 3,
-            "Agi": 1,
-            "Int": 0,
-            "Sor": 1
-        },
-        "verso": "Sobrevivente",
-        "tipo": "fraco"
+    "verso": "Feiticeiro",
+    "tipo": "chefe",
+    "classe": "Magia"
+  },
+  {
+    "max_hp": 30,
+    "max_mp": 5,
+    "arquivo_imagem": "Abelha.png",
+    "nome": "Abelha",
+    "ataques": [
+      "Mordida"
+    ],
+    "xp": 25,
+    "atributos": {
+      "For": 3,
+      "Agi": 1,
+      "Int": 0,
+      "Sor": 1
     },
-    {
-        "max_hp": 45,
-        "max_mp": 10,
-        "arquivo_imagem": "Maldicao1.png",
-        "nome": "Mutante Ágil",
-        "ataques": [
-            "Mordida",
-            "Soco"
-        ],
-        "xp": 45,
-        "atributos": {
-            "For": 4,
-            "Agi": 6,
-            "Int": 0,
-            "Sor": 1
-        },
-        "verso": "Sobrevivente",
-        "tipo": "medio"
+    "verso": "Sobrevivente",
+    "tipo": "fraco"
+  },
+  {
+    "max_hp": 45,
+    "max_mp": 10,
+    "arquivo_imagem": "Maldicao1.png",
+    "nome": "Carrapato Sombrio",
+    "ataques": [
+      "Mordida",
+      "Soco"
+    ],
+    "xp": 45,
+    "atributos": {
+      "For": 4,
+      "Agi": 6,
+      "Int": 0,
+      "Sor": 1
     },
-    {
-        "max_hp": 70,
-        "max_mp": 15,
-        "arquivo_imagem": "Maldicao1.png",
-        "nome": "Aberração Gigante",
-        "ataques": [
-            "Porrete do Chefe",
-            "Soco"
-        ],
-        "xp": 75,
-        "atributos": {
-            "For": 8,
-            "Agi": 2,
-            "Int": 0,
-            "Sor": 1
-        },
-        "verso": "Sobrevivente",
-        "tipo": "grande"
+    "verso": "Sobrevivente",
+    "tipo": "medio"
+  },
+  {
+    "max_hp": 70,
+    "max_mp": 15,
+    "arquivo_imagem": "Passaro_Olhudo.png",
+    "nome": "Pássaro Alto",
+    "ataques": [
+      "Porrete do Chefe",
+      "Soco"
+    ],
+    "xp": 75,
+    "atributos": {
+      "For": 8,
+      "Agi": 2,
+      "Int": 0,
+      "Sor": 1
     },
-    {
-        "max_hp": 160,
-        "max_mp": 30,
-        "arquivo_imagem": "Sukuna1.png",
-        "nome": "Nemesis",
-        "ataques": [
-            "Porrete do Chefe",
-            "Terremoto",
-            "Fogo"
-        ],
-        "xp": 350,
-        "atributos": {
-            "For": 12,
-            "Agi": 4,
-            "Int": 2,
-            "Sor": 1
-        },
-        "verso": "Sobrevivente",
-        "tipo": "chefe"
+    "verso": "Sobrevivente",
+    "tipo": "grande"
+  },
+  {
+    "max_hp": 160,
+    "max_mp": 30,
+    "arquivo_imagem": "Sukuna1.png",
+    "nome": "Charlie",
+    "ataques": [
+      "Invocação: Mãos das Sombras",
+      "Garras da Noite",
+      "Invocação: Fera do Breu",
+      "Invocação: Tentáculos das Trevas",
+      "Invocação: Enxame Noturno"
+    ],
+    "xp": 350,
+    "atributos": {
+      "For": 6,
+      "Agi": 6,
+      "Int": 8,
+      "Sab": 14,
+      "Sor": 3
     },
-    {
-        "max_hp": 25,
-        "max_mp": 5,
-        "arquivo_imagem": "Torreta.png",
-        "nome": "Torreta",
-        "ataques": [
-            "Tiro"
-        ],
-        "xp": 30,
-        "atributos": {
-            "For": 2,
-            "Agi": 4,
-            "Int": 1,
-            "Sor": 1
-        },
-        "verso": "Agente",
-        "tipo": "fraco"
+    "verso": "Sobrevivente",
+    "tipo": "chefe",
+    "classe": "Invocação"
+  },
+  {
+    "max_hp": 25,
+    "max_mp": 5,
+    "arquivo_imagem": "Torreta.png",
+    "nome": "Torreta",
+    "ataques": [
+      "Tiro"
+    ],
+    "xp": 30,
+    "atributos": {
+      "For": 2,
+      "Agi": 4,
+      "Int": 1,
+      "Sor": 1
     },
-    {
-        "max_hp": 50,
-        "max_mp": 10,
-        "arquivo_imagem": "Maldicao1.png",
-        "nome": "Soldado de Elite",
-        "ataques": [
-            "Soco",
-            "Fogo"
-        ],
-        "xp": 55,
-        "atributos": {
-            "For": 5,
-            "Agi": 5,
-            "Int": 2,
-            "Sor": 1
-        },
-        "verso": "Agente",
-        "tipo": "medio"
+    "verso": "Agente",
+    "tipo": "fraco"
+  },
+  {
+    "max_hp": 75,
+    "max_mp": 10,
+    "arquivo_imagem": "Confinamento.png",
+    "nome": "Confinamento",
+    "ataques": [
+      "Confinamento",
+      "Soco"
+    ],
+    "xp": 55,
+    "atributos": {
+      "For": 5,
+      "Agi": 5,
+      "Int": 2,
+      "Sor": 1
     },
-    {
-        "max_hp": 65,
-        "max_mp": 15,
-        "arquivo_imagem": "Maldicao1.png",
-        "nome": "Mecanoide de Batalha",
-        "ataques": [
-            "Gelo",
-            "Porrete do Chefe"
-        ],
-        "xp": 80,
-        "atributos": {
-            "For": 7,
-            "Agi": 3,
-            "Int": 5,
-            "Sor": 1
-        },
-        "verso": "Agente",
-        "tipo": "grande"
+    "verso": "Agente",
+    "tipo": "especial"
+  },
+  {
+    "max_hp": 65,
+    "max_mp": 15,
+    "arquivo_imagem": "Maldicao1.png",
+    "nome": "MaxBot",
+    "ataques": [
+      "Gelo",
+      "Porrete do Chefe"
+    ],
+    "xp": 80,
+    "atributos": {
+      "For": 7,
+      "Agi": 3,
+      "Int": 5,
+      "Sor": 1
     },
-    {
-        "max_hp": 140,
-        "max_mp": 35,
-        "arquivo_imagem": "Sukuna1.png",
-        "nome": "Comandante Supremo",
-        "ataques": [
-            "Nevasca",
-            "Terremoto",
-            "Soco"
-        ],
-        "xp": 320,
-        "atributos": {
-            "For": 8,
-            "Agi": 8,
-            "Int": 8,
-            "Sor": 1
-        },
-        "verso": "Agente",
-        "tipo": "chefe"
-    }
+    "verso": "Agente",
+    "tipo": "grande"
+  },
+  {
+    "max_hp": 140,
+    "max_mp": 35,
+    "arquivo_imagem": "Sukuna1.png",
+    "nome": "Estraga Prazeres",
+    "ataques": [
+      "Plantar Spike",
+      "Disparo Tático",
+      "Tiro Perfurador",
+      "Granada de Concussão",
+      "Rajada de Artilharia"
+    ],
+    "xp": 320,
+    "atributos": {
+      "For": 8,
+      "Agi": 8,
+      "Int": 8,
+      "Sor": 1
+    },
+    "verso": "Agente",
+    "tipo": "chefe",
+    "classe": "Distância"
+  }
 ]

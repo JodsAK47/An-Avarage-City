@@ -1,5 +1,5 @@
 import pygame
-from Sistemas.SistemaUI import Botao
+from Sistemas.SistemaUI import Botao, TelaBase
 from Sistemas.Fontes import obter_fonte
 from Sistemas.Recursos import caminho_botao
 from Sistemas.Conquistas import sistema_conquistas
@@ -19,8 +19,9 @@ TEXTO_BLOQUEADO = (120, 130, 145)
 VERDE_STATUS = (70, 220, 120)
 VERMELHO_STATUS = (210, 80, 80)
 
-class GerenciadorConquistasTela:
+class GerenciadorConquistasTela(TelaBase):
     def __init__(self, tela):
+        super().__init__(tela, nome="conquistas")
         self.tela = tela
         self.fonte_titulo = obter_fonte(20)
         self.fonte_nome = obter_fonte(14)

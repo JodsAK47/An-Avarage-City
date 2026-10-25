@@ -2,11 +2,12 @@ import random
 import pygame
 from Sistemas.Fontes import obter_fonte
 from Gameplay.GeracaoFases import BANCO_EVENTOS
-from Sistemas.SistemaUI import Botao
+from Sistemas.SistemaUI import Botao, TelaBase
 from Sistemas.Inventario import inventario_global
 
-class GerenciadorSelecao:
+class GerenciadorSelecao(TelaBase):
     def __init__(self, tela):
+        super().__init__(tela, nome="selecao_cenario")
         self.tela = tela
         self.largura_tela = self.tela.get_width()
         self.retangulos = []

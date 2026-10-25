@@ -1,3 +1,5 @@
+from .MinigameSpike import MinigameSpike
+from .MinigameEsquiva import MinigameEsquiva
 from .Habilidades import (
     Habilidade,
     banco_habilidades,
@@ -17,6 +19,8 @@ from .GeracaoFases import (
 )
 
 __all__ = [
+    "MinigameSpike",
+    "MinigameEsquiva",
     "Habilidade",
     "banco_habilidades",
     "carregar_habilidades_jogador",

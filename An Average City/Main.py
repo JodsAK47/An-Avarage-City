@@ -20,10 +20,12 @@ from Telas import (
     GerenciadorSelecao,
     GerenciadorPosLuta,
     GerenciadorDialogo,
-    TelaInventario,
+    GerenciadorCutscene,
+
     GerenciadorConfiguracoesTela,
     GerenciadorPosDialogo,
     GerenciadorLoja,
+    GerenciadorPausa,
 )
 from Sistemas import (
     save_global,
@@ -31,7 +33,13 @@ from Sistemas import (
     inventario_global,
     caminho_musica,
     sistema_config,
+    gerenciador_musica,
+    obter_musica_combate,
+    sistema_cutscene,
 )
+
+def esta_em_cutscene() -> bool:
+    return sistema_cutscene.esta_em_cutscene() or estado == "cutscene" 
 from Entidades import personagem
 from Gameplay import obter_dialogo_evento
 
@@ -61,25 +69,27 @@ pos_luta_tela = GerenciadorPosLuta(tela)
 dialogo_tela = GerenciadorDialogo(tela)
 pos_dialogo_tela = GerenciadorPosDialogo(tela)
 vitoria_tela = GerenciadorVitoria(tela)
-inventario_tela = TelaInventario(tela)
+cutscene_tela = GerenciadorCutscene(tela)
+
 config_tela = GerenciadorConfiguracoesTela(tela)
 loja_tela = GerenciadorLoja(tela)
+pausa_tela = GerenciadorPausa(tela)
+estado_anterior_config = "menu"
 
 classe_jogador1 = None
 classe_jogador2 = None
 alvo_classes = None
 verso_menu_selecionado = None
 
-def tocar_musica(nome_arquivo):
-    pygame.mixer.music.stop()
-    try:
-        pygame.mixer.music.load(caminho_musica(nome_arquivo))
-        pygame.mixer.music.set_volume(sistema_config.obter_volume_musica_efetivo())
-        pygame.mixer.music.play(-1)
-    except pygame.error as erro:
-        print(f"⚠️ Aviso: Não foi possível tocar '{nome_arquivo}'.")
+def tocar_musica(nome_arquivo, fade_out_ms=600, fade_in_ms=800, verso=None):
+    gerenciador_musica.tocar(
+        nome_arquivo,
+        fade_out_ms=fade_out_ms,
+        fade_in_ms=fade_in_ms,
+        verso=verso,
+    )
 
-tocar_musica("Menu.mp3")
+tocar_musica("Menu.mp3", fade_out_ms=0, fade_in_ms=800)
 
 estado = "menu"
 rodando = True
@@ -98,6 +108,12 @@ def reiniciar_para_menu():
     jogo_tela.classe_jogador2 = None
     menu_tela.duas_pessoas = False
     menu_tela.switch_2p.ativo = False
+    jogo_tela.menu_acoes_estado = "principal"
+    jogo_tela.ataque_selecionado = None
+    if getattr(pausa_tela, "superficie_fundo", None) is not None:
+        pausa_tela.fechar()
+    if getattr(cutscene_tela, 'ativo', False):
+        cutscene_tela.finalizar()
     tocar_musica("Menu.mp3")
     return "menu"
 
@@ -155,6 +171,7 @@ def tratar_eventos_menu(evento, posicao_mouse):
         return "conquistas"
 
     if "config" in botoes_menu and botoes_menu["config"].checar_clique(evento, posicao_mouse):
+        estado_anterior_config = "menu"
         return "config"
 
     if menu_tela.botao_salvar.checar_clique(evento, posicao_mouse):
@@ -236,7 +253,7 @@ def tratar_eventos_classes(evento, posicao_mouse):
                 jogo_tela.classe_jogador2 = None
                 jogo_tela.classe_jogador2_tipo = None
                 jogo_tela.reiniciar()
-                tocar_musica("Combate.mp3")
+                tocar_musica(jogo_tela.musica_luta)
                 return "jogo"
         elif target == 2:
             classe_jogador2 = verso_escolhido
@@ -247,7 +264,7 @@ def tratar_eventos_classes(evento, posicao_mouse):
             if jogo_tela.personagem2 is not None:
                 verso_tela.aplicar_talentos_ao_personagem(jogo_tela.personagem2, verso=verso_escolhido)
             jogo_tela.reiniciar()
-            tocar_musica("Combate.mp3")
+            tocar_musica(jogo_tela.musica_luta)
             return "jogo"
         else:
             from Sistemas.Inventario import inventario_global
@@ -255,7 +272,7 @@ def tratar_eventos_classes(evento, posicao_mouse):
             jogo_tela.configurar_classe(verso_escolhido, classe_escolhida)
             verso_tela.aplicar_talentos_ao_personagem(personagem, verso=verso_escolhido)
             jogo_tela.reiniciar()
-            tocar_musica("Combate.mp3")
+            tocar_musica(jogo_tela.musica_luta)
             return "jogo"
     return None
 
@@ -269,6 +286,8 @@ def tratar_eventos_verso(evento, posicao_mouse):
         return "menu"
 
     if escolha_verso:
+        gerenciador_musica.definir_verso(escolha_verso)
+        jogo_tela.musica_luta = jogo_tela.obter_musica_combate(eh_chefe=False, verso=escolha_verso)
         if getattr(verso_tela, "modo", "menu") == "visualizacao":
             verso_tela.aviso = f"Verso selecionado: {escolha_verso}"
             jogo_tela.classe_atual = escolha_verso
@@ -289,6 +308,15 @@ def tratar_eventos_verso(evento, posicao_mouse):
             return None
     return None
 
+def tratar_eventos_jogo(evento, posicao_mouse):
+    if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_ESCAPE, pygame.K_p):
+        pausa_tela.abrir("jogo")
+        return "pausa"
+    if getattr(jogo_tela, "btn_pausa", None) and jogo_tela.btn_pausa.checar_clique(evento, posicao_mouse):
+        pausa_tela.abrir("jogo")
+        return "pausa"
+    return None
+
 def tratar_eventos_pos_luta(evento, posicao_mouse):
     if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
         pos_luta_tela.jogadores = [personagem, jogo_tela.personagem2]
@@ -299,9 +327,18 @@ def tratar_eventos_pos_luta(evento, posicao_mouse):
     if resultado_tela == "continuar":
         selecao_tela.recarregar_opcoes()
         return "selecao_cenario"
+    elif resultado_tela == "pausa":
+        pausa_tela.abrir("pos_luta")
+        return "pausa"
+    if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_ESCAPE, pygame.K_p):
+        pausa_tela.abrir("pos_luta")
+        return "pausa"
     return None
 
 def tratar_eventos_selecao_cenario(evento, posicao_mouse):
+    if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_ESCAPE, pygame.K_p):
+        pausa_tela.abrir("selecao_cenario")
+        return "pausa"
     escolha_cenario = selecao_tela.atualizar_eventos(evento, posicao_mouse)
     if escolha_cenario == "dormir":
         jogo_tela.recuperar_apos_batalha(dormir=True)
@@ -352,6 +389,9 @@ def tratar_eventos_pos_dialogo(evento, posicao_mouse):
     return None
 
 def tratar_eventos_loja(evento, posicao_mouse):
+    if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_ESCAPE, pygame.K_p):
+        pausa_tela.abrir("loja")
+        return "pausa"
     resultado_loja = loja_tela.atualizar_eventos(evento, posicao_mouse)
     if resultado_loja in ("continuar", "jogo", "voltar"):
         jogo_tela.reiniciar()
@@ -372,19 +412,133 @@ def tratar_eventos_sewer(evento, posicao_mouse):
         return "menu"
     return None
 
+def iniciar_batalha_customizada(nomes_inimigos):
+    from Gameplay.GeracaoFases import BANCO_INIMIGOS, _criar_inimigo_a_partir_template
+
+    if getattr(jogo_tela, 'classe_atual', 'Nenhuma') in ('Nenhuma', None):
+        jogo_tela.classe_atual = "Feiticeiro"
+    if not getattr(jogo_tela, 'classe_dano_atual', None) or jogo_tela.classe_dano_atual == "Nenhuma":
+        jogo_tela.classe_dano_atual = "Magia"
+
+    if personagem.hp <= 0:
+        personagem.hp = personagem.max_hp
+    personagem.bloqueando = False
+    personagem.recuperando = False
+
+    contagem_nomes = {}
+    for nome in nomes_inimigos:
+        contagem_nomes[nome] = contagem_nomes.get(nome, 0) + 1
+
+    indices_atuais = {nome: 0 for nome in contagem_nomes}
+    instancias_inimigos = []
+
+    for nome in nomes_inimigos:
+        tmpl = next((t for t in BANCO_INIMIGOS if t.get("nome") == nome), None)
+        if tmpl:
+            ini = _criar_inimigo_a_partir_template(tmpl, x=740, y=400)
+            if contagem_nomes[nome] > 1:
+                indices_atuais[nome] += 1
+                ini.nome = f"{tmpl.get('nome')} #{indices_atuais[nome]}"
+            else:
+                ini.nome = tmpl.get("nome")
+
+            nome_lower = ini.nome.lower()
+            if "confinamento" in nome_lower or getattr(ini, "eh_confinamento", False):
+                ini.eh_confinamento = True
+                ini.carga_confinamento = 0
+                ini.max_carga_confinamento = 5
+
+            if "sukuna" in nome_lower or "estraga prazeres" in nome_lower:
+                ini.mp = min(getattr(ini, "max_mp", 40), 10)
+
+            instancias_inimigos.append(ini)
+
+    if not instancias_inimigos:
+        return None
+
+    jogo_tela.fase_numero = max(1, len(instancias_inimigos))
+    jogo_tela.partida_atual = 1
+
+    tem_chefe = any(
+        getattr(ini, "tipo", "") == "chefe" or
+        any(k in ini.nome.lower() for k in ("sukuna", "estraga prazeres", "charlie"))
+        for ini in instancias_inimigos
+    )
+    if tem_chefe:
+        jogo_tela.total_partidas = 1
+        jogo_tela.partida_atual = 1
+    verso_batalha = getattr(jogo_tela, 'classe_atual', 'Feiticeiro')
+    for ini in instancias_inimigos:
+        nome_l = getattr(ini, 'nome', '').lower()
+        if "sukuna" in nome_l:
+            verso_batalha = "Feiticeiro"
+            break
+        elif "estraga prazeres" in nome_l:
+            verso_batalha = "Agente"
+            break
+        elif "charlie" in nome_l:
+            verso_batalha = "Sobrevivente"
+            break
+        elif getattr(ini, 'verso', None):
+            verso_batalha = ini.verso
+
+    musica = jogo_tela.obter_musica_combate(eh_chefe=tem_chefe, verso=verso_batalha)
+    jogo_tela.musica_luta = musica
+
+    participantes = [personagem]
+    if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
+        if jogo_tela.personagem2.hp <= 0:
+            jogo_tela.personagem2.hp = jogo_tela.personagem2.max_hp
+        participantes.append(jogo_tela.personagem2)
+    participantes.extend(instancias_inimigos)
+
+    jogo_tela.ordem_turnos = participantes
+    jogo_tela.reiniciar()
+    tocar_musica(musica)
+    return "jogo"
+
 def tratar_eventos_cheats(evento, posicao_mouse):
     resultado_cheats = cheats_tela.atualizar_eventos(evento, posicao_mouse)
+    if isinstance(resultado_cheats, tuple) and resultado_cheats[0] == "batalhar_custom":
+        nomes_inimigos = resultado_cheats[1]
+        if nomes_inimigos:
+            return iniciar_batalha_customizada(nomes_inimigos)
+
+    if resultado_cheats == "batalhar_sukuna":
+        return iniciar_batalha_customizada(["Sukuna"])
+    if resultado_cheats == "batalhar_estraga_prazeres":
+        return iniciar_batalha_customizada(["Estraga Prazeres"])
+    if resultado_cheats == "batalhar_confinamento":
+        return iniciar_batalha_customizada(["Confinamento"])
+
     if resultado_cheats in ("menu", "sewer") or cheats_tela.voltar_clicado:
         cheats_tela.voltar_clicado = False
         return "menu"
     return None
 
+def tratar_eventos_pausa(evento, posicao_mouse):
+    global estado_anterior_config
+    resultado = pausa_tela.atualizar_eventos(evento, posicao_mouse)
+    if resultado == "continuar":
+        origem = getattr(pausa_tela, "estado_anterior", "jogo")
+        pausa_tela.fechar()
+        return origem
+    elif resultado == "config":
+        estado_anterior_config = "pausa"
+        return "config"
+    elif resultado == "menu":
+        pausa_tela.fechar()
+        return reiniciar_para_menu()
+    return None
+
 def tratar_eventos_config(evento, posicao_mouse):
-    global tela_real, tela_cheia
+    global tela_real, tela_cheia, estado_anterior_config
     resultado_config = config_tela.atualizar_eventos(evento, posicao_mouse)
     if resultado_config == "menu" or config_tela.voltar_clicado:
         config_tela.voltar_clicado = False
-        return "menu"
+        destino = estado_anterior_config
+        estado_anterior_config = "menu"
+        return destino
     elif resultado_config == "video_alterado":
         nova_tela = pygame.display.get_surface()
         if nova_tela is not None:
@@ -393,12 +547,53 @@ def tratar_eventos_config(evento, posicao_mouse):
         return None
     return None
 
+def tratar_eventos_game_over(evento, posicao_mouse):
+    resultado = game_over_tela.atualizar_eventos(evento, posicao_mouse)
+    if resultado == "menu":
+        return reiniciar_para_menu()
+    elif resultado == "reiniciar":
+        from Sistemas.Inventario import inventario_global
+        inventario_global.resetar()
+        personagem.resetar()
+        if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
+            jogo_tela.personagem2.resetar()
+        verso_atual = getattr(game_over_tela, 'verso', getattr(jogo_tela, 'classe_atual', 'Sobrevivente'))
+        if verso_atual in ('Nenhuma', None):
+            verso_atual = 'Sobrevivente'
+        classe_tipo = getattr(jogo_tela, 'classe_dano_atual', 'Magia' if verso_atual == 'Feiticeiro' else 'Físico')
+        jogo_tela.configurar_classe(verso_atual, classe_tipo)
+        verso_tela.aplicar_talentos_ao_personagem(personagem, verso=verso_atual)
+        if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
+            verso_tela.aplicar_talentos_ao_personagem(jogo_tela.personagem2, verso=getattr(jogo_tela, 'classe_jogador2', verso_atual))
+        jogo_tela.partida_atual = 1
+        jogo_tela.pontos_jogo = 0
+        jogo_tela.reiniciar()
+        tocar_musica(jogo_tela.musica_luta)
+        return "jogo"
+    return None
+
+def tratar_eventos_cutscene(evento, posicao_mouse):
+    cutscene_tela.atualizar_eventos(evento, posicao_mouse)
+    # A finalização da cutscene dispara callback_conclusao, que define 'estado'
+    # para 'game_over' ou 'tela_vitoria'. Retornamos None para não sobrescrever 'estado'.
+    return None
+
+def tratar_eventos_vitoria(evento, posicao_mouse):
+    if evento.type == pygame.KEYDOWN and evento.key in (pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE):
+        return reiniciar_para_menu()
+    if vitoria_tela.botao_menu.checar_clique(evento, posicao_mouse):
+        return reiniciar_para_menu()
+    return None
+
 DISTRIBUIDOR_EVENTOS = {
     "menu": tratar_eventos_menu,
+    "jogo": tratar_eventos_jogo,
+    "pausa": tratar_eventos_pausa,
     "classes": tratar_eventos_classes,
     "verso": tratar_eventos_verso,
-    "game_over": lambda ev, pos: reiniciar_para_menu() if game_over_tela.botao_menu.checar_clique(ev, pos) else None,
-    "tela_vitoria": lambda ev, pos: reiniciar_para_menu() if vitoria_tela.botao_menu.checar_clique(ev, pos) else None,
+    "game_over": tratar_eventos_game_over,
+    "cutscene": tratar_eventos_cutscene,
+    "tela_vitoria": tratar_eventos_vitoria,
     "pos_luta": tratar_eventos_pos_luta,
     "selecao_cenario": tratar_eventos_selecao_cenario,
     "dialogo": tratar_eventos_dialogo,
@@ -414,10 +609,50 @@ def atualizar_estado_atual(posicao_mouse, estado_clique_mouse):
     global estado
     if estado == "jogo":
         resultado_jogo = jogo_tela.atualizar(posicao_mouse, estado_clique_mouse)
-        if resultado_jogo == "game_over":
-            game_over_tela.pontos = registrar_pontos_partida()
-            tocar_musica("GameOver.mp3")
-            estado = "game_over"
+        if resultado_jogo == "pausa":
+            pausa_tela.abrir("jogo")
+            estado = "pausa"
+            return
+        elif resultado_jogo == "game_over":
+            registrar_pontos_partida()
+            gerenciador_musica.parar()
+
+            verso_derrota = getattr(jogo_tela, 'classe_atual', 'Sobrevivente')
+            boss_nome = getattr(jogo_tela, 'ultimo_chefe_combate', None)
+            if not boss_nome:
+                for ent in getattr(jogo_tela, 'ordem_turnos', []):
+                    if jogo_tela.eh_inimigo(ent):
+                        nome_e = getattr(ent, 'nome', '').lower()
+                        if 'sukuna' in nome_e:
+                            boss_nome = 'Sukuna'
+                            verso_derrota = 'Feiticeiro'
+                            break
+                        elif 'charlie' in nome_e:
+                            boss_nome = 'Charlie'
+                            verso_derrota = 'Sobrevivente'
+                            break
+                        elif 'estraga prazeres' in nome_e:
+                            boss_nome = 'Estraga Prazeres'
+                            verso_derrota = 'Agente'
+                            break
+
+            if not boss_nome:
+                if verso_derrota == 'Feiticeiro':
+                    boss_nome = 'Sukuna'
+                elif verso_derrota == 'Sobrevivente':
+                    boss_nome = 'Charlie'
+                else:
+                    boss_nome = 'Estraga Prazeres'
+
+            def ao_concluir_cutscene_game_over():
+                global estado
+                game_over_tela.pontos = registrar_pontos_partida()
+                game_over_tela.definir_verso(verso_derrota)
+                tocar_musica("GameOver.mp3")
+                estado = "game_over"
+
+            cutscene_tela.iniciar(boss_nome=boss_nome, verso=verso_derrota, callback_conclusao=ao_concluir_cutscene_game_over)
+            estado = "cutscene"
         elif resultado_jogo == "vitoria":
             registrar_pontos_partida()
             tocar_musica("Menu.mp3")
@@ -426,8 +661,25 @@ def atualizar_estado_atual(posicao_mouse, estado_clique_mouse):
             estado = "pos_luta"
         elif resultado_jogo == "fim_jogo":
             registrar_pontos_partida()
-            tocar_musica("Vitoria.mp3")
-            estado = "tela_vitoria"
+            gerenciador_musica.parar()
+
+            verso_batalha = getattr(jogo_tela, 'classe_atual', 'Feiticeiro')
+            boss_nome = getattr(jogo_tela, 'ultimo_chefe_derrotado', None)
+            if not boss_nome:
+                if verso_batalha == 'Feiticeiro':
+                    boss_nome = 'Sukuna'
+                elif verso_batalha == 'Sobrevivente':
+                    boss_nome = 'Charlie'
+                else:
+                    boss_nome = 'Estraga Prazeres'
+
+            def ao_concluir_cutscene():
+                global estado
+                tocar_musica("Vitoria.mp3")
+                estado = "tela_vitoria"
+
+            cutscene_tela.iniciar(boss_nome=boss_nome, verso=verso_batalha, callback_conclusao=ao_concluir_cutscene)
+            estado = "cutscene"
         elif resultado_jogo == "fugiu":
             if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
                 pos_luta_tela.jogadores = [personagem, jogo_tela.personagem2]
@@ -455,6 +707,9 @@ def atualizar_estado_atual(posicao_mouse, estado_clique_mouse):
         "selecao_cenario": selecao_tela,
         "pos_dialogo": pos_dialogo_tela,
         "loja": loja_tela,
+        "cutscene": cutscene_tela,
+        "concluido": game_over_tela,
+        "pausa": pausa_tela,
     }
     if tela_alvo := telas_atualizacao.get(estado):
         tela_alvo.atualizar(posicao_mouse, estado_clique_mouse)
@@ -469,13 +724,16 @@ def desenhar_estado_atual(posicao_mouse):
         "sewer": sewer_tela.desenhar,
         "cheats": cheats_tela.desenhar,
         "jogo": lambda: jogo_tela.desenhar(posicao_mouse),
-        "pos_luta": pos_luta_tela.desenhar,
+        "pos_luta": lambda: pos_luta_tela.desenhar(posicao_mouse),
         "selecao_cenario": lambda: selecao_tela.desenhar(posicao_mouse),
         "dialogo": lambda: (selecao_tela.desenhar(posicao_mouse), dialogo_tela.desenhar()),
         "pos_dialogo": lambda: (selecao_tela.desenhar(posicao_mouse), pos_dialogo_tela.desenhar(posicao_mouse)),
         "loja": lambda: loja_tela.desenhar(posicao_mouse),
         "game_over": game_over_tela.desenhar,
+        "cutscene": cutscene_tela.desenhar,
         "tela_vitoria": vitoria_tela.desenhar,
+        "concluido": lambda: (game_over_tela.desenhar() if getattr(personagem, "hp", 1) <= 0 else vitoria_tela.desenhar()),
+        "pausa": pausa_tela.desenhar,
     }
     tela.fill((0, 0, 0))
     if renderizador := telas_desenho.get(estado):
@@ -484,6 +742,7 @@ def desenhar_estado_atual(posicao_mouse):
 def loop_principal():
     global rodando, estado, tela_real, tela, tela_cheia
     while rodando:
+        gerenciador_musica.atualizar()
         posicao_mouse_real = pygame.mouse.get_pos()
         estado_clique_mouse = pygame.mouse.get_pressed()
 
@@ -521,7 +780,8 @@ def loop_principal():
         desenhar_estado_atual(posicao_mouse)
 
         sistema_conquistas.atualizar_notificacoes()
-        sistema_conquistas.desenhar_notificacao(tela)
+        if not esta_em_cutscene():
+            sistema_conquistas.desenhar_notificacao(tela)
 
         tela_redimensionada = pygame.transform.scale(tela, (nova_largura, nova_altura))
         tela_real.fill((0, 0, 0))

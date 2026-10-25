@@ -5,8 +5,9 @@ from Sistemas.Recursos import caminho_botao, caminho_imagem
 from Sistemas.SistemaUI import Botao, TelaBase, GerenciadorTelas
 from Sistemas.SaveSystem import save_global
 
-class GerenciadorMenu:
+class GerenciadorMenu(TelaBase):
     def __init__(self, tela):
+        super().__init__(tela, nome="menu")
         self.tela = tela
 
         largura_tela = self.tela.get_width()
@@ -37,7 +38,7 @@ class GerenciadorMenu:
         y_titulo = 35
 
         self.imagem_titulo = None
-        for nome_titulo in ("Titulo.png", "Titulo(1).png"):
+        for nome_titulo in ("Titulo.png",):
             try:
                 img_carregada = pygame.image.load(caminho_imagem(nome_titulo)).convert_alpha()
                 caixa_delimitadora = img_carregada.get_bounding_rect()
@@ -238,3 +239,5 @@ class GerenciadorMenu:
             bg_rect = pygame.Rect(23, 715, txt_fb.get_width() + 8, txt_fb.get_height() + 4)
             pygame.draw.rect(self.tela, (15, 20, 28), bg_rect, border_radius=4)
             self.tela.blit(txt_fb, (27, 717))
+
+TelaMenu = GerenciadorMenu

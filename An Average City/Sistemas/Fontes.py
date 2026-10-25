@@ -4,6 +4,8 @@ from Sistemas.Recursos import caminho_fonte
 CAMINHO_FONTE = caminho_fonte("Minecraftia-Regular.ttf")
 
 def obter_fonte(tamanho):
+    if not pygame.font.get_init():
+        pygame.font.init()
     try:
         return pygame.font.Font(CAMINHO_FONTE, tamanho)
     except (pygame.error, FileNotFoundError):

@@ -1,9 +1,10 @@
 import pygame
 from Sistemas.Fontes import obter_fonte
-from Sistemas.SistemaUI import Botao
+from Sistemas.SistemaUI import Botao, TelaBase
 
-class GerenciadorDialogo:
+class GerenciadorDialogo(TelaBase):
     def __init__(self, tela):
+        super().__init__(tela, nome="dialogo")
         self.tela = tela
         self.largura = tela.get_width()
         self.altura = tela.get_height()

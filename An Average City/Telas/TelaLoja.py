@@ -1,12 +1,13 @@
 import pygame
 from Sistemas.Fontes import obter_fonte
-from Sistemas.SistemaUI import Botao
-from Sistemas.Inventario import inventario_global
+from Sistemas.SistemaUI import Botao, TelaBase
+from Sistemas.Inventario import inventario_global, carregar_sprite_item
 from Entidades.Personagem import personagem
 
 
-class GerenciadorLoja:
+class GerenciadorLoja(TelaBase):
     def __init__(self, tela):
+        super().__init__(tela, nome="loja")
         self.tela = tela
         self.largura = tela.get_width()
         self.altura = tela.get_height()
@@ -530,6 +531,13 @@ class GerenciadorLoja:
                 tag_txt = self.fonte_desc.render(item["tag"], True, (130, 160, 210))
                 self.tela.blit(tag_txt, (rect.x + 14, rect.y + 12))
 
+                # Ícone do item no card da loja
+                rect_icone = pygame.Rect(rect.right - 48, rect.y + 10, 36, 36)
+                pygame.draw.rect(self.tela, (16, 20, 28), rect_icone, border_radius=6)
+                pygame.draw.rect(self.tela, borda, rect_icone, width=1, border_radius=6)
+                sprite_loja = carregar_sprite_item(item["nome"], tamanho=(30, 30))
+                self.tela.blit(sprite_loja, (rect_icone.centerx - 15, rect_icone.centery - 15))
+
                 nome_txt = self.fonte_item_nome.render(item["nome"], True, (255, 255, 255) if not esgotado else (130, 130, 130))
                 self.tela.blit(nome_txt, (rect.x + 14, rect.y + 32))
 
@@ -585,6 +593,12 @@ class GerenciadorLoja:
                     tag_txt = "[EQUIPADO]" if item_venda["equipado"] else "[MOCHILA]"
                     cor_tag = (255, 215, 80) if item_venda["equipado"] else (110, 210, 255)
                     self.tela.blit(self.fonte_desc.render(tag_txt, True, cor_tag), (rect.x + 14, rect.y + 12))
+
+                    rect_icone = pygame.Rect(rect.right - 48, rect.y + 10, 36, 36)
+                    pygame.draw.rect(self.tela, (16, 20, 28), rect_icone, border_radius=6)
+                    pygame.draw.rect(self.tela, (70, 130, 95), rect_icone, width=1, border_radius=6)
+                    sprite_venda = carregar_sprite_item(eq, tamanho=(30, 30))
+                    self.tela.blit(sprite_venda, (rect_icone.centerx - 15, rect_icone.centery - 15))
 
                     nome_txt = self.fonte_item_nome.render(eq.nome, True, (255, 255, 255))
                     self.tela.blit(nome_txt, (rect.x + 14, rect.y + 32))

@@ -1,5 +1,5 @@
 import pygame
-from Sistemas.SistemaUI import Botao
+from Sistemas.SistemaUI import Botao, TelaBase
 from Sistemas.Fontes import obter_fonte, quebrar_texto
 from Telas.TelaVerso import ARVORE_POR_VERSO
 
@@ -25,8 +25,9 @@ ATRIBUTO_BASE_CLASSE = {
     "Invocador": "Sabedoria (SAB)",
 }
 
-class GerenciadorClasses:
+class GerenciadorClasses(TelaBase):
     def __init__(self, tela):
+        super().__init__(tela, nome="classes")
         self.tela = tela
         self.fonte_titulo = obter_fonte(24)
         self.fonte_card = obter_fonte(18)

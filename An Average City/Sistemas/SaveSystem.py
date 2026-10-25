@@ -4,7 +4,7 @@ from Sistemas.Recursos import caminho_dados, caminho_saves
 
 CAMINHO_SAVES = caminho_saves()
 ARQUIVO_SAVE = caminho_saves("save.json")
-ARQUIVO_LEGADO_SAVE = caminho_dados("save.json")
+
 
 class GerenciadorSave:
     def __init__(self):
@@ -17,17 +17,17 @@ class GerenciadorSave:
         self.carregar()
 
     def carregar(self):
-        arquivo_para_ler = None
-        if os.path.exists(ARQUIVO_SAVE):
-            arquivo_para_ler = ARQUIVO_SAVE
-        elif os.path.exists(ARQUIVO_LEGADO_SAVE):
-            arquivo_para_ler = ARQUIVO_LEGADO_SAVE
+        if not os.path.exists(ARQUIVO_SAVE):
 
-        if not arquivo_para_ler:
+
+
+
+
+
             return
 
         try:
-            with open(arquivo_para_ler, "r", encoding="utf-8") as f:
+            with open(ARQUIVO_SAVE, "r", encoding="utf-8") as f:
                 dados = json.load(f)
                 self.pontos = max(0, int(dados.get("pontos", 0)))
                 self.total_pontos_acumulados = max(0, int(dados.get("total_pontos_acumulados", self.pontos)))

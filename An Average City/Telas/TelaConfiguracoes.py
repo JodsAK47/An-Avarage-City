@@ -1,6 +1,6 @@
 import pygame
 from typing import Tuple, Optional
-from Sistemas.SistemaUI import Botao
+from Sistemas.SistemaUI import Botao, TelaBase
 from Sistemas.Fontes import obter_fonte
 from Sistemas.Configuracoes import sistema_config, RESOLUCOES_DISPONIVEIS
 
@@ -23,9 +23,10 @@ TEXTO_AMARELO = (255, 215, 60)
 TEXTO_VERDE = (80, 230, 130)
 TEXTO_VERMELHO = (240, 80, 80)
 
-class GerenciadorConfiguracoesTela:
+class GerenciadorConfiguracoesTela(TelaBase):
 
     def __init__(self, tela: pygame.Surface):
+        super().__init__(tela, nome="config")
         self.tela = tela
         self.largura = self.tela.get_width()
         self.altura = self.tela.get_height()

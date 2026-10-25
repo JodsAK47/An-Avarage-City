@@ -5,6 +5,7 @@ import pygame
 from Sistemas.Fontes import obter_fonte
 from Sistemas.Recursos import caminho_dados, caminho_imagem
 from Gameplay.Habilidades import Habilidade
+from Entidades.EntidadeCombate import EntidadeCombate
 
 
 def carregar_minions():
@@ -20,7 +21,7 @@ def carregar_minions():
 BANCO_MINIONS = carregar_minions()
 
 
-class Minion:
+class Minion(EntidadeCombate):
     def __init__(
         self,
         x=0,
@@ -36,6 +37,7 @@ class Minion:
         inverter_horizontal=False,
         descricao="",
     ):
+        super().__init__(nome=nome, max_hp=vida_maxima, max_mp=max_mp, is_player=False)
         self.nome = nome
         self.verso = verso
         self.dono = dono
@@ -46,6 +48,7 @@ class Minion:
         self.is_minion = True
         self.is_player = False
         self.congelado = False
+        self.atordoado = False
         self.nivel = 1
 
         sab_dono = 1

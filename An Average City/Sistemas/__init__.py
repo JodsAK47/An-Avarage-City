@@ -5,8 +5,10 @@ from .Recursos import (
     caminho_saves,
     caminho_imagem,
     caminho_botao,
+    caminho_conquista,
     caminho_musica,
     caminho_fonte,
+    caminho_vfx,
 )
 from .Fontes import obter_fonte, quebrar_texto
 from .SaveSystem import GerenciadorSave, save_global
@@ -19,9 +21,42 @@ from .Inventario import (
     Equipamento,
     SistemaInventario,
     inventario_global,
+    carregar_sprite_item,
+    obter_arquivo_imagem_item,
+    eh_arte_placeholder,
+    limpar_cache_sprites_itens,
+    MAPA_SPRITES_ITENS,
+    ARTES_OFICIAIS_INVENTARIO,
 )
 from .SistemaUI import Botao, TelaBase, GerenciadorTelas
 from .Configuracoes import GerenciadorConfiguracoes, sistema_config
+from .SistemaQuadrantes import Quadrante, DirecaoOlhar, SistemaQuadrantes, sistema_quadrantes
+from .Constantes import (
+    Verso,
+    Classe,
+    normalizar_identificador,
+    obter_equipamento_inicial,
+    obter_multiplicador_verso_classe,
+    MAPA_ATRIBUTO_CLASSE,
+    MAPA_MUSICA_VERSO,
+    obter_musica_combate,
+)
+from .GerenciadorAudio import (
+    EstadoMusica,
+    GerenciadorMusica,
+    gerenciador_musica,
+)
+from .SistemaEfeitos import (
+    CONFIG_EFEITOS,
+    obter_efeitos_ativos,
+    carregar_icone_efeito,
+    desenhar_icones_entidade,
+    desenhar_tooltip_efeito,
+)
+from .SistemaCutscene import (
+    SistemaCutscene,
+    sistema_cutscene,
+)
 
 __all__ = [
     "DIRETORIO_PROJETO",
@@ -30,8 +65,10 @@ __all__ = [
     "caminho_saves",
     "caminho_imagem",
     "caminho_botao",
+    "caminho_conquista",
     "caminho_musica",
     "caminho_fonte",
+    "caminho_vfx",
     "obter_fonte",
     "quebrar_texto",
     "GerenciadorSave",
@@ -46,9 +83,37 @@ __all__ = [
     "Equipamento",
     "SistemaInventario",
     "inventario_global",
+    "carregar_sprite_item",
+    "obter_arquivo_imagem_item",
+    "eh_arte_placeholder",
+    "limpar_cache_sprites_itens",
+    "MAPA_SPRITES_ITENS",
+    "ARTES_OFICIAIS_INVENTARIO",
     "Botao",
     "TelaBase",
     "GerenciadorTelas",
     "GerenciadorConfiguracoes",
     "sistema_config",
+    "Quadrante",
+    "DirecaoOlhar",
+    "SistemaQuadrantes",
+    "sistema_quadrantes",
+    "Verso",
+    "Classe",
+    "normalizar_identificador",
+    "obter_equipamento_inicial",
+    "obter_multiplicador_verso_classe",
+    "MAPA_ATRIBUTO_CLASSE",
+    "MAPA_MUSICA_VERSO",
+    "obter_musica_combate",
+    "EstadoMusica",
+    "GerenciadorMusica",
+    "gerenciador_musica",
+    "CONFIG_EFEITOS",
+    "obter_efeitos_ativos",
+    "carregar_icone_efeito",
+    "desenhar_icones_entidade",
+    "desenhar_tooltip_efeito",
+    "SistemaCutscene",
+    "sistema_cutscene",
 ]

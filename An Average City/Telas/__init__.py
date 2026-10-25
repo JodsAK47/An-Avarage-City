@@ -8,12 +8,14 @@ from .TelaConquistas import GerenciadorConquistasTela
 from .TelaCheats import GerenciadorCheatsTela
 from .TelaSewer import GerenciadorSewerTela
 from .TelaCenarios import GerenciadorSelecao
-from .TelaDescanco import GerenciadorPosLuta
+from .TelaDescanso import TelaDescanso, GerenciadorPosLuta
 from .TelaDialogo import GerenciadorDialogo
-from .TelaInventario import TelaInventario
+from .TelaCutscene import GerenciadorCutscene
+
 from .TelaConfiguracoes import GerenciadorConfiguracoesTela
 from .TelaPosDialogo import GerenciadorPosDialogo
 from .TelaLoja import GerenciadorLoja, TelaLoja
+from .TelaPausa import GerenciadorPausa, TelaPausa
 
 TelaConfiguracoes = GerenciadorConfiguracoesTela
 
@@ -30,10 +32,13 @@ __all__ = [
     "GerenciadorSelecao",
     "GerenciadorPosLuta",
     "GerenciadorDialogo",
-    "TelaInventario",
+    "GerenciadorCutscene",
+    "TelaDescanso",
     "GerenciadorConfiguracoesTela",
     "TelaConfiguracoes",
     "GerenciadorPosDialogo",
     "GerenciadorLoja",
     "TelaLoja",
+    "GerenciadorPausa",
+    "TelaPausa",
 ]
