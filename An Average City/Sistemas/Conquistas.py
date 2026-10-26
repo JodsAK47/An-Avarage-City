@@ -94,7 +94,7 @@ class SistemaConquistas:
                     self.conquistas.append(c)
                     self.mapa_conquistas[c.id] = c
         except Exception as e:
-            print(f"⚠️ Erro ao carregar conquistas: {e}")
+            print(f"[Aviso] Erro ao carregar conquistas: {e}")
 
     def salvar(self):
         try:
@@ -113,7 +113,7 @@ class SistemaConquistas:
             with open(ARQUIVO_CONQUISTAS, "w", encoding="utf-8") as f:
                 json.dump(dados, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(f"⚠️ Erro ao salvar conquistas: {e}")
+            print(f"[Aviso] Erro ao salvar conquistas: {e}")
 
     def esta_desbloqueada(self, id_conquista):
         c = self.mapa_conquistas.get(id_conquista)

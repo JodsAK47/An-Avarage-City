@@ -1,7 +1,7 @@
 {
     "largura": 1000,
     "altura": 800,
-    "tela_cheia": true,
+    "tela_cheia": false,
     "volume_geral": 0.4,
     "volume_musica": 0.5,
     "volume_sfx": 0.7,

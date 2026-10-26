@@ -3,8 +3,9 @@ from Sistemas.Recursos import caminho_imagem
 from Entidades.EntidadeCombate import EntidadeCombate
 
 class Personagem(EntidadeCombate):
-    def __init__(self, x, y, nome_imagem="pixil.png"):
-        super().__init__(nome="Jogador", max_hp=100, max_mp=10, is_player=True)
+    def __init__(self, x, y, nome_imagem="pixil.png", nome="Jogador 1"):
+        super().__init__(nome=nome, max_hp=100, max_mp=10, is_player=True)
+        self.nome = nome
         self.max_hp = 100
         self.hp = 100
         self.max_mp = 10
@@ -87,12 +88,19 @@ class Personagem(EntidadeCombate):
             return True
         return False
 
-    def resetar(self):
-        talentos_salvos = set(getattr(self, 'talentos', set()))
-        ultimates_salvas = set(getattr(self, 'ultimates_desbloqueadas', set()))
-        skin_salva = getattr(self, 'nome_imagem', 'pixil.png')
-        god_mode_salvo = getattr(self, 'god_mode', False)
-        self.__init__(self.rect.x, self.rect.y, nome_imagem=skin_salva)
+    def resetar(self, resetar_cheats: bool = False):
+        if resetar_cheats:
+            talentos_salvos = set()
+            ultimates_salvas = set()
+            skin_salva = 'pixil.png'
+            god_mode_salvo = False
+        else:
+            talentos_salvos = set(getattr(self, 'talentos', set()))
+            ultimates_salvas = set(getattr(self, 'ultimates_desbloqueadas', set()))
+            skin_salva = getattr(self, 'nome_imagem', 'pixil.png')
+            god_mode_salvo = getattr(self, 'god_mode', False)
+        nome_salvo = getattr(self, 'nome', 'Jogador 1')
+        self.__init__(self.rect.x, self.rect.y, nome_imagem=skin_salva, nome=nome_salvo)
         self.talentos = talentos_salvos
         self.ultimates_desbloqueadas = ultimates_salvas
         self.god_mode = god_mode_salvo
@@ -107,5 +115,5 @@ class Personagem(EntidadeCombate):
 
         tela.blit(self.imagem, self.rect)
 
-personagem = Personagem(150, 350, "pixil.png")
+personagem = Personagem(150, 350, "pixil.png", nome="Jogador 1")
 personagem.is_player = True

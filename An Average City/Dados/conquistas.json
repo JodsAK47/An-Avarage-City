@@ -24,28 +24,28 @@
         "id": "vitoria_feiticeiro",
         "nome": "Feiticeiro Supremo",
         "como_liberar": "Vença uma batalha usando o verso Feiticeiro.",
-        "icone": "Quem Precisa De Dominio.png",
+        "icone": "Feiticeiro Supremo.png",
         "desbloqueada": false
     },
     {
         "id": "critico_devastador",
         "nome": "Golpe Preciso",
         "como_liberar": "Acerte um golpe crítico devastador em um oponente.",
-        "icone": "BYELLM.png",
+        "icone": "Que Critico.png",
         "desbloqueada": false
     },
     {
         "id": "mestre_esquiva",
         "nome": "Reflexos de Aço",
         "como_liberar": "Acerte o centro das barras no minigame de esquiva.",
-        "icone": "BVERDEM.png",
+        "icone": "Esquiva tatica.png",
         "desbloqueada": false
     },
     {
         "id": "fuga_estrategica",
         "nome": "Fuga Tática",
         "como_liberar": "Fuja com sucesso de uma batalha perigosa.",
-        "icone": "Acontece Com Todos.png",
+        "icone": "Fuga Tatica.png",
         "desbloqueada": false
     },
     {
@@ -94,7 +94,7 @@
         "id": "chefe_derrotado",
         "nome": "Lenda dos Versos",
         "como_liberar": "Derrote o Chefe Final na partida 9 e vença o jogo!",
-        "icone": "Sukuna1.png",
+        "icone": "Lenda.png",
         "desbloqueada": false
     },
     {

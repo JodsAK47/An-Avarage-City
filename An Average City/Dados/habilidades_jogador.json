@@ -249,19 +249,6 @@
       "descricao": "Lança um Drone Caçador tático com feixes térmicos e pulso EMP.",
       "verso": "Agente",
       "minion": "Drone Caçador"
-    },
-    "Santuário Malevolente": {
-      "nome": "Santuário Malevolente",
-      "tipo": "Magia",
-      "dano": 20,
-      "custo_mp": 10,
-      "precisao": 1.0,
-      "descricao": "Ultimate do Sukuna: Invoca um pequeno Santuário que desfere cortes devastadores em área.",
-      "efeito": null,
-      "chance_efeito": 0.0,
-      "em_area": true,
-      "verso": "Feiticeiro",
-      "minion": "Pequeno Santuário"
     }
   },
   "ultimates": {
@@ -379,44 +366,6 @@
       "em_area": false,
       "verso": "Feiticeiro",
       "minion": "Mahoraga"
-    },
-    "Feiticeiro|Sukuna": {
-      "nome": "Santuário Malevolente",
-      "tipo": "Magia",
-      "dano": 20,
-      "precisao": 1.0,
-      "descricao": "Ultimate do Sukuna: Invoca um pequeno Santuário que desfere cortes devastadores em área.",
-      "efeito": null,
-      "chance_efeito": 0.0,
-      "em_area": true,
-      "verso": "Feiticeiro",
-      "minion": "Pequeno Santuário"
     }
-  },
-  "Plantar Spike": {
-    "nome": "Plantar Spike",
-    "tipo": "Distância",
-    "dano": 0,
-    "custo_mp": 10,
-    "precisao": 1.0,
-    "descricao": "Ultimate de Estraga Prazeres: Planta a Spike. Se não for desarmada em aproximadamente 50s, ela explode em uma esfera negra e elimina todos os jogadores!",
-    "efeito": null,
-    "chance_efeito": 0.0,
-    "em_area": true,
-    "verso": "Agente",
-    "is_ultimate": true
-  },
-  "Spike": {
-    "nome": "Spike",
-    "tipo": "Distância",
-    "dano": 0,
-    "custo_mp": 10,
-    "precisao": 1.0,
-    "descricao": "Ultimate de Estraga Prazeres: Planta a Spike. Se não for desarmada em aproximadamente 50s, ela explode em uma esfera negra e elimina todos os jogadores!",
-    "efeito": null,
-    "chance_efeito": 0.0,
-    "em_area": true,
-    "verso": "Agente",
-    "is_ultimate": true
   }
 }

@@ -53,6 +53,7 @@ class GerenciadorVerso(TelaBase):
 
         self.fonte_titulo = obter_fonte(16)
         self.fonte_desc = obter_fonte(12)
+        self.fonte_micro = obter_fonte(9)
 
         self.aviso = ""
         self.voltar_clicado = False
@@ -61,11 +62,13 @@ class GerenciadorVerso(TelaBase):
         self.verso_atual = "Sobrevivente"
         self.verso_ativo = None
         self.modo = "menu"
+        self.alvo_personagem = None
         self.habilidades_desbloqueadas = []
         self.habilidade_foco = None
         self.arvores_por_verso = {verso: arvore[:] for verso, arvore in ARVORE_POR_VERSO.items()}
         self.versos = ["Sobrevivente", "Agente", "Feiticeiro"]
         self.progresso_por_verso = {verso: list(save_global.obter_progresso_verso(verso)) for verso in self.versos}
+        self.habilidades_desabilitadas = {verso: set(save_global.obter_habilidades_desabilitadas(verso)) for verso in self.versos}
         self.sincronizar_habilidades_ativas()
 
         self.botao_voltar = Botao(
@@ -109,6 +112,14 @@ class GerenciadorVerso(TelaBase):
                 self.progresso_por_verso[v] = list(progresso_salvo[v])
         self.progresso_por_verso.setdefault(self.verso_atual, [])
         self.habilidades_desbloqueadas = list(self.progresso_por_verso.get(self.verso_atual, []))
+
+        desab_salvo = save_global.obter_habilidades_desabilitadas()
+        for v in self.versos:
+            if v in desab_salvo:
+                self.habilidades_desabilitadas[v] = set(desab_salvo[v])
+            else:
+                self.habilidades_desabilitadas.setdefault(v, set())
+
         self.aplicar_talentos_ao_personagem()
 
     def aplicar_talentos_ao_personagem(self, personagem_alvo=None, verso=None):
@@ -116,7 +127,13 @@ class GerenciadorVerso(TelaBase):
         verso_alvo = verso if verso is not None else self.verso_atual
         talentos_verso = list(self.progresso_por_verso.get(verso_alvo, []))
         talentos_invocador = list(save_global.obter_progresso_verso("Invocador"))
-        alvo.talentos = set(talentos_verso) | set(talentos_invocador)
+
+        desab_verso = self.habilidades_desabilitadas.get(verso_alvo, set())
+        desab_invocador = self.habilidades_desabilitadas.get("Invocador", set())
+        desabilitadas = set(desab_verso) | set(desab_invocador)
+
+        talentos_ativos = [t for t in (talentos_verso + talentos_invocador) if t not in desabilitadas]
+        alvo.talentos = set(talentos_ativos)
 
         mapa_nodos = {"Sobrevivente": "S4", "Agente": "A4", "Feiticeiro": "F4"}
         if not hasattr(alvo, "ultimates_desbloqueadas"):
@@ -124,7 +141,7 @@ class GerenciadorVerso(TelaBase):
 
         classes_todas = ["Físico", "Distância", "Magia", "Invocador"]
         nodo_ult = mapa_nodos.get(verso_alvo)
-        if nodo_ult and nodo_ult in talentos_verso:
+        if nodo_ult and nodo_ult in talentos_verso and nodo_ult not in desabilitadas:
             alvo.ultimates_desbloqueadas.add(verso_alvo)
             for c in classes_todas:
                 alvo.ultimates_desbloqueadas.add((verso_alvo, c))
@@ -133,10 +150,31 @@ class GerenciadorVerso(TelaBase):
             for c in classes_todas:
                 alvo.ultimates_desbloqueadas.discard((verso_alvo, c))
 
-        if "I4" in talentos_invocador:
+        if "I4" in talentos_invocador and "I4" not in desabilitadas:
             alvo.ultimates_desbloqueadas.add("Invocador")
             for v in self.versos:
                 alvo.ultimates_desbloqueadas.add((v, "Invocador"))
+
+    def alternar_habilidade_foco(self):
+        if not self.habilidade_foco:
+            self.aviso = "Selecione uma habilidade na árvore!"
+            return
+        hab_id = self.habilidade_foco["id"]
+        if hab_id not in self.habilidades_desbloqueadas:
+            self.aviso = "Desbloqueie a habilidade antes de habilitar/desabilitar!"
+            return
+
+        desab_verso = self.habilidades_desabilitadas.setdefault(self.verso_atual, set())
+        if hab_id in desab_verso:
+            desab_verso.remove(hab_id)
+            self.aviso = f"Habilidade '{self.habilidade_foco['nome']}' HABILITADA!"
+        else:
+            desab_verso.add(hab_id)
+            self.aviso = f"Habilidade '{self.habilidade_foco['nome']}' DESABILITADA!"
+
+        save_global.definir_habilidades_desabilitadas(self.verso_atual, list(desab_verso))
+        save_global.salvar()
+        self.aplicar_talentos_ao_personagem()
 
     def obter_arvore_ativa(self):
         return self.arvores_por_verso.get(self.verso_atual, self.arvores_por_verso["Sobrevivente"])
@@ -148,12 +186,17 @@ class GerenciadorVerso(TelaBase):
             return None
 
         if self.botao_selecionar.checar_clique(evento, posicao_mouse):
-            self.aplicar_talentos_ao_personagem()
-            save_global.salvar()
-            if self.modo == "menu":
-                self.verso_ativo = self.verso_atual
-                self.aviso = f"Verso {self.verso_atual} definido como ativo!"
-            return self.verso_atual
+            if self.modo == "visualizacao":
+                alvo = getattr(self, "alvo_personagem", None)
+                if alvo is not None:
+                    self.aplicar_talentos_ao_personagem(alvo, verso=self.verso_atual)
+                else:
+                    self.aplicar_talentos_ao_personagem(personagem, verso=self.verso_atual)
+                save_global.salvar()
+                return self.verso_atual
+            elif self.modo == "menu":
+                self.alternar_habilidade_foco()
+                return None
 
         if self.modo == "menu" and self.botao_comprar.checar_clique(evento, posicao_mouse):
             if self.habilidade_foco:
@@ -200,13 +243,68 @@ class GerenciadorVerso(TelaBase):
         self.botao_voltar.atualizar(posicao_mouse, estado_clique_mouse)
         if self.modo == "visualizacao":
             self.botao_selecionar.texto = "CONFIRMAR VERSO"
+            self.botao_selecionar.cor_base = AZUL_DESTAQUE
+            self.botao_selecionar.cor_hover = (95, 120, 145)
+            self.botao_selecionar.cor_texto = TEXTO
         else:
-            if self.verso_atual == getattr(self, "verso_ativo", None):
-                self.botao_selecionar.texto = "VERSO ATIVO"
+            # Modo menu: botão vira HABILITAR / DESABILITAR
+            if self.habilidade_foco:
+                hab_id = self.habilidade_foco["id"]
+                if hab_id in self.habilidades_desbloqueadas:
+                    desab_verso = self.habilidades_desabilitadas.get(self.verso_atual, set())
+                    if hab_id in desab_verso:
+                        self.botao_selecionar.texto = "HABILITAR HABILIDADE"
+                        self.botao_selecionar.cor_base = (35, 105, 55)
+                        self.botao_selecionar.cor_hover = (48, 140, 75)
+                        self.botao_selecionar.cor_texto = (210, 255, 220)
+                    else:
+                        self.botao_selecionar.texto = "DESABILITAR HABILIDADE"
+                        self.botao_selecionar.cor_base = (130, 42, 45)
+                        self.botao_selecionar.cor_hover = (170, 52, 58)
+                        self.botao_selecionar.cor_texto = (255, 225, 225)
+                else:
+                    self.botao_selecionar.texto = "HABILITAR / DESABILITAR"
+                    self.botao_selecionar.cor_base = (50, 58, 72)
+                    self.botao_selecionar.cor_hover = (50, 58, 72)
+                    self.botao_selecionar.cor_texto = (140, 150, 165)
             else:
-                self.botao_selecionar.texto = "DEFINIR COMO ATIVO"
+                self.botao_selecionar.texto = "SELECIONE UMA HABILIDADE"
+                self.botao_selecionar.cor_base = (50, 58, 72)
+                self.botao_selecionar.cor_hover = (50, 58, 72)
+                self.botao_selecionar.cor_texto = (140, 150, 165)
+
         self.botao_selecionar.atualizar(posicao_mouse, estado_clique_mouse)
         if self.modo == "menu":
+            if self.habilidade_foco:
+                hab_id = self.habilidade_foco["id"]
+                if hab_id in self.habilidades_desbloqueadas:
+                    self.botao_comprar.texto = "DESBLOQUEADA"
+                    self.botao_comprar.cor_base = (45, 55, 70)
+                    self.botao_comprar.cor_hover = (45, 55, 70)
+                    self.botao_comprar.cor_texto = (130, 140, 155)
+                else:
+                    pode = all(req in self.habilidades_desbloqueadas for req in self.habilidade_foco.get("req", []))
+                    if not pode:
+                        self.botao_comprar.texto = "REQUER ANTERIOR"
+                        self.botao_comprar.cor_base = (45, 55, 70)
+                        self.botao_comprar.cor_hover = (45, 55, 70)
+                        self.botao_comprar.cor_texto = (130, 140, 155)
+                    elif self.pontos < self.habilidade_foco.get("preco", 0):
+                        self.botao_comprar.texto = f"DESBLOQUEAR ({self.habilidade_foco.get('preco', 0)} PTS)"
+                        self.botao_comprar.cor_base = (90, 75, 30)
+                        self.botao_comprar.cor_hover = (110, 95, 40)
+                        self.botao_comprar.cor_texto = (240, 215, 110)
+                    else:
+                        self.botao_comprar.texto = f"DESBLOQUEAR ({self.habilidade_foco.get('preco', 0)} PTS)"
+                        self.botao_comprar.cor_base = (40, 105, 60)
+                        self.botao_comprar.cor_hover = (55, 145, 80)
+                        self.botao_comprar.cor_texto = (235, 255, 235)
+            else:
+                self.botao_comprar.texto = "DESBLOQUEAR"
+                self.botao_comprar.cor_base = (45, 55, 70)
+                self.botao_comprar.cor_hover = (45, 55, 70)
+                self.botao_comprar.cor_texto = (130, 140, 155)
+
             self.botao_comprar.atualizar(posicao_mouse, estado_clique_mouse)
 
     def _quebrar_texto(self, texto, fonte, largura_maxima):
@@ -270,30 +368,68 @@ class GerenciadorVerso(TelaBase):
         pygame.draw.rect(self.tela, PAINEL, (320, 40, 360, 720))
 
         arvore_ativa = self.obter_arvore_ativa()
+        desab_atual = self.habilidades_desabilitadas.get(self.verso_atual, set())
 
+        # 1. Linhas conectando os nós
         for hab in arvore_ativa:
             for id_requisito in hab["req"]:
                 for h in arvore_ativa:
                     if h["id"] == id_requisito:
-                        cor_linha = AZUL_DESTAQUE if (hab["id"] in self.habilidades_desbloqueadas) else BORDA
+                        hab_desbloq = hab["id"] in self.habilidades_desbloqueadas
+                        req_desbloq = h["id"] in self.habilidades_desbloqueadas
+                        if hab_desbloq:
+                            cor_linha = (42, 175, 88) if hab["id"] not in desab_atual else (205, 50, 50)
+                        elif req_desbloq:
+                            cor_linha = (215, 175, 35)
+                        else:
+                            cor_linha = (70, 78, 92)
                         pygame.draw.line(self.tela, cor_linha, h["pos"], hab["pos"], 4)
 
+        # 2. Orbes das habilidades
         for hab in arvore_ativa:
-            cor = (75, 82, 95)
-            if hab["id"] in self.habilidades_desbloqueadas:
-                cor = (95, 125, 155)
+            hab_id = hab["id"]
+            desbloqueada = hab_id in self.habilidades_desbloqueadas
+            desabilitada = hab_id in desab_atual
+            req_ok = all(req in self.habilidades_desbloqueadas for req in hab.get("req", []))
+
+            if desbloqueada:
+                if desabilitada:
+                    # VERMELHO: se estiver desabilitada deixe a orbe vermelha
+                    cor_orbe = (205, 50, 50)
+                    cor_borda = (255, 95, 95)
+                    cor_texto = (255, 230, 230)
+                else:
+                    # VERDE: Verde é liberado
+                    cor_orbe = (42, 175, 88)
+                    cor_borda = (85, 235, 135)
+                    cor_texto = (235, 255, 240)
             else:
-                pode = True
-                for req in hab["req"]:
-                    if req not in self.habilidades_desbloqueadas:
-                        pode = False
-                if pode:
-                    cor = (110, 125, 145)
+                if not req_ok:
+                    # CINZA: cinza é desbloquear anterior
+                    cor_orbe = (70, 78, 92)
+                    cor_borda = (95, 105, 120)
+                    cor_texto = (140, 150, 165)
+                else:
+                    if self.pontos < hab.get("preco", 0):
+                        # AMARELO: Amarelo é Sem dinheiro o bastante
+                        cor_orbe = (215, 175, 35)
+                        cor_borda = (255, 215, 75)
+                        cor_texto = (255, 250, 220)
+                    else:
+                        # Disponível para desbloquear (Amarelo Ouro / Pronto)
+                        cor_orbe = (245, 205, 50)
+                        cor_borda = (255, 235, 95)
+                        cor_texto = (255, 255, 230)
 
             x, y = hab["pos"]
-            pygame.draw.circle(self.tela, cor, (x, y), 35)
+            pygame.draw.circle(self.tela, cor_orbe, (x, y), 35)
+            pygame.draw.circle(self.tela, cor_borda, (x, y), 35, 3)
+
+            txt_id = self.fonte_titulo.render(hab_id, True, cor_texto)
+            self.tela.blit(txt_id, txt_id.get_rect(center=(x, y)))
+
             if self.habilidade_foco == hab:
-                pygame.draw.circle(self.tela, TEXTO, (x, y), 38, 3)
+                pygame.draw.circle(self.tela, (255, 255, 255), (x, y), 40, 3)
 
         if self.aviso:
             txt_aviso = self.fonte_titulo.render(self.aviso, True, TEXTO)
@@ -312,10 +448,26 @@ class GerenciadorVerso(TelaBase):
                 self.tela.blit(txt_desc, txt_desc.get_rect(centerx=840, top=deslocamento_y))
                 deslocamento_y += 22
 
-            texto_estado = "BLOQUEADO"
             if self.habilidade_foco["id"] in self.habilidades_desbloqueadas:
-                texto_estado = "DESBLOQUEADO"
-            txt_estado = self.fonte_desc.render(texto_estado, True, AZUL_DESTAQUE)
+                if self.habilidade_foco["id"] in desab_atual:
+                    texto_estado = "DESABILITADA"
+                    cor_estado = (255, 95, 95)
+                else:
+                    texto_estado = "LIBERADO"
+                    cor_estado = (85, 235, 135)
+            else:
+                pode = all(req in self.habilidades_desbloqueadas for req in self.habilidade_foco.get("req", []))
+                if not pode:
+                    texto_estado = "DESBLOQUEAR ANTERIOR"
+                    cor_estado = (150, 160, 175)
+                elif self.pontos < self.habilidade_foco.get("preco", 0):
+                    texto_estado = "SEM DINHEIRO O BASTANTE"
+                    cor_estado = (255, 215, 75)
+                else:
+                    texto_estado = "DISPONÍVEL PARA DESBLOQUEAR"
+                    cor_estado = (255, 235, 95)
+
+            txt_estado = self.fonte_desc.render(texto_estado, True, cor_estado)
             self.tela.blit(txt_estado, txt_estado.get_rect(centerx=840, top=deslocamento_y + 18))
 
         else:
@@ -343,6 +495,27 @@ class GerenciadorVerso(TelaBase):
             txt_pontos = self.fonte_titulo.render(f"PONTOS: {self.pontos}", True, TEXTO)
             self.tela.blit(txt_pontos, txt_pontos.get_rect(center=(840, 490)))
             self.botao_comprar.desenhar(self.tela)
+
+        # Mini-painel de Legenda no rodapé da coluna esquerda
+        rect_legenda = pygame.Rect(50, 642, 240, 110)
+        pygame.draw.rect(self.tela, FUNDO, rect_legenda, border_radius=6)
+        pygame.draw.rect(self.tela, BORDA, rect_legenda, width=1, border_radius=6)
+
+        txt_leg_tit = self.fonte_desc.render("LEGENDA DAS ORBES:", True, TEXTO)
+        self.tela.blit(txt_leg_tit, (58, 646))
+
+        itens_legenda = [
+            ((42, 175, 88), "Verde: Liberado"),
+            ((205, 50, 50), "Vermelho: Desabilitado"),
+            ((215, 175, 35), "Amarelo: Sem dinheiro"),
+            ((70, 78, 92), "Cinza: Bloqueado anterior"),
+        ]
+        for idx, (cor_item, texto_item) in enumerate(itens_legenda):
+            y_item = 667 + idx * 20
+            pygame.draw.circle(self.tela, cor_item, (66, y_item + 6), 6)
+            pygame.draw.circle(self.tela, TEXTO, (66, y_item + 6), 6, 1)
+            txt_i = self.fonte_micro.render(texto_item, True, TEXTO_SECUNDARIO)
+            self.tela.blit(txt_i, (78, y_item))
 
         self.botao_selecionar.desenhar(self.tela)
         self.botao_voltar.desenhar(self.tela)

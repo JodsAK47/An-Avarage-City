@@ -14,6 +14,7 @@ class GerenciadorSave:
         self.conquistas = []
         self.member_card_coletado = False
         self.progresso_versos = {}
+        self.habilidades_desabilitadas = {}
         self.carregar()
 
     def carregar(self):
@@ -35,6 +36,7 @@ class GerenciadorSave:
                 self.conquistas = list(dados.get("conquistas", []))
                 self.member_card_coletado = bool(dados.get("member_card_coletado", False))
                 self.progresso_versos = dict(dados.get("progresso_versos", {}))
+                self.habilidades_desabilitadas = {k: list(v) for k, v in dict(dados.get("habilidades_desabilitadas", {})).items()}
         except Exception as e:
             print(f"⚠️ Erro ao carregar save.json: {e}")
 
@@ -50,6 +52,7 @@ class GerenciadorSave:
                 "conquistas": list(self.conquistas),
                 "member_card_coletado": bool(self.member_card_coletado),
                 "progresso_versos": dict(self.progresso_versos),
+                "habilidades_desabilitadas": {k: list(v) for k, v in self.habilidades_desabilitadas.items()},
             }
 
             with open(ARQUIVO_SAVE, "w", encoding="utf-8") as f:
@@ -65,6 +68,17 @@ class GerenciadorSave:
 
     def definir_progresso_verso(self, verso, talentos):
         self.progresso_versos[verso] = list(talentos)
+
+    def obter_habilidades_desabilitadas(self, verso=None):
+        if verso is not None:
+            return list(self.habilidades_desabilitadas.get(verso, []))
+        return {k: list(v) for k, v in self.habilidades_desabilitadas.items()}
+
+    def definir_habilidades_desabilitadas(self, verso, lista):
+        self.habilidades_desabilitadas[verso] = list(lista)
+
+    def esta_habilidade_desabilitada(self, verso, id_habilidade):
+        return id_habilidade in self.habilidades_desabilitadas.get(verso, [])
 
     def obter_pontos(self):
         return self.pontos
@@ -110,6 +124,7 @@ class GerenciadorSave:
         self.conquistas.clear()
         self.member_card_coletado = False
         self.progresso_versos.clear()
+        self.habilidades_desabilitadas.clear()
         self.salvar()
 
 save_global = GerenciadorSave()

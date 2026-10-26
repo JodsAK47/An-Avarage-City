@@ -35,7 +35,7 @@ class Material:
         return False
 
 class ItemBilhete:
-    def __init__(self, quantidade=1, arquivo_imagem="MemberCard.png"):
+    def __init__(self, quantidade=1, arquivo_imagem="TIcket.png"):
         self.nome = "Bilhete do Dormitório"
         self.descricao = "Permite dormir no dormitório para recuperar mais HP e PM."
         self.quantidade = quantidade
@@ -105,10 +105,15 @@ MAPA_SPRITES_ITENS = {
     "sucata": "Sucata.png",
 
     # Especiais com arte própria
-    "bilhete do dormitorio": "MemberCard.png",
-    "bilhete do dormitório": "MemberCard.png",
-    "bilhete dormitorio": "MemberCard.png",
-    "bilhete dormitório": "MemberCard.png",
+    "bilhete do dormitorio": "TIcket.png",
+    "bilhete do dormitório": "TIcket.png",
+    "bilhete dormitorio": "TIcket.png",
+    "bilhete dormitório": "TIcket.png",
+    "bilhete": "TIcket.png",
+    "ticket": "TIcket.png",
+    "ticket de dormir": "TIcket.png",
+    "ticket do dormitorio": "TIcket.png",
+    "ticket do dormitório": "TIcket.png",
     "polidor de itens": "Polidor.png",
     "polidor": "Polidor.png",
 
@@ -145,6 +150,8 @@ ARTES_OFICIAIS_INVENTARIO = {
     "Cafe.png",
     "Marmita.png",
     "Sucata.png",
+    "TIcket.png",
+    "Ticket.png",
     "MemberCard.png",
     "Polidor.png",
     "Lucy O Machado.png",
@@ -160,6 +167,8 @@ ARTES_OFICIAIS_INVENTARIO = {
     "Ferramenta Amaldicoada.png",
     "Amuleto Sombrio.png",
 }
+
+_ARTES_OFICIAIS_LOWER = {a.lower() for a in ARTES_OFICIAIS_INVENTARIO}
 
 def eh_arte_placeholder(item_ou_arquivo) -> bool:
     """Verifica se o item está usando arte provisória (placeholder) em vez de arte final."""
@@ -180,7 +189,7 @@ def eh_arte_placeholder(item_ou_arquivo) -> bool:
     nome_base = os.path.basename(str(nome_arquivo))
     if "placeholder" in nome_base.lower():
         return True
-    return nome_base not in ARTES_OFICIAIS_INVENTARIO
+    return nome_base not in ARTES_OFICIAIS_INVENTARIO and nome_base.lower() not in _ARTES_OFICIAIS_LOWER
 
 def obter_arquivo_imagem_item(item_ou_nome) -> str:
     """Resolve o arquivo de imagem adequado para um item ou retorna o placeholder correspondente."""

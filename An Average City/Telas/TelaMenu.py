@@ -38,7 +38,7 @@ class GerenciadorMenu(TelaBase):
         y_titulo = 35
 
         self.imagem_titulo = None
-        for nome_titulo in ("Titulo.png",):
+        for nome_titulo in ("Titulo.png", "Titulo.jpg"):
             try:
                 img_carregada = pygame.image.load(caminho_imagem(nome_titulo)).convert_alpha()
                 caixa_delimitadora = img_carregada.get_bounding_rect()
@@ -109,9 +109,9 @@ class GerenciadorMenu(TelaBase):
             x_sw, y_sw, largura_sw, altura_sw, "",
             (120, 120, 120), (180, 180, 180), largura_sw, altura_sw,
             cor_texto=(255, 255, 255), fonte_tamanho=22,
-            sprite_base_path="SON.png",
-            sprite_hover_path="SON.png",
-            sprite_clique_path="SOFF.png",
+            sprite_base_path="SOFF.png",
+            sprite_hover_path="SOFF.png",
+            sprite_clique_path="SON.png",
             alternado=True,
             ativo_inicial=False,
         )

@@ -155,6 +155,27 @@ class GerenciadorCheatsTela(TelaBase):
         self.miniaturas_inimigos = {}
         self._carregar_miniaturas_inimigos()
 
+    def resetar(self):
+        """Restaura o menu de cheats e todos os seus estados/trapaças para os padrões iniciais."""
+        self.modo = "cheats"
+        self.voltar_clicado = False
+        self.mensagem_feedback = "Terminal de Cheats pronto. Selecione uma função."
+        self.cor_feedback = VERDE_NEON
+        self.filtro_verso = "TODOS"
+        self.equipe_selecionada.clear()
+
+        self.btn_godmode.texto = "GOD MODE: DESATIVADO"
+        self.btn_godmode.cor_texto = ROXO_NEON
+
+        self.btn_iniciar_batalha_custom.texto = "⚔️ INICIAR (0/4)"
+        self.btn_iniciar_batalha_custom.cor_texto = TEXTO_CINZA
+        self.btn_iniciar_batalha_custom.cor_fundo = (35, 45, 55)
+        self.btn_iniciar_batalha_custom.cor_hover = (45, 55, 65)
+
+        # Desativa cheats no personagem e restaura skin original
+        personagem.resetar(resetar_cheats=True)
+        personagem.trocar_skin("pixil.png")
+
     def _carregar_miniaturas_skins(self):
         for s in self.catalogo_skins:
             try:
@@ -239,14 +260,7 @@ class GerenciadorCheatsTela(TelaBase):
             return ("batalhar_custom", ["Confinamento"])
 
         if self.btn_restaurar.checar_clique(evento, posicao_mouse):
-            personagem.god_mode = False
-            personagem.max_hp = 100
-            personagem.hp = 100
-            personagem.max_mp = 10
-            personagem.mp = 0
-            self.btn_godmode.texto = "GOD MODE: DESATIVADO"
-            self.btn_godmode.cor_texto = ROXO_NEON
-            personagem.trocar_skin("pixil.png")
+            self.resetar()
             self.mensagem_feedback = "Padrões restaurados (God Mode desativado e skin padrão aplicada)."
             self.cor_feedback = TEXTO_CLARO
 

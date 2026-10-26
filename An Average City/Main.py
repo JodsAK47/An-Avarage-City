@@ -78,6 +78,8 @@ estado_anterior_config = "menu"
 
 classe_jogador1 = None
 classe_jogador2 = None
+verso_jogador1 = None
+verso_jogador2 = None
 alvo_classes = None
 verso_menu_selecionado = None
 
@@ -95,8 +97,12 @@ estado = "menu"
 rodando = True
 
 def reiniciar_para_menu():
-    global alvo_classes
+    global alvo_classes, verso_jogador1, verso_jogador2, classe_jogador1, classe_jogador2
     alvo_classes = None
+    verso_jogador1 = None
+    verso_jogador2 = None
+    classe_jogador1 = None
+    classe_jogador2 = None
     from Sistemas.Inventario import inventario_global
     inventario_global.resetar()
     personagem.resetar()
@@ -106,6 +112,7 @@ def reiniciar_para_menu():
     jogo_tela.duas_pessoas = False
     jogo_tela.personagem2 = None
     jogo_tela.classe_jogador2 = None
+    jogo_tela.classe_jogador2_tipo = None
     menu_tela.duas_pessoas = False
     menu_tela.switch_2p.ativo = False
     jogo_tela.menu_acoes_estado = "principal"
@@ -117,6 +124,29 @@ def reiniciar_para_menu():
     tocar_musica("Menu.mp3")
     return "menu"
 
+def resetar_jogo():
+    global verso_menu_selecionado
+    save_global.resetar_tudo()
+    sistema_conquistas.resetar_todas()
+    verso_menu_selecionado = None
+    verso_tela.verso_ativo = None
+    verso_tela.progresso_por_verso = {verso: [] for verso in verso_tela.versos}
+    verso_tela.pontos = save_global.obter_pontos()
+    verso_tela.sincronizar_habilidades_ativas()
+    personagem.resetar(resetar_cheats=True)
+    personagem.talentos = set()
+    personagem.ultimates_desbloqueadas = set()
+    cheats_tela.resetar()
+    if hasattr(jogo_tela, 'personagem2') and jogo_tela.personagem2 is not None:
+        jogo_tela.personagem2.resetar(resetar_cheats=True)
+        jogo_tela.personagem2.talentos = set()
+        jogo_tela.personagem2.ultimates_desbloqueadas = set()
+        jogo_tela.personagem2.god_mode = False
+        jogo_tela.personagem2.classe_aplicada = None
+    if hasattr(sewer_tela, 'modal_aberto'):
+        sewer_tela.modal_aberto = False
+    menu_tela.mostrar_feedback("⚠️ SAVE RESETADO COM SUCESSO!", (255, 100, 100))
+
 def registrar_pontos_partida():
     pontos_partida = max(0, int(jogo_tela.pontos_jogo))
     if not getattr(jogo_tela, 'pontos_salvos_na_partida', False):
@@ -125,7 +155,7 @@ def registrar_pontos_partida():
     return pontos_partida
 
 def tratar_eventos_menu(evento, posicao_mouse):
-    global estado, rodando, alvo_classes, verso_menu_selecionado
+    global estado, rodando, alvo_classes, verso_menu_selecionado, verso_jogador1, verso_jogador2
     botoes_menu = menu_tela.botoes
 
     if botoes_menu["jogar"].checar_clique(evento, posicao_mouse):
@@ -133,25 +163,31 @@ def tratar_eventos_menu(evento, posicao_mouse):
             jogo_tela.classe_atual if getattr(jogo_tela, 'classe_atual', 'Nenhuma') != 'Nenhuma' else None
         )
         if getattr(menu_tela, 'duas_pessoas', False):
-            if verso_escolhido_anteriormente:
-                jogo_tela.classe_atual = verso_escolhido_anteriormente
-                alvo_classes = 1
-                classes_tela.aviso = f"J1: {verso_escolhido_anteriormente} | Escolha CLASSE para JOGADOR 1"
-                return "classes"
             alvo_classes = 1
+            verso_jogador1 = None
+            verso_jogador2 = None
             verso_tela.modo = "visualizacao"
-            verso_tela.verso_atual = "Sobrevivente"
+            verso_tela.alvo_personagem = personagem
+            verso_tela.verso_atual = verso_escolhido_anteriormente or "Sobrevivente"
+            verso_tela.sincronizar_habilidades_ativas()
+            verso_tela.habilidade_foco = None
             verso_tela.aviso = "Escolha o Verso para JOGADOR 1"
             return "verso"
         else:
             if verso_escolhido_anteriormente:
                 jogo_tela.classe_atual = verso_escolhido_anteriormente
                 alvo_classes = 1
+                verso_jogador1 = verso_escolhido_anteriormente
                 classes_tela.aviso = f"Verso: {verso_escolhido_anteriormente} | Escolha SUA CLASSE"
+                classes_tela.classe_atual = "Físico"
                 return "classes"
             alvo_classes = 1
+            verso_jogador1 = None
             verso_tela.modo = "visualizacao"
+            verso_tela.alvo_personagem = personagem
             verso_tela.verso_atual = "Sobrevivente"
+            verso_tela.sincronizar_habilidades_ativas()
+            verso_tela.habilidade_foco = None
             verso_tela.aviso = "Escolha seu Verso"
             return "verso"
 
@@ -181,17 +217,7 @@ def tratar_eventos_menu(evento, posicao_mouse):
         return None
 
     if menu_tela.botao_reset.checar_clique(evento, posicao_mouse):
-        save_global.resetar_tudo()
-        sistema_conquistas.resetar_todas()
-        verso_menu_selecionado = None
-        verso_tela.verso_ativo = None
-        verso_tela.progresso_por_verso = {verso: [] for verso in verso_tela.versos}
-        verso_tela.pontos = save_global.obter_pontos()
-        verso_tela.sincronizar_habilidades_ativas()
-        personagem.resetar()
-        personagem.talentos = set()
-        personagem.ultimates_desbloqueadas = set()
-        menu_tela.mostrar_feedback("⚠️ SAVE RESETADO COM SUCESSO!", (255, 100, 100))
+        resetar_jogo()
         return None
 
     if menu_tela.checar_clique_esgoto(evento, posicao_mouse):
@@ -209,6 +235,7 @@ def tratar_eventos_menu(evento, posicao_mouse):
             jogo_tela.duas_pessoas = False
             jogo_tela.personagem2 = None
             jogo_tela.classe_jogador2 = None
+            jogo_tela.classe_jogador2_tipo = None
         return None
 
     if botoes_menu["sair"].checar_clique(evento, posicao_mouse):
@@ -218,35 +245,70 @@ def tratar_eventos_menu(evento, posicao_mouse):
     return None
 
 def tratar_eventos_classes(evento, posicao_mouse):
-    global alvo_classes, classe_jogador1, classe_jogador2
+    global alvo_classes, classe_jogador1, classe_jogador2, verso_jogador1, verso_jogador2
     escolha_classe = classes_tela.atualizar_eventos(evento, posicao_mouse)
+    target = alvo_classes if alvo_classes is not None else 1
 
     if classes_tela.voltar_clicado:
-        alvo_classes = None
         classes_tela.voltar_clicado = False
-        return "menu"
+        if getattr(menu_tela, 'duas_pessoas', False):
+            if target == 2:
+                # Volta para a seleção de verso do Jogador 2
+                alvo_classes = 2
+                verso_tela.modo = "visualizacao"
+                verso_tela.alvo_personagem = getattr(jogo_tela, 'personagem2', None)
+                verso_tela.verso_atual = verso_jogador2 or "Sobrevivente"
+                verso_tela.sincronizar_habilidades_ativas()
+                verso_tela.habilidade_foco = None
+                verso_tela.aviso = "Escolha o Verso para JOGADOR 2"
+                return "verso"
+            else:
+                # Volta para a seleção de verso do Jogador 1
+                alvo_classes = 1
+                verso_tela.modo = "visualizacao"
+                verso_tela.alvo_personagem = personagem
+                verso_tela.verso_atual = verso_jogador1 or "Sobrevivente"
+                verso_tela.sincronizar_habilidades_ativas()
+                verso_tela.habilidade_foco = None
+                verso_tela.aviso = "Escolha o Verso para JOGADOR 1"
+                return "verso"
+        else:
+            alvo_classes = 1
+            verso_tela.modo = "visualizacao"
+            verso_tela.alvo_personagem = personagem
+            verso_tela.verso_atual = verso_jogador1 or "Sobrevivente"
+            verso_tela.sincronizar_habilidades_ativas()
+            verso_tela.habilidade_foco = None
+            verso_tela.aviso = "Escolha seu Verso"
+            return "verso"
 
     if escolha_classe:
         if isinstance(escolha_classe, tuple):
             verso_escolhido, classe_escolhida = escolha_classe
         else:
             classe_escolhida = escolha_classe
-            verso_escolhido = getattr(jogo_tela, 'classe_atual', getattr(verso_tela, 'verso_atual', 'Sobrevivente'))
-            if verso_escolhido == "Nenhuma":
-                verso_escolhido = getattr(verso_tela, 'verso_atual', 'Sobrevivente')
+            if target == 1:
+                verso_escolhido = verso_jogador1 or getattr(jogo_tela, 'classe_atual', 'Sobrevivente')
+            else:
+                verso_escolhido = verso_jogador2 or getattr(jogo_tela, 'classe_jogador2', 'Sobrevivente')
 
-        target = alvo_classes if alvo_classes is not None else 1
         if target == 1:
             from Sistemas.Inventario import inventario_global
             inventario_global.resetar()
-            jogo_tela.configurar_classe(verso_escolhido, classe_escolhida)
-            classe_jogador1 = verso_escolhido
-            classes_tela.aviso = f"J1: {verso_escolhido} - {classe_escolhida}"
-            verso_tela.aplicar_talentos_ao_personagem(personagem, verso=verso_escolhido)
+            verso_jogador1 = verso_escolhido
+            classe_jogador1 = classe_escolhida
+            jogo_tela.configurar_classe(verso_jogador1, classe_jogador1)
+            verso_tela.aplicar_talentos_ao_personagem(personagem, verso=verso_jogador1)
             if getattr(menu_tela, 'duas_pessoas', False):
+                # Jogador 1 terminou classe -> agora Jogador 2 escolhe seu VERSO!
                 alvo_classes = 2
-                classes_tela.aviso = "Escolha CLASSE para JOGADOR 2"
-                return None
+                verso_tela.modo = "visualizacao"
+                verso_tela.alvo_personagem = getattr(jogo_tela, 'personagem2', None)
+                verso_tela.verso_atual = verso_jogador2 or "Sobrevivente"
+                verso_tela.sincronizar_habilidades_ativas()
+                verso_tela.habilidade_foco = None
+                verso_tela.aviso = "Escolha o Verso para JOGADOR 2"
+                return "verso"
             else:
                 jogo_tela.duas_pessoas = False
                 jogo_tela.personagem2 = None
@@ -254,17 +316,21 @@ def tratar_eventos_classes(evento, posicao_mouse):
                 jogo_tela.classe_jogador2_tipo = None
                 jogo_tela.reiniciar()
                 tocar_musica(jogo_tela.musica_luta)
+                alvo_classes = None
                 return "jogo"
         elif target == 2:
-            classe_jogador2 = verso_escolhido
-            classes_tela.aviso = f"J2: {verso_escolhido} - {classe_escolhida}"
-            jogo_tela.classe_jogador2 = verso_escolhido
-            jogo_tela.classe_jogador2_tipo = classe_escolhida
+            verso_jogador2 = verso_escolhido
+            classe_jogador2 = classe_escolhida
+            jogo_tela.classe_jogador2 = verso_jogador2
+            jogo_tela.classe_jogador2_tipo = classe_jogador2
             jogo_tela.duas_pessoas = True
-            if jogo_tela.personagem2 is not None:
-                verso_tela.aplicar_talentos_ao_personagem(jogo_tela.personagem2, verso=verso_escolhido)
             jogo_tela.reiniciar()
+            if jogo_tela.personagem2 is not None:
+                verso_tela.aplicar_talentos_ao_personagem(jogo_tela.personagem2, verso=verso_jogador2)
+                jogo_tela.personagem2.classe_aplicada = None
+                jogo_tela._aplicar_classe_personagem2()
             tocar_musica(jogo_tela.musica_luta)
+            alvo_classes = None
             return "jogo"
         else:
             from Sistemas.Inventario import inventario_global
@@ -273,31 +339,46 @@ def tratar_eventos_classes(evento, posicao_mouse):
             verso_tela.aplicar_talentos_ao_personagem(personagem, verso=verso_escolhido)
             jogo_tela.reiniciar()
             tocar_musica(jogo_tela.musica_luta)
+            alvo_classes = None
             return "jogo"
     return None
 
 def tratar_eventos_verso(evento, posicao_mouse):
-    global alvo_classes, verso_menu_selecionado
+    global alvo_classes, verso_menu_selecionado, verso_jogador1, verso_jogador2
     escolha_verso = verso_tela.atualizar_eventos(evento, posicao_mouse)
 
     if verso_tela.voltar_clicado:
         verso_tela.voltar_clicado = False
-        alvo_classes = None
-        return "menu"
+        if getattr(menu_tela, 'duas_pessoas', False) and alvo_classes == 2:
+            # Jogador 2 voltou da tela de verso -> retorna à escolha de classe do Jogador 1
+            alvo_classes = 1
+            classes_tela.aviso = f"J1: {verso_jogador1} | Escolha CLASSE para JOGADOR 1"
+            return "classes"
+        else:
+            alvo_classes = None
+            return "menu"
 
     if escolha_verso:
         gerenciador_musica.definir_verso(escolha_verso)
-        jogo_tela.musica_luta = jogo_tela.obter_musica_combate(eh_chefe=False, verso=escolha_verso)
         if getattr(verso_tela, "modo", "menu") == "visualizacao":
-            verso_tela.aviso = f"Verso selecionado: {escolha_verso}"
-            jogo_tela.classe_atual = escolha_verso
-            verso_tela.aplicar_talentos_ao_personagem(personagem, verso=escolha_verso)
-            alvo_classes = 1
-            if getattr(menu_tela, 'duas_pessoas', False):
-                classes_tela.aviso = f"J1: {escolha_verso} | Escolha CLASSE para JOGADOR 1"
-            else:
-                classes_tela.aviso = f"Verso: {escolha_verso} | Escolha SUA CLASSE"
-            return "classes"
+            target = alvo_classes if alvo_classes is not None else 1
+            if target == 1:
+                verso_jogador1 = escolha_verso
+                jogo_tela.classe_atual = escolha_verso
+                jogo_tela.musica_luta = jogo_tela.obter_musica_combate(eh_chefe=False, verso=escolha_verso)
+                verso_tela.aplicar_talentos_ao_personagem(personagem, verso=escolha_verso)
+                if getattr(menu_tela, 'duas_pessoas', False):
+                    classes_tela.aviso = f"J1: {escolha_verso} | Escolha CLASSE para JOGADOR 1"
+                else:
+                    classes_tela.aviso = f"Verso: {escolha_verso} | Escolha SUA CLASSE"
+                classes_tela.classe_atual = "Físico"
+                return "classes"
+            elif target == 2:
+                verso_jogador2 = escolha_verso
+                jogo_tela.classe_jogador2 = escolha_verso
+                classes_tela.aviso = f"J2: {escolha_verso} | Escolha CLASSE para JOGADOR 2"
+                classes_tela.classe_atual = "Físico"
+                return "classes"
         else:
             verso_menu_selecionado = escolha_verso
             jogo_tela.classe_atual = escolha_verso
@@ -486,6 +567,8 @@ def iniciar_batalha_customizada(nomes_inimigos):
     jogo_tela.musica_luta = musica
 
     participantes = [personagem]
+    if personagem.hp <= 0:
+        personagem.hp = personagem.max_hp
     if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
         if jogo_tela.personagem2.hp <= 0:
             jogo_tela.personagem2.hp = jogo_tela.personagem2.max_hp
@@ -557,6 +640,7 @@ def tratar_eventos_game_over(evento, posicao_mouse):
         personagem.resetar()
         if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
             jogo_tela.personagem2.resetar()
+            jogo_tela.personagem2.classe_aplicada = None
         verso_atual = getattr(game_over_tela, 'verso', getattr(jogo_tela, 'classe_atual', 'Sobrevivente'))
         if verso_atual in ('Nenhuma', None):
             verso_atual = 'Sobrevivente'
@@ -565,6 +649,7 @@ def tratar_eventos_game_over(evento, posicao_mouse):
         verso_tela.aplicar_talentos_ao_personagem(personagem, verso=verso_atual)
         if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
             verso_tela.aplicar_talentos_ao_personagem(jogo_tela.personagem2, verso=getattr(jogo_tela, 'classe_jogador2', verso_atual))
+            jogo_tela._aplicar_classe_personagem2()
         jogo_tela.partida_atual = 1
         jogo_tela.pontos_jogo = 0
         jogo_tela.reiniciar()
@@ -622,40 +707,58 @@ def atualizar_estado_atual(posicao_mouse, estado_clique_mouse):
             if not boss_nome:
                 for ent in getattr(jogo_tela, 'ordem_turnos', []):
                     if jogo_tela.eh_inimigo(ent):
-                        nome_e = getattr(ent, 'nome', '').lower()
-                        if 'sukuna' in nome_e:
+                        nome_e = getattr(ent, 'nome', '').strip().lower()
+                        tipo_e = getattr(ent, 'tipo', '').strip().lower()
+                        if 'sukuna' in nome_e and (tipo_e == 'chefe' or nome_e == 'sukuna'):
                             boss_nome = 'Sukuna'
-                            verso_derrota = 'Feiticeiro'
                             break
-                        elif 'charlie' in nome_e:
+                        elif 'charlie' in nome_e and (tipo_e == 'chefe' or nome_e == 'charlie'):
                             boss_nome = 'Charlie'
-                            verso_derrota = 'Sobrevivente'
                             break
-                        elif 'estraga prazeres' in nome_e:
+                        elif 'estraga prazeres' in nome_e and (tipo_e == 'chefe' or 'estraga' in nome_e):
                             boss_nome = 'Estraga Prazeres'
-                            verso_derrota = 'Agente'
                             break
 
-            if not boss_nome:
-                if verso_derrota == 'Feiticeiro':
-                    boss_nome = 'Sukuna'
-                elif verso_derrota == 'Sobrevivente':
-                    boss_nome = 'Charlie'
-                else:
-                    boss_nome = 'Estraga Prazeres'
+            # Mapeamento do chefe respectivo para cada verso
+            chefe_respectivo_por_verso = {
+                "feiticeiro": "Sukuna",
+                "sorcerer": "Sukuna",
+                "sobrevivente": "Charlie",
+                "survivor": "Charlie",
+                "agente": "Estraga Prazeres",
+                "agent": "Estraga Prazeres",
+            }
+            boss_esperado = chefe_respectivo_por_verso.get(str(verso_derrota).lower().strip(), "")
 
-            def ao_concluir_cutscene_game_over():
-                global estado
+            # A cutscene de derrota só deve ser exibida caso morra para o respectivo boss
+            morreu_para_boss_respectivo = bool(
+                boss_nome and
+                boss_esperado and
+                boss_nome.lower() == boss_esperado.lower()
+            )
+
+            if morreu_para_boss_respectivo:
+                def ao_concluir_cutscene_game_over():
+                    global estado
+                    game_over_tela.pontos = registrar_pontos_partida()
+                    game_over_tela.definir_verso(verso_derrota)
+                    tocar_musica("GameOver.mp3")
+                    estado = "game_over"
+
+                cutscene_tela.iniciar(boss_nome=boss_nome, verso=verso_derrota, callback_conclusao=ao_concluir_cutscene_game_over)
+                estado = "cutscene"
+            else:
                 game_over_tela.pontos = registrar_pontos_partida()
                 game_over_tela.definir_verso(verso_derrota)
                 tocar_musica("GameOver.mp3")
                 estado = "game_over"
-
-            cutscene_tela.iniciar(boss_nome=boss_nome, verso=verso_derrota, callback_conclusao=ao_concluir_cutscene_game_over)
-            estado = "cutscene"
         elif resultado_jogo == "vitoria":
             registrar_pontos_partida()
             tocar_musica("Menu.mp3")
+            if getattr(jogo_tela, 'duas_pessoas', False) and getattr(jogo_tela, 'personagem2', None) is not None:
+                pos_luta_tela.jogadores = [personagem, jogo_tela.personagem2]
+            else:
+                pos_luta_tela.jogadores = [personagem]
             if hasattr(jogo_tela, 'ultimo_resultado_batalha') and jogo_tela.ultimo_resultado_batalha:
                 pos_luta_tela.definir_popup_notificacao(jogo_tela.ultimo_resultado_batalha)
             estado = "pos_luta"

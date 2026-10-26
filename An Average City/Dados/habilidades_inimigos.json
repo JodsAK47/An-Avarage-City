@@ -142,7 +142,8 @@
     "chance_efeito": 0.0,
     "em_area": true,
     "verso": "Feiticeiro",
-    "minion": "Pequeno Santuário"
+    "minion": "Pequeno Santuário",
+    "is_ultimate": true
   },
   "Garras da Noite": {
     "nome": "Garras da Noite",
