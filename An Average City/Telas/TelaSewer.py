@@ -122,7 +122,8 @@ class GerenciadorSewerTela(TelaBase):
             if self.btn_pegar_card.checar_clique(evento, posicao_mouse):
                 save_global.coletar_member_card()
                 self.modal_aberto = False
-                self.mostrar_aviso("✓ MEMBER CARD COLETADO! Use-o na porta da direita (NO TRESPASSING) do Menu.", VERDE_NEON, 240)
+                self.msg_aviso = ""
+                self.timer_aviso = 0
                 return None
 
             if self.btn_deixar_card.checar_clique(evento, posicao_mouse):
@@ -187,9 +188,9 @@ class GerenciadorSewerTela(TelaBase):
         self.tela.blit(txt_local, (hud_rect.x + 12, hud_rect.y + 7))
 
         if tem_card:
-            txt_card_status = self.fonte_tooltip.render("MEMBER CARD: COLETADO ✓ (Abra a porta NO TRESPASSING à direita do Menu)", True, VERDE_NEON)
+            txt_card_status = self.fonte_tooltip.render("MEMBER CARD: ATIVO", True, VERDE_NEON)
         else:
-            txt_card_status = self.fonte_tooltip.render("MEMBER CARD: NÃO COLETADO (Procure sob a bancada do terminal)", True, (255, 120, 120))
+            txt_card_status = self.fonte_tooltip.render("MEMBER CARD: INDISPONÍVEL", True, (255, 120, 120))
         self.tela.blit(txt_card_status, (hud_rect.x + 12, hud_rect.y + 27))
 
         if self.timer_aviso > 0 and self.msg_aviso:
@@ -224,8 +225,7 @@ class GerenciadorSewerTela(TelaBase):
 
             linhas_desc = [
                 "Cartão de membro exclusivo com insígnia dourada gravada.",
-                "Foi abandonado discretamente sob a bancada do terminal.",
-                "Concede autorização para abrir a porta restrita (NO TRESPASSING) à direita do Menu."
+                "Foi abandonado discretamente sob a bancada do terminal."
             ]
             for idx, linha in enumerate(linhas_desc):
                 txt_l = self.fonte_tooltip.render(linha, True, TEXTO_CINZA)

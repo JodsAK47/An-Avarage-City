@@ -168,9 +168,7 @@ class GerenciadorMenu(TelaBase):
             if self.rect_porta_cheats.collidepoint(posicao_mouse):
                 if save_global.tem_member_card():
                     return "cheats"
-                else:
-                    self.mostrar_feedback("🔒 NO TRESPASSING // Acesso Restrito! Requer o Member Card.", (255, 80, 80))
-                    return "trancado"
+                return None
         return None
 
     def checar_clique_sewer(self, evento, posicao_mouse):

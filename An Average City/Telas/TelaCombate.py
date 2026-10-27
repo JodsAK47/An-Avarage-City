@@ -1630,8 +1630,7 @@ class GerenciadorJogo(TelaBase):
                 alvo.hp = max(0, alvo.hp - dano_corte)
             dano_aplicado = dano_corte
 
-        golpes_txt = f"{santuario.golpes_restantes()}/4"
-        self.mensagem_log = f"⚔️ O Santuário desfere CORTES em área! (-{dano_aplicado} HP) [Duração: {santuario.duracao} | Golpes: {golpes_txt}]"
+        self.mensagem_log = f"⚔️ O Santuário desfere CORTES em área! (-{dano_aplicado} HP) [Duração: {santuario.duracao}/4]"
         self.iniciar_cooldown_feedback(65, self.avancar_turno)
 
     def executar_ataque_jogador(self, nome_habilidade, alvo_principal=None, jogador_ativo=None):
@@ -1765,7 +1764,7 @@ class GerenciadorJogo(TelaBase):
                 if alvo_principal.hp <= 0:
                     msg = f"💥 O Pequeno Santuário foi DESTRUÍDO pelos ataques de {self.nome_exibicao(jogador_ativo)}!"
                 else:
-                    msg = f"⚔️ {self.nome_exibicao(jogador_ativo)} atacou o Santuário! [{alvo_principal.golpes_restantes()}/4 Golpes restantes]"
+                    msg = f"⚔️ {self.nome_exibicao(jogador_ativo)} atacou o Santuário! [Duração: {alvo_principal.duracao}/4]"
 
             if efeitos_aplicados:
                 msg += f" {' '.join(efeitos_aplicados)}"

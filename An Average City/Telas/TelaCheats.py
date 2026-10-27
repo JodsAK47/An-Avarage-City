@@ -431,7 +431,7 @@ class GerenciadorCheatsTela(TelaBase):
         pygame.draw.rect(self.tela, VERDE_NEON, (40, 20, 920, 60), width=2, border_radius=8)
 
         txt_tit = self.fonte_titulo.render("SEWER ACCESS // CONSOLE DE CHEATS", True, VERDE_NEON)
-        txt_sub = self.fonte_mini.render("ACESSO RESTRITO - NÍVEL ADMINISTRADOR CONCEDIDO", True, CIANO)
+        txt_sub = self.fonte_mini.render("MODELO DE TESTE // PAINEL DE CONTROLE", True, CIANO)
         self.tela.blit(txt_tit, (60, 28))
         self.tela.blit(txt_sub, (60, 56))
 
@@ -474,7 +474,7 @@ class GerenciadorCheatsTela(TelaBase):
             (f"• Vida Atual: {personagem.hp}/{personagem.max_hp}", VERMELHO_ALERTA if not gm_ativo else VERDE_NEON),
             (f"• Mana Atual: {personagem.mp}/{personagem.max_mp}", CIANO),
             (f"• Modo Deus: {txt_gm}", cor_gm),
-            (f"• Member Card: {'Possui (Liberado)' if save_global.tem_member_card() else 'Não Possui'}", VERDE_NEON if save_global.tem_member_card() else VERMELHO_ALERTA),
+            (f"• Member Card: {'Ativo' if save_global.tem_member_card() else 'Indisponível'}", VERDE_NEON if save_global.tem_member_card() else VERMELHO_ALERTA),
             (f"• Skin Equipada: {getattr(personagem, 'nome_imagem', 'pixil.png')}", ROXO_NEON),
         ]
 

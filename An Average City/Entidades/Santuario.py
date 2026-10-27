@@ -11,7 +11,8 @@ class Santuario(EntidadeCombate):
     """
     Pequeno Santuário invocado pela Ultimate de Sukuna (Santuário Malevolente).
     - Possui tamanho semelhante a uma invocação (altura aproximada de 85px).
-    - Destruído em 4 ataques sofridos, OU perde 10% da vida máxima por rodada.
+    - Começa com duração de 4 turnos.
+    - Perde 1 ponto de duração por rodada e 1 ponto por ataque recebido.
     - Causa dano contínuo em área utilizando a sprite de Cortes com tremor de tela.
     """
     def __init__(self, x=580, y=405, dono=None, lado="inimigo"):
@@ -105,30 +106,27 @@ class Santuario(EntidadeCombate):
             self.duracao_maxima = 4
 
         if novo_valor < self._hp:
-            # Qualquer ataque sofrido consome 1 vida de ataque
-            self.ataques_recebidos += 1
-            porc_golpes = self.golpes_restantes() / max(1, self.max_ataques)
-            porc_duracao = self.duracao / max(1, self.duracao_maxima)
-            self._hp = max(0, int(min(porc_golpes, porc_duracao) * 100))
-            if self.ataques_recebidos >= self.max_ataques:
+            # Qualquer ataque recebido também reduz a duração do santuário em 1.
+            self.ataques_recebidos = min(self.max_ataques, self.ataques_recebidos + 1)
+            self.duracao = max(0, self.duracao - 1)
+            duracao_max = max(1, self.duracao_maxima)
+            self._hp = max(0, int((self.duracao / duracao_max) * 100))
+            if self.duracao <= 0:
                 self._hp = 0
         else:
             self._hp = min(getattr(self, "max_hp", 100), max(0, int(novo_valor)))
 
     def golpes_restantes(self):
-        return max(0, getattr(self, "max_ataques", 4) - getattr(self, "ataques_recebidos", 0))
+        return max(0, int(getattr(self, "duracao", 0)))
 
     def perder_duracao_rodada(self):
         """
         Perde 1 ponto de duração no fim de cada rodada completa.
         Quando a duração chega a 0, o santuário se desfaz.
         """
-        self.duracao = max(0, getattr(self, "duracao", 4) - 1)
-        duracao_max = getattr(self, "duracao_maxima", 4)
-        max_atq = getattr(self, "max_ataques", 4)
-        porc_duracao = self.duracao / max(1, duracao_max)
-        porc_golpes = self.golpes_restantes() / max(1, max_atq)
-        self._hp = max(0, int(min(porc_duracao, porc_golpes) * 100))
+        self.duracao = max(0, int(getattr(self, "duracao", 4)) - 1)
+        duracao_max = max(1, int(getattr(self, "duracao_maxima", 4)))
+        self._hp = max(0, int((self.duracao / duracao_max) * 100))
         if self.duracao <= 0:
             self._hp = 0
         return self.duracao
